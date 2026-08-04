@@ -1,8 +1,6 @@
 from django.db import models
-<<<<<<< HEAD
 
 # Create your models here.
-=======
 from accounts.models import JobSeekerProfile
 from jobs.models import JobPosting
 # Create your models here.
@@ -65,4 +63,4 @@ class Application(TimeStampedModel):
 
     def __str__(self):
         return f"{self.job_seeker} - {self.job.title}"
->>>>>>> 75b667f19879999abb7e9c912f2d8f3b434bdd64
+
