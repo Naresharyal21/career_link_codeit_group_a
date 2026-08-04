@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'applications',
     'jobs',
-    'moderators',
+    'moderator',
     'notifications',
 ]
 
@@ -123,6 +123,6 @@ STATIC_URL = 'static/'
 
 # Manually Added
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-AUTH_USER_MODEL = "usermanagement.User"
+# MEDIA_URL = "/media/"
+# MEDIA_ROOT = BASE_DIR / "media"
+# AUTH_USER_MODEL = "usermanagement.User"
