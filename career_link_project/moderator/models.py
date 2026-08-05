@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from jobs.models import JobPosting
 
 # Create your models here.
 class Report(models.Model):
@@ -21,7 +22,7 @@ class Report(models.Model):
     report_description = models.TextField()
     reported_at = models.DateTimeField(auto_now_add=True)
     reported_job = models.ForeignKey(
-        'jobs.Job',
+        'jobs.JobPosting',
         on_delete=models.CASCADE,
         related_name='reports'
     )
