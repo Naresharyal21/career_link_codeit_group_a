@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'accounts',
     'applications',
     'jobs',
-    'moderators',
+    'moderator',
     'notifications',
 ]
 
