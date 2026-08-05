@@ -37,11 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+<<<<<<< HEAD
+    'usermanagement',
+    'moderation',
+=======
     'accounts',
     'applications',
     'jobs',
     'moderator',
     'notifications',
+>>>>>>> upstream/main
 ]
 
 MIDDLEWARE = [
