@@ -127,3 +127,36 @@ class Application(TimeStampedModel):
     def __str__(self):
         return f"{self.job_seeker} - {self.job.title}"
 
+
+class SavedJob(models.Model):
+    """
+    Model to store jobs saved/bookmarked by a job seeker.
+    """
+
+    job_seeker = models.ForeignKey(
+        JobSeekerProfile,
+        on_delete=models.CASCADE,
+        related_name="saved_jobs",
+    )
+
+    job = models.ForeignKey(
+        JobPosting,
+        on_delete=models.CASCADE,
+        related_name="saved_by",
+    )
+
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    note = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional note added by the job seeker.",
+    )
+
+    class Meta:
+        ordering = ["-saved_at"]
+        verbose_name = "Saved Job"
+        verbose_name_plural = "Saved Jobs"
+
+    def __str__(self):
+        return f"{self.job_seeker} saved {self.job.title}"
