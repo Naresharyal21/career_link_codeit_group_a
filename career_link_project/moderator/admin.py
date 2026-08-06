@@ -1,7 +1,13 @@
 from django.contrib import admin
-import moderator.models as models
-
-# Register your models here.
+from .models import Report
 
 
 @admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    
+    list_display = (
+        "id",
+        "reported_by",
+        "status",
+        "reported_at",
+    )
