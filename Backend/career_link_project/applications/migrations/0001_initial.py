@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('cover_letter', models.TextField(blank=True)),
                 ('resume', models.FileField(blank=True, null=True, upload_to='application_resumes/%Y/%m/')),
                 ('job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='jobs.jobposting')),
-                ('job_seeker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='accounts.jobseekerprofile')),
+                ('job_seeker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='applications', to='accounts.JobSeekerProfile')),
             ],
             options={
                 'verbose_name': 'Application',
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('saved_at', models.DateTimeField(auto_now_add=True)),
                 ('note', models.CharField(blank=True, help_text='Optional note added by the job seeker.', max_length=255)),
                 ('job', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_by', to='jobs.jobposting')),
-                ('job_seeker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_jobs', to='accounts.jobseekerprofile')),
+                ('job_seeker', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saved_jobs', to='accounts.JobSeekerProfile')),
             ],
             options={
                 'verbose_name': 'Saved Job',

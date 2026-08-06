@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 
-from accounts.models import JobseekerProfile as JobSeekerProfile
+from accounts.models import JobSeekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
 # Create your models here.
 
@@ -38,7 +38,7 @@ class Application(TimeStampedModel):
     )
 
     job_seeker = models.ForeignKey(
-        JobseekerProfile,
+        JobSeekerProfile,
         on_delete=models.CASCADE,
         related_name="applications",
     )
@@ -72,7 +72,7 @@ class SavedJob(models.Model):
     """
 
     job_seeker = models.ForeignKey(
-        JobseekerProfile,
+        JobSeekerProfile,
         on_delete=models.CASCADE,
         related_name="saved_jobs",
     )
@@ -97,4 +97,4 @@ class SavedJob(models.Model):
         verbose_name_plural = "Saved Jobs"
 
     def __str__(self):
-        return f"{self.job_seeker} saved {self.job.title}
+        return f"{self.job_seeker} saved {self.job.title}"

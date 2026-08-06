@@ -26,7 +26,7 @@ class User (Timestamp):
     return self.username
 
 
-class JobseekerProfile(Timestamp):
+class JobSeekerProfile(Timestamp):
   user=models.OneToOneField(User, on_delete=models.CASCADE,related_name="seeker_profile")
   full_name=models.CharField(max_length=50)
   phone=models.CharField(max_length=100, blank=True)
