@@ -64,7 +64,8 @@
 from django.db import models
 
 # Create your models here.
-from accounts.models import JobseekerProfile
+
+from accounts.models import JobseekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
 # Create your models here.
 
