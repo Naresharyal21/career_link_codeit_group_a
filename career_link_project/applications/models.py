@@ -64,7 +64,8 @@
 from django.db import models
 
 # Create your models here.
-from accounts.models import JobSeekerProfile
+
+from accounts.models import JobseekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
 # Create your models here.
 
@@ -99,7 +100,7 @@ class Application(TimeStampedModel):
     )
 
     job_seeker = models.ForeignKey(
-        JobSeekerProfile,
+        JobseekerProfile,
         on_delete=models.CASCADE,
         related_name="applications",
     )
@@ -129,4 +130,40 @@ class Application(TimeStampedModel):
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 >>>>>>> b72fb043fcf7f58b0cce8730efec1924134276b2
+=======
+
+class SavedJob(models.Model):
+    """
+    Model to store jobs saved/bookmarked by a job seeker.
+    """
+
+    job_seeker = models.ForeignKey(
+        JobseekerProfile,
+        on_delete=models.CASCADE,
+        related_name="saved_jobs",
+    )
+
+    job = models.ForeignKey(
+        JobPosting,
+        on_delete=models.CASCADE,
+        related_name="saved_by",
+    )
+
+    saved_at = models.DateTimeField(auto_now_add=True)
+
+    note = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Optional note added by the job seeker.",
+    )
+
+    class Meta:
+        ordering = ["-saved_at"]
+        verbose_name = "Saved Job"
+        verbose_name_plural = "Saved Jobs"
+
+    def __str__(self):
+        return f"{self.job_seeker} saved {self.job.title}"
+>>>>>>> 5e657c4b0af7599adc0d7ac19cae26df96a799fe
