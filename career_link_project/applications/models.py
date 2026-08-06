@@ -64,6 +64,7 @@
 from django.db import models
 
 # Create your models here.
+
 from accounts.models import JobseekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
 # Create your models here.
@@ -99,7 +100,7 @@ class Application(TimeStampedModel):
     )
 
     job_seeker = models.ForeignKey(
-        JobSeekerProfile,
+        JobseekerProfile,
         on_delete=models.CASCADE,
         related_name="applications",
     )
@@ -134,7 +135,7 @@ class SavedJob(models.Model):
     """
 
     job_seeker = models.ForeignKey(
-        JobSeekerProfile,
+        JobseekerProfile,
         on_delete=models.CASCADE,
         related_name="saved_jobs",
     )
