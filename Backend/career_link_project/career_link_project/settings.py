@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    "rest_framework",
+    "corsheaders",
+    "api",
     'accounts',
     'applications',
     'jobs',
@@ -45,6 +48,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -126,3 +131,11 @@ STATIC_URL = 'static/'
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = BASE_DIR / "media"
 # AUTH_USER_MODEL = "usermanagement.User"
+
+#for connectin to reactframework
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",   # Vite's default dev server
+]
+
+#ADDED PART
+AUTH_USER_MODEL = 'accounts.User'
