@@ -1,19 +1,17 @@
 from django.db import models
-
-
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
 
 
 # Create your models here.
-class Timestamp(models.Model):
+class TimeStamp(models.Model):
   created_at=models.DateTimeField(auto_now_add=True)
   updated_at=models.DateTimeField(auto_now=True)
 
   class Meta:
     abstract=True
 
-class User (Timestamp):
+class User (TimeStamp):
   class ROLE_CHOOSE(models.TextChoices):
     JOBSEEKERS='js','jobseekers'
     EMPLOYEERS='ep','employeer'
@@ -26,7 +24,7 @@ class User (Timestamp):
     return self.username
 
 
-class JobSeekerProfile(Timestamp):
+class JobSeekerProfile(TimeStamp):
   user=models.OneToOneField(User, on_delete=models.CASCADE,related_name="seeker_profile")
   full_name=models.CharField(max_length=50)
   phone=models.CharField(max_length=100, blank=True)
@@ -51,7 +49,7 @@ class JobSeekerProfile(Timestamp):
   
 
 
-class EmployeerProfile(Timestamp):
+class EmployerProfile(TimeStamp):
   user=models.OneToOneField(User, on_delete=models.CASCADE, related_name="employer_profile")
   company_name=models.CharField(max_length=100)
   company_description=models.CharField(max_length=100, blank=True)

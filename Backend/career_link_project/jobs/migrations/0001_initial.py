@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 ('is_active', models.BooleanField(default=True)),
                 ('deadline', models.DateField(blank=True, null=True)),
                 ('category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='job_postings', to='jobs.jobcategory')),
-                ('employer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='job_postings', to='accounts.employeerprofile')),
+                ('employer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='job_postings', to='accounts.EmployerProfile')),
                 ('skills', models.ManyToManyField(blank=True, related_name='job_postings', to='jobs.skill')),
             ],
             options={
