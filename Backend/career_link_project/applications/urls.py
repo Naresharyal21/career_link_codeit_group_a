@@ -1,5 +1,6 @@
 from django.urls import path
+from .views import ApplicationListView
 
 urlpatterns = [
-    # Leave this empty for now, or add your app's URL paths here
+    path("", ApplicationListView.as_view(), name="application_list_url"),
 ]
