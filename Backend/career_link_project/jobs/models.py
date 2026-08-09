@@ -1,5 +1,5 @@
 from django.db import models
-from accounts.models import Timestamp, EmployeerProfile
+from accounts.models import Timestamp, EmployerProfile
 
 
 class JobCategory(Timestamp):
@@ -33,7 +33,7 @@ class JobPosting(Timestamp):
         SENIOR = "SR", "Senior Level"
 
     employer = models.ForeignKey(
-        EmployeerProfile,
+        EmployerProfile,
         on_delete=models.CASCADE,
         related_name="job_postings",
     )
