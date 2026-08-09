@@ -1,0 +1,7 @@
+GET    /api/v1/applications/
+POST   /api/v1/applications/
+
+GET    /api/v1/applications/<id>/
+PUT    /api/v1/applications/<id>/
+PATCH  /api/v1/applications/<id>/
+DELETE /api/v1/applications/<id>/
