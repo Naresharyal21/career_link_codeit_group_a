@@ -31,7 +31,7 @@ const JobCard = ({ job }) => {
 
       <div className="flex flex-wrap gap-2 mt-3">
         {job.skills?.map((skill) => (
-          <span key={skill.name} className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+          <span key={skill.name} className="text-xs bg-blue-50 text-blue-900 px-2 py-1 rounded">
             {skill.name}
           </span>
         ))}
@@ -39,7 +39,7 @@ const JobCard = ({ job }) => {
 
       <button
         onClick={() => navigate(`/jobs/${job.id}`)}
-        className="mt-4 bg-purple-900 text-white px-4 py-2 rounded hover:bg-purple-800 active:bg-purple-950 transition-colors cursor-pointer"
+        className="mt-4 bg-blue-950 text-white px-4 py-2 rounded hover:bg-blue-900 active:bg-blue-950 transition-colors cursor-pointer"
       >
         View Details
       </button>

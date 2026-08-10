@@ -39,7 +39,7 @@ const JobDetailPage = () => {
         <p className="text-gray-700 font-medium">This job posting couldn't be found.</p>
         <button
           onClick={() => navigate('/jobs')}
-          className="mt-4 bg-purple-900 text-white px-4 py-2 rounded hover:bg-purple-800 transition-colors"
+          className="mt-4 bg-blue-950 text-white px-4 py-2 rounded hover:bg-blue-900 transition-colors"
         >
           Back to Browse Jobs
         </button>
@@ -51,7 +51,7 @@ const JobDetailPage = () => {
     <div className="max-w-3xl">
       <button
         onClick={() => navigate('/jobs')}
-        className="text-purple-900 text-sm mb-3 hover:underline cursor-pointer"
+        className="text-blue-950 text-sm mb-3 hover:underline cursor-pointer"
       >
         ← Back to Browse Jobs
       </button>
@@ -87,7 +87,7 @@ const JobDetailPage = () => {
           <p className="text-gray-700 mt-1">{job.benefits}</p>
         </div>
 
-        <button className="mt-6 bg-purple-900 text-white px-6 py-2 rounded hover:bg-purple-800 active:bg-purple-950 transition-colors cursor-pointer">
+        <button className="mt-6 bg-blue-950 text-white px-6 py-2 rounded hover:bg-blue-900 active:bg-blue-950 transition-colors cursor-pointer">
           Apply Now
         </button>
       </div>

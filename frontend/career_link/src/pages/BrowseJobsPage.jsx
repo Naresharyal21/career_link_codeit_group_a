@@ -53,7 +53,7 @@ const BrowseJobsPage = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="bg-purple-900 text-white px-6 py-2 rounded hover:bg-purple-800 active:bg-purple-950 transition-colors cursor-pointer">
+        <button className="bg-blue-950 text-white px-6 py-2 rounded hover:bg-blue-900 active:bg-blue-950 transition-colors cursor-pointer">
           Search
         </button>
       </div>
