@@ -4,8 +4,13 @@ from moderator.models import Report
 
 
 class ReportSerializer(serializers.ModelSerializer):
-    reported_by = serializers.ReadOnlyField(source="reported_by.username")
-    reviewed_by = serializers.ReadOnlyField(source="reviewed_by.username")
+    reported_by = serializers.ReadOnlyField(
+        source="reported_by.username"
+    )
+
+    reviewed_by = serializers.ReadOnlyField(
+        source="reviewed_by.username"
+    )
 
     class Meta:
         model = Report
@@ -21,6 +26,7 @@ class ReportSerializer(serializers.ModelSerializer):
             "updated_at",
             "reviewed_at",
         ]
+
         read_only_fields = [
             "id",
             "reported_by",
