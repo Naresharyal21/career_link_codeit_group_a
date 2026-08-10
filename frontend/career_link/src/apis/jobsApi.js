@@ -77,3 +77,8 @@ export const JOB_TYPE_LABELS = {
   RM: "Remote",
   CT: "Contract",
 };
+
+export async function getSimilarJobs(currentId, limit = 2) {
+  const others = MOCK_JOBS.filter((j) => String(j.id) !== String(currentId));
+  return new Promise((resolve) => setTimeout(() => resolve(others.slice(0, limit)), 200));
+}
