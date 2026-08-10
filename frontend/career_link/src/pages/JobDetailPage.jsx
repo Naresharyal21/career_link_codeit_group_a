@@ -61,8 +61,8 @@ const JobDetailPage = () => {
         ← Back to Browse Jobs
       </button>
 
-      <div className="flex gap-6 items-start">
-        <div className="bg-gray-50 shadow shadow-black/12 rounded p-6 flex-1">
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <div className="bg-gray-50 shadow shadow-black/12 rounded p-6 flex-1 w-full min-w-0">
           <h2 className="text-2xl font-bold">{job.title}</h2>
           <p className="text-gray-600 mt-1">{job.employer?.company_name} • {job.location}</p>
 
@@ -99,7 +99,7 @@ const JobDetailPage = () => {
         </div>
 
         {similarJobs.length > 0 && (
-          <div className="w-72 shrink-0">
+          <div className="w-full md:w-72 shrink-0">
             <h3 className="font-semibold mb-3">Similar Jobs</h3>
             <div className="space-y-3">
               {similarJobs.map((sj) => (
