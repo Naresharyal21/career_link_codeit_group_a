@@ -1,15 +1,10 @@
-
 from django.db import models
-
-# Create your models here.
-
-from accounts.models import JobseekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
-# Create your models here.
+from accounts.models import JobSeekerProfile
 
 class TimeStampedModel(models.Model):
     """
-    Abstract base model to track created and updated timestamps.
+    Abstract base model to track created and updated TimeStamps.
     """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
