@@ -139,6 +139,8 @@ CORS_ALLOWED_ORIGINS = [
 
 # ADDED PART
 AUTH_USER_MODEL = "accounts.User"
+USERNAME_FIELD = "email"
+
 
 # ── 2. DRF global config ──
 REST_FRAMEWORK = {

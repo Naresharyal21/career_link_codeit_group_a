@@ -20,10 +20,15 @@ class User(AbstractUser, Timestamp):
         JOBSEEKERS = "js", "jobseekers"
         EMPLOYEERS = "ep", "employeer"
 
+    email = models.EmailField(unique=True)
+
     role = models.CharField(choices=Role, max_length=2, default=Role.JOBSEEKERS)
 
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
     def __str__(self):
-        return self.username
+        return self.email
 
 
 class JobseekerProfile(Timestamp):
@@ -32,7 +37,7 @@ class JobseekerProfile(Timestamp):
         on_delete=models.CASCADE,
         related_name="seeker_profile",
     )
-    full_name = models.CharField(max_length=50)
+
     phone = models.CharField(max_length=100, blank=True)
     resume_file = models.FileField(
         upload_to="documents/",
@@ -48,7 +53,7 @@ class JobseekerProfile(Timestamp):
         verbose_name = "job Seeker Profile"
 
     def __str__(self):
-        return self.full_name
+        return self.user.username
 
 
 class EmployerProfile(Timestamp):
