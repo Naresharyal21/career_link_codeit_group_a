@@ -10,9 +10,25 @@ const accountsApi = {
     });
   },
 
+  login: (credentials) => {
+    return apiClient("/accounts/login/", {
+      method: POST,
+      body: JSON.stringify(credentials),
+    });
+  },
 
+  refreshToken: (refresh) => {
+    return apiClient("/accounts/login/refresh/", {
+      method: "POST",
+      body: JSON.stringify({
+        refresh,
+      }),
+    });
+  },
 
-  
+  getMe: () => {
+    return accountsApi("/accounts/me/");
+  },
 };
 
 export default accountsApi;
