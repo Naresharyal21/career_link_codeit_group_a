@@ -61,39 +61,16 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
         return value
 
-    def validate(self, attrs):
-        """
-        Prevent one user from applying to same job twice.
-        """
-        request = self.context.get("request")
-        job_seeker = getattr(request, "user", None)
-        job = attrs.get("job")
-
-        if job_seeker and job:
-            queryset = Application.objects.filter(
-                job_seeker=job_seeker,
-                job=job
-            )
-
-            if self.instance:
-                queryset = queryset.exclude(pk=self.instance.pk)
-
-            if queryset.exists():
-                raise serializers.ValidationError(
-                    "You have already applied for this job."
-                )
-
-        return attrs
 
 class SavedJobSerializer(serializers.ModelSerializer):
     job = serializers.PrimaryKeyRelatedField(read_only=True)
 
     job_id = serializers.PrimaryKeyRelatedField(
-        queryset="job",
+        queryset=JobPosting.objects.all(),
         source="job",
         write_only=True,
         error_messages={
-            "does_not_exit":"Job Posting not found.",
+            "does_not_exist":"Job Posting not found.",
             "incorrect_type":"Invalid job id."
         }
     )
