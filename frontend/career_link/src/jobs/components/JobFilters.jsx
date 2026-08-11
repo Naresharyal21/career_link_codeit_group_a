@@ -1,9 +1,21 @@
 import React from 'react'
 
 const JobFilters = ({ filters, onChange }) => {
+  const hasActiveFilters = filters.jobType || filters.location || filters.experience
+
   return (
-    <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 w-60">
-      <h3 className="font-semibold mb-3">Filters</h3>
+    <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 w-full md:w-60">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-semibold">Filters</h3>
+        {hasActiveFilters && (
+          <button
+            onClick={() => onChange({ jobType: '', location: '', experience: '' })}
+            className="text-sm text-[#0f2a52] hover:underline cursor-pointer"
+          >
+            Clear All
+          </button>
+        )}
+      </div>
 
       <div className="mb-4">
         <label className="text-sm font-medium block mb-1">Job Type</label>

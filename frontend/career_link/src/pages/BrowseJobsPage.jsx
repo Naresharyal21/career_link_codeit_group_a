@@ -26,7 +26,8 @@ const BrowseJobsPage = () => {
         const query = search.toLowerCase()
         const matchesTitle = job.title.toLowerCase().includes(query)
         const matchesCompany = job.employer?.company_name?.toLowerCase().includes(query)
-        if (!matchesTitle && !matchesCompany) return false
+        const matchesSkill = job.skills?.some((s) => s.name.toLowerCase().includes(query))
+        if (!matchesTitle && !matchesCompany && !matchesSkill) return false
       }
       return true
     })
@@ -45,25 +46,27 @@ const BrowseJobsPage = () => {
 
   return (
     <div>
-      <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-6 flex gap-3">
+      <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Job title, skills, or company"
-          className="flex-1 border rounded p-2 text-sm"
+          className="flex-1 border rounded p-2 text-sm w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="bg-blue-950 text-white px-6 py-2 rounded hover:bg-blue-900 active:bg-blue-950 transition-colors cursor-pointer">
+        <button className="bg-[#0f2a52] text-white px-6 py-2 rounded hover:bg-[#173a6e] active:bg-[#0a1d3a] transition-colors cursor-pointer whitespace-nowrap">
           Search
         </button>
       </div>
 
-      <div className="flex gap-6">
-        <JobFilters filters={filters} onChange={setFilters} />
-        <div className="flex-1">
-          <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-auto">
+          <JobFilters filters={filters} onChange={setFilters} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
             <h2 className="text-xl font-bold">Browse Jobs</h2>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {!loading && (
                 <span className="text-sm text-gray-500">{filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} found</span>
               )}
