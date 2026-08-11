@@ -1,25 +1,9 @@
 from django.db import models
 from django.conf import settings
 from jobs.models import JobPosting
-from accounts.models import TimeStamp
 
 
-class Report(TimeStamp):
-    reported_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="submitted_reports",
-    )
-
-    reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="reviewed_reports",
-    )
-
-    report_reason = models.CharField(max_length=255)
-    report_description = models.TextField()
-    reported_at = models.DateTimeField(auto_now_add=True)
+class Report(models.Model):
 
     STATUS_CHOICES = [
         ("Pending", "Pending"),
@@ -28,17 +12,55 @@ class Report(TimeStamp):
         ("Rejected", "Rejected"),
     ]
 
+    REASON_CHOICES = [
+        ("Spam", "Spam"),
+        ("Fake Job", "Fake Job"),
+        ("Scam", "Scam"),
+        ("Misleading Information", "Misleading Information"),
+        ("Duplicate", "Duplicate"),
+        ("Offensive Content", "Offensive Content"),
+        ("Expired Job", "Expired Job"),
+        ("Other", "Other"),
+    ]
+
+    reported_job = models.ForeignKey(
+        JobPosting,
+        on_delete=models.CASCADE,
+        related_name="reports"
+    )
+
+    reported_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="submitted_reports"
+    )
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_reports"
+    )
+
+    report_reason = models.CharField(
+        max_length=50,
+        choices=REASON_CHOICES
+    )
+
+    report_description = models.TextField(blank=True)
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default="Pending",
+        default="Pending"
     )
 
+    reported_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
 
-    reviewed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-reported_at"]

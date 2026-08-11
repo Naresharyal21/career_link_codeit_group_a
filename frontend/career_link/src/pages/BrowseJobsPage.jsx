@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import JobFilters from '../../components/jobs/JobFilters'
-import JobList from '../../components/jobs/jobList'
-import { getJobs } from '../../apis/jobsApi'
-
-
-
+import { getJobs } from '../apis/jobsApi'
+import JobList from '../jobs/components/JobList'
+import JobFilters from '../jobs/components/JobFilters'
 
 const BrowseJobsPage = () => {
   const [jobs, setJobs] = useState([])
@@ -81,10 +78,9 @@ const BrowseJobsPage = () => {
               </select>
             </div>
           </div>
-          <jobL jobs={filteredJobs} loading={loading} />
+          <JobList jobs={filteredJobs} loading={loading} />
         </div>
       </div>
-      
     </div>
   )
 }
