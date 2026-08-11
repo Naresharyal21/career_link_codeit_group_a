@@ -4,7 +4,7 @@ import './index.css';
 
 
 
-import AppRoutes from './Routes'
+import AppRoutes from './routes/Routes'
 import { BrowserRouter } from 'react-router'
 
 

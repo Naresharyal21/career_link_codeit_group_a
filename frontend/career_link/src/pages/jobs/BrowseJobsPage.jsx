@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import JobFilters from '../../components/jobs/JobFilters'
-import JobList from '../../components/jobs/jobList'
+import JobList from '../../components/jobs/JobList'
 import { getJobs } from '../../apis/jobsApi'
 
 
@@ -84,7 +84,7 @@ const BrowseJobsPage = () => {
               </select>
             </div>
           </div>
-          <jobL jobs={filteredJobs} loading={loading} />
+          <JobList jobs={filteredJobs} loading={loading} />
         </div>
       </div>
       
