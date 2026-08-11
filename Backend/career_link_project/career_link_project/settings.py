@@ -127,6 +127,15 @@ STATIC_URL = 'static/'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# for connectin to reactframework
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite's default dev server
+]
+
+# ADDED PART
+AUTH_USER_MODEL = "accounts.User"
+USERNAME_FIELD = "email"
+
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [

@@ -18,27 +18,38 @@ class User (TimeStamp):
 
   username=models.CharField(max_length=80)
 
-  role=models.CharField(choices=ROLE_CHOOSE, max_length=2,default='js')
+    email = models.EmailField(unique=True)
 
-  def __str__(self):
-    return self.username
+    role = models.CharField(choices=Role, max_length=2, default=Role.JOBSEEKERS)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
+    def __str__(self):
+        return self.email
 
 
-class JobSeekerProfile(TimeStamp):
-  user=models.OneToOneField(User, on_delete=models.CASCADE,related_name="seeker_profile")
-  full_name=models.CharField(max_length=50)
-  phone=models.CharField(max_length=100, blank=True)
-  resume_file=models.FileField(
-    upload_to="documents/",
-    blank=True,
-    null=True,
-    validators=[FileExtensionValidator(allowed_extensions=["pdf","doc","docx"])]
+class JobseekerProfile(Timestamp):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="seeker_profile",
+    )
+
+    phone = models.CharField(max_length=100, blank=True)
+    resume_file = models.FileField(
+        upload_to="documents/",
+        blank=True,
+        null=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx"])],
     )
   locations=models.CharField(max_length=50)
   profile_pictur=models.ImageField(upload_to="profile_pic/",blank=True,null=True)
   date_of_birth=models.DateTimeField(blank=True, null=True)
 
 
+    def __str__(self):
+        return self.user.username
 
   class Meta:
     verbose_name="job Seeker Profile"
