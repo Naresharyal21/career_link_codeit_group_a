@@ -1,24 +1,22 @@
 from django.db import models
-from django.conf import settings
-
-
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import FileExtensionValidator
 
 
 # Create your models here.
-class Timestamp(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class TimeStamp(models.Model):
+  created_at=models.DateTimeField(auto_now_add=True)
+  updated_at=models.DateTimeField(auto_now=True)
 
-    class Meta:
-        abstract = True
+  class Meta:
+    abstract=True
 
+class User (TimeStamp):
+  class ROLE_CHOOSE(models.TextChoices):
+    JOBSEEKERS='js','jobseekers'
+    EMPLOYEERS='ep','employeer'
 
-class User(AbstractUser, Timestamp):
-    class Role(models.TextChoices):
-        JOBSEEKERS = "js", "jobseekers"
-        EMPLOYEERS = "ep", "employeer"
+  username=models.CharField(max_length=80)
 
     email = models.EmailField(unique=True)
 
@@ -45,32 +43,34 @@ class JobseekerProfile(Timestamp):
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx"])],
     )
-    location = models.CharField(max_length=50)
-    profile_pictur = models.ImageField(upload_to="profile_pic/", blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
+  locations=models.CharField(max_length=50)
+  profile_pictur=models.ImageField(upload_to="profile_pic/",blank=True,null=True)
+  date_of_birth=models.DateTimeField(blank=True, null=True)
 
-    class Meta:
-        verbose_name = "job Seeker Profile"
 
     def __str__(self):
         return self.user.username
 
+  class Meta:
+    verbose_name="job Seeker Profile"
 
-class EmployerProfile(Timestamp):
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="employer_profile",
-    )
-    company_name = models.CharField(max_length=100)
-    company_description = models.CharField(max_length=100, blank=True)
-    website = models.URLField(blank=True)
-    phone = models.CharField(max_length=100, blank=True)
-    logo = models.ImageField(upload_to="company_logo/", blank=True, null=True)
-    is_varified = models.BooleanField(default=False)
+  def __str__(self):
+     return self.full_name
 
-    class Meta:
-        verbose_name = "Employer Profile"
+  
 
-    def __str__(self):
-        return self.company_name
+
+class EmployerProfile(TimeStamp):
+  user=models.OneToOneField(User, on_delete=models.CASCADE, related_name="employer_profile")
+  company_name=models.CharField(max_length=100)
+  company_description=models.CharField(max_length=100, blank=True)
+  website=models.URLField(blank=True)
+  phone=models.CharField(max_length=100, blank=True)
+  logo=models.ImageField(upload_to="company_logo/",blank=True, null=True)
+  is_varified=models.BooleanField(default=False)
+
+  class Meta:
+    verbose_name="Employer Profile"
+
+  def __str__(self):
+    return self.company_name
