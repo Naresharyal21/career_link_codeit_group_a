@@ -1,22 +1,16 @@
-const BASE_URL=import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const apiClient = async (endpoint, options = {}) => {
+  const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
+  const data = await response.json();
+    console.log("API RESPONSE:", data);
 
-const apiClient=async(endpoints , options ={})=>{
+  if (!response.ok) {
+    throw new Error(data.detail || "Something went wrong");
+  }
 
-const response = await fetch(
-  `${BASE_URL}${endpoints}`,options
-);
-
-const data = await response.json();
-if(!response.ok){
-  throw new Error(
-    data.detail || "something went wrong"
-  )
-}
-return data;
-
-
+  return data;
 };
 
- export default apiClient;
+export default apiClient;

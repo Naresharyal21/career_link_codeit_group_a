@@ -1,33 +1,51 @@
 import apiClient from "./apiClient";
 
-import React from "react";
-
 const accountsApi = {
-  registr: (userData) => {
-    return apiClient("/accounts/register/", {
+  register: async (userData) => {
+    const formData = new FormData();
+    console.log(userData)
+
+    Object.keys(userData).forEach((key) => {
+      const value = userData[key];
+
+      if (value !== null && value !== "") {
+        formData.append(key, value);
+      }
+    });
+
+    return await apiClient("/accounts/register/", {
       method: "POST",
-      body: JSON.stringify(userData),
+      body: formData,
+      
     });
   },
 
-  login: (credentials) => {
-    return apiClient("/accounts/login/", {
-      method: POST,
+  login: async (credentials) => {
+    return await apiClient("/accounts/login/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(credentials),
     });
   },
 
-  refreshToken: (refresh) => {
-    return apiClient("/accounts/login/refresh/", {
+  getMe: async () => {
+    return await apiClient("/accounts/me/", {
+      method: "GET",
+    });
+  },
+
+  refreshToken: async (refresh) => {
+    return await apiClient("/accounts/token/refresh/", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         refresh,
       }),
     });
-  },
-
-  getMe: () => {
-    return accountsApi("/accounts/me/");
   },
 };
 
