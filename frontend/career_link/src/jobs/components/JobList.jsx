@@ -1,5 +1,5 @@
 import React from 'react'
-import jobCard from './jobCard'
+import JobCard from './JobCard'
 
 const SkeletonCard = () => (
   <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-4 animate-pulse">
@@ -37,7 +37,7 @@ const JobList = ({ jobs, loading }) => {
   return (
     <div>
       {jobs.map((job) => (
-        <jobCard key={job.id} job={job} />
+        <JobCard key={job.id} job={job} />
       ))}
     </div>
   )

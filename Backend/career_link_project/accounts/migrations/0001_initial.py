@@ -64,6 +64,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'verbose_name': 'Employer Profile',
+                'verbose_name_plural': 'Employer Profiles',
             },
         ),
         migrations.CreateModel(
@@ -80,7 +81,8 @@ class Migration(migrations.Migration):
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='seeker_profile', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'verbose_name': 'job Seeker Profile',
+                'verbose_name': 'Job Seeker Profile',
+                'verbose_name_plural': 'Job Seeker Profiles',
             },
         ),
     ]
