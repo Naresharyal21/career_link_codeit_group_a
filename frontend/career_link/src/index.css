@@ -34,7 +34,10 @@
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #16171d;
+    /* --bg: #16171d; */
+    /* --bg: #1a1b23; */
+    /* --bg: #0f172a; */
+    --bg: #f8fafc;
     --border: #2e303a;
     --code-bg: #1f2028;
     --accent: #c084fc;
@@ -60,11 +63,11 @@ body {
 }
 }
 
-h1,
+
 h2 {
   font-family: var(--heading);
   font-weight: 500;
-  color: var(--text-h);
+  /* color: var(--text-h); */
 }
 
 h1 {
@@ -85,9 +88,9 @@ h2 {
     font-size: 20px;
   }
 }
-p {
+/* p {
   margin: 0;
-}
+} */
 
 code,
 .counter {

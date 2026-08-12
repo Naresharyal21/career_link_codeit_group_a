@@ -5,6 +5,7 @@ import HomePage from "./home/components/pages/HomePage";
 import MyApplicationsPage from "./applications/components/pages/MyApplicationsPage";
 import NotificationsPage from "./notifications/components/pages/NotificationsPage";
 
+
 function AppRoutes() {
   return (
     <Routes>
