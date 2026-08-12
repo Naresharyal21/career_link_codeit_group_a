@@ -1,5 +1,5 @@
 import React from 'react'
-import JobCard from './Jobcard'
+import JobCard from './JobCard'
 
 const SkeletonCard = () => (
   <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-4 animate-pulse">

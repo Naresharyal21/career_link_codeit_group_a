@@ -2,8 +2,6 @@ import React from 'react'
 import { useNavigate } from 'react-router'
 import { JOB_TYPE_LABELS } from '../../apis/jobsApi'
 
-
-
 const JobCard = ({ job }) => {
   const navigate = useNavigate()
 

@@ -6,13 +6,29 @@ from .models import Report
 class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "reported_job_display",
+        "reported_job",
         "reported_by",
         "report_reason",
         "status",
         "reported_at",
     )
 
-    def reported_job_display(self, obj):
-        return obj.job.title   # assuming Report has a ForeignKey 'job'
-    reported_job_display.short_description = "Reported Job"
+    search_fields = (
+        "reported_job__title",
+        "reported_by__username",
+    )
+
+    list_filter = (
+        "status",
+        "report_reason",
+        "reported_at",
+    )
+
+    readonly_fields = (
+        "reported_at",
+        "created_at",
+        "updated_at",
+        "reviewed_at",
+    )
+
+    ordering = ("-reported_at",)
