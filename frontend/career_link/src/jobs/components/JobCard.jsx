@@ -10,7 +10,7 @@ const JobCard = ({ job }) => {
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-lg font-semibold text-black">{job.title}</h3>
-          <p className="text-sm text-gray-600">{job.employer?.company_name}</p>
+          <p className="text-sm text-gray-600">{job.employer_name}</p>
         </div>
         {job.is_urgent && (
           <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded font-medium">Urgent</span>

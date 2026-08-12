@@ -25,7 +25,7 @@ const BrowseJobsPage = () => {
       if (search) {
         const query = search.toLowerCase()
         const matchesTitle = job.title.toLowerCase().includes(query)
-        const matchesCompany = job.employer?.company_name?.toLowerCase().includes(query)
+        const matchesCompany = job.employer_name?.toLowerCase().includes(query)
         const matchesSkill = job.skills?.some((s) => s.name.toLowerCase().includes(query))
         if (!matchesTitle && !matchesCompany && !matchesSkill) return false
       }

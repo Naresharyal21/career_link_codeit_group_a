@@ -64,7 +64,7 @@ const JobDetailPage = () => {
       <div className="flex flex-col md:flex-row gap-6 items-start">
         <div className="bg-gray-50 shadow shadow-black/12 rounded p-6 flex-1 w-full min-w-0">
           <h2 className="text-2xl font-bold">{job.title}</h2>
-          <p className="text-gray-600 mt-1">{job.employer?.company_name} • {job.location}</p>
+          <p className="text-gray-600 mt-1">{job.employer_name} • {job.location}</p>
 
           <div className="flex gap-4 mt-4 text-sm text-gray-700">
             <span>{JOB_TYPE_LABELS[job.job_type]}</span>
@@ -109,7 +109,7 @@ const JobDetailPage = () => {
                   className="bg-gray-50 shadow shadow-black/12 rounded p-3 cursor-pointer hover:shadow-md hover:shadow-black/20 transition-shadow"
                 >
                   <h4 className="font-medium text-sm">{sj.title}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{sj.employer?.company_name}</p>
+                  <p className="text-xs text-gray-600 mt-1">{sj.employer_name}</p>
                   {sj.salary_min && sj.salary_max && (
                     <p className="text-xs text-gray-500 mt-1">
                       NPR {sj.salary_min.toLocaleString()} - {sj.salary_max.toLocaleString()}
