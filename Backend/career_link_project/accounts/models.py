@@ -20,6 +20,8 @@ class User(AbstractUser, Timestamp):
         JOBSEEKERS = "js", "jobseekers"
         EMPLOYEERS = "ep", "employeer"
 
+    username=models.CharField(max_length=150,unique=False)
+
     email = models.EmailField(unique=True)
 
     role = models.CharField(choices=Role, max_length=2, default=Role.JOBSEEKERS)
@@ -45,7 +47,7 @@ class JobseekerProfile(Timestamp):
         null=True,
         validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx"])],
     )
-    location = models.CharField(max_length=50)
+    location = models.CharField(max_length=50 )
     profile_pictur = models.ImageField(upload_to="profile_pic/", blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
 
@@ -64,10 +66,11 @@ class EmployerProfile(Timestamp):
     )
     company_name = models.CharField(max_length=100)
     company_description = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=50)
     website = models.URLField(blank=True)
     phone = models.CharField(max_length=100, blank=True)
     logo = models.ImageField(upload_to="company_logo/", blank=True, null=True)
-    is_varified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Employer Profile"
