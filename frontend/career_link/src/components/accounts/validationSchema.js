@@ -12,6 +12,10 @@ export const passwordRule = Yup.string()
   .min(8, "Password must be at least 8 characters")
   .required("Password is required");
 
+export const passwordconfirmRule=Yup.string()
+  .oneOf([Yup.ref("password")],"password must match")
+  .required("Please confirm your passsword");
+
 export const locationRule = Yup.string().required("Location is required");
 
 export const loginValidationSchema = Yup.object({
@@ -23,6 +27,7 @@ export const signupValidationSchema = Yup.object({
   username: usernameRule,
   email: emailRule,
   password: passwordRule,
+  confirmpassword:passwordconfirmRule,
   role: Yup.string()
     .oneOf(["js", "ep"], "Invalid role")
     .required("Role is required"),
