@@ -7,6 +7,10 @@ from jobs.models import JobPosting
 
 class ApplicationSerializer(serializers.ModelSerializer):
     job_seeker = serializers.StringRelatedField(read_only=True)
+    job_title = serializers.CharField(
+        source="job.title",
+        read_only=True,
+    )
 
     class Meta:
         model = Application
@@ -14,6 +18,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "id",
             "job_seeker",
             "job",
+            "job_title",
             "cover_letter",
             "resume",
             "status",
