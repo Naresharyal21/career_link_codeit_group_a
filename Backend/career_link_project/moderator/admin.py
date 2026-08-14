@@ -1,18 +1,45 @@
 from django.contrib import admin
-from .models import Report
+from moderator.models import Report
 
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
+
     list_display = (
         "id",
-        "reported_job_display",
+        "reported_job",
         "reported_by",
         "report_reason",
         "status",
+        "reviewed_by",
+        "reported_at",
+        "reviewed_at",
+    )
+
+    list_filter = (
+        "status",
+        "report_reason",
         "reported_at",
     )
 
-    def reported_job_display(self, obj):
-        return obj.job.title   # assuming Report has a ForeignKey 'job'
-    reported_job_display.short_description = "Reported Job"
+    search_fields = (
+        "reported_job__title",
+        "reported_by__username",
+        "reviewed_by__username",
+        "report_description",
+    )
+
+    readonly_fields = (
+        "reported_by",
+        "reviewed_by",
+        "reported_at",
+        "reviewed_at",
+        "created_at",
+        "updated_at",
+    )
+
+    def save_model(self, request, obj, form, change):
+        if not change and not obj.reported_by_id:
+            obj.reported_by = request.user
+
+        super().save_model(request, obj, form, change)

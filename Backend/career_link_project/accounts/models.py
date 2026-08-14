@@ -5,25 +5,29 @@ from django.core.validators import FileExtensionValidator
 
 # Create your models here.
 class TimeStamp(models.Model):
-  created_at=models.DateTimeField(auto_now_add=True)
-  updated_at=models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-  class Meta:
-    abstract=True
-
-class User (TimeStamp):
-  class ROLE_CHOOSE(models.TextChoices):
-    JOBSEEKERS='js','jobseekers'
-    EMPLOYEERS='ep','employeer'
-
-  username=models.CharField(max_length=80)
-
-  role=models.CharField(choices=ROLE_CHOOSE, max_length=2,default='js')
-
-  def __str__(self):
-    return self.username
+    class Meta:
+        abstract = True
 
 
+class User(AbstractUser):
+    class ROLE_CHOOSE(models.TextChoices):
+        JOBSEEKERS = "js", "Job Seekers"
+        EMPLOYERS = "ep", "Employers"
+
+    role = models.CharField(
+        max_length=2,
+        choices=ROLE_CHOOSE.choices,
+        default=ROLE_CHOOSE.JOBSEEKERS,
+    )
+
+    def __str__(self):
+        return self.username
+
+
+        
 class JobSeekerProfile(TimeStamp):
   user=models.OneToOneField(User, on_delete=models.CASCADE,related_name="seeker_profile")
   full_name=models.CharField(max_length=50)

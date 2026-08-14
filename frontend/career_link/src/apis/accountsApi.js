@@ -1,18 +1,19 @@
 import apiClient from "./apiClient";
 
-import React from "react";
-
 const accountsApi = {
-  registr: (userData) => {
-    return apiClient("/accounts/register/", {
-      method: "POST",
-      body: JSON.stringify(userData),
-    });
-  },
+    register: (userData) => {
+        return apiClient.post("/accounts/register/", userData);
+    },
 
+    login: (credentials) => {
+        return apiClient.post("/api/token/", credentials);
+    },
 
-
-  
+    refreshToken: (refresh) => {
+        return apiClient.post("/api/token/refresh/", {
+            refresh,
+        });
+    },
 };
 
 export default accountsApi;

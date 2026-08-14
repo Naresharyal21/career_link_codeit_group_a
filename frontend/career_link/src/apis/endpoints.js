@@ -1,4 +1,5 @@
 export const MODERATOR_ENDPOINTS = {
+    DASHBOARD: "/api/moderator/dashboard/",
     REPORTS: "/api/moderator/reports/",
     REPORT: (id) => `/api/moderator/reports/${id}/`,
     START_REVIEW: (id) =>
