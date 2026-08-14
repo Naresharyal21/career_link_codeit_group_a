@@ -4,11 +4,11 @@ const JobseekerForm = ({ formik }) => {
   return (
     <div>
 
-      {/* =========================
+      {/* 
           PHONE
-      ========================= */}
-
-      <div className="mb-4">
+       */}
+<div className="flex justify-between">
+      <div className="mb-4 w-65">
         <input
           id="phone"
           name="phone"
@@ -29,11 +29,11 @@ const JobseekerForm = ({ formik }) => {
       </div>
 
 
-      {/* =========================
+      {/* 
           DATE OF BIRTH
-      ========================= */}
+       */}
 
-      <div className="mb-4">
+      <div className="mb-4 w-65">
         <input
           id="date_of_birth"
           name="date_of_birth"
@@ -51,11 +51,11 @@ const JobseekerForm = ({ formik }) => {
             </p>
           )}
       </div>
+</div>
 
-
-      {/* =========================
+      {/* 
           RESUME
-      ========================= */}
+       */}
 
       <div className="mb-4 flex items-center justify-between border p-3 rounded-lg">
 
