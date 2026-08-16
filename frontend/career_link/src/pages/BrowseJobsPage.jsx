@@ -6,15 +6,27 @@ import JobFilters from '../jobs/components/JobFilters'
 const BrowseJobsPage = () => {
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({ jobType: '', location: '', experience: '' })
 
+  const loadJobs = () => {
+    setLoading(true)
+    setError(null)
+    getJobs()
+      .then((data) => {
+        setJobs(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message || 'Something went wrong while loading jobs.')
+        setLoading(false)
+      })
+  }
+
   useEffect(() => {
-    getJobs().then((data) => {
-      setJobs(data)
-      setLoading(false)
-    })
+    loadJobs()
   }, [])
 
   const filteredJobs = jobs
@@ -44,6 +56,21 @@ const BrowseJobsPage = () => {
       return 0
     })
 
+  if (error) {
+    return (
+      <div className="bg-gray-50 shadow shadow-black/12 rounded p-8 text-center">
+        <p className="text-red-700 font-medium">Couldn't load jobs.</p>
+        <p className="text-gray-500 text-sm mt-1">{error}</p>
+        <button
+          onClick={loadJobs}
+          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded hover:bg-[#173a6e] transition-colors cursor-pointer"
+        >
+          Try Again
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-6 flex flex-col sm:flex-row gap-3">
@@ -58,7 +85,6 @@ const BrowseJobsPage = () => {
           Search
         </button>
       </div>
-
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-auto">
           <JobFilters filters={filters} onChange={setFilters} />
