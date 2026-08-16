@@ -27,7 +27,10 @@ const SignupForm = () => {
       username: "",
       email: "",
       password: "",
+      confirmpassword: "",
+
       role: "js",
+
       location: "",
       phone: "",
       date_of_birth: "",
@@ -38,7 +41,7 @@ const SignupForm = () => {
       logo: null,
     },
 
-    validationSchema: signupValidationSchema, // <--- Used here
+    validationSchema: signupValidationSchema,
 
     onSubmit: async (values) => {
       try {
@@ -57,33 +60,25 @@ const SignupForm = () => {
 
   const handleRoleChange = (newRole) => {
     if (newRole === "js") {
-      formik.setValues({
-        ...formik.values,
-        role: "js",
-        company_description: "",
-        website: "",
-        logo: null,
+      formik.resetForm({
+        values: {
+          ...formik.initialValues,
+          role: "js"
+        },
+
       });
-      formik.setTouched({
-        ...formik.touched,
-        website: false,
-      });
+
     }
 
     if (newRole === "ep") {
-      formik.setValues({
-        ...formik.values,
-        role: "ep",
-        phone: "",
-        date_of_birth: "",
-        resume_file: null,
-        profile_pictur: null,
+      formik.resetForm({
+        values: {
+          ...formik.initialValues,
+          role: "ep"
+        },
+
       });
-      formik.setTouched({
-        ...formik.touched,
-        phone: false,
-        date_of_birth: false,
-      });
+
     }
   };
 
@@ -159,27 +154,52 @@ const SignupForm = () => {
       </div>
 
       {/* PASSWORD */}
-      <div className="mb-4 relative">
-        <input
-          id="password"
-          name="password"
-          type={showPassword ? "text" : "password"}
-          placeholder="Enter your password"
-          value={formik.values.password}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="border rounded p-2 w-full"
-        />
-        <button
-          type="button"
-          onClick={handletoggle}
-          className="-ml-9 absolute mt-3 w-4 text-amber-600"
-        >
-          {showPassword ? <FiEye /> : <FiEyeOff />}
-        </button>
-        {formik.touched.password && formik.errors.password && (
-          <p className="text-red-700">{formik.errors.password}</p>
-        )}
+      <div className="flex justify-between">
+        <div className="mb-4 w-65">
+          <input
+            id="password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            value={formik.values.password}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="border rounded p-2 w-full"
+          />
+          <button
+            type="button"
+            onClick={handletoggle}
+            className="-ml-9 absolute mt-3 w-4 text-amber-600"
+          >
+            {showPassword ? <FiEye /> : <FiEyeOff />}
+          </button>
+          {formik.touched.password && formik.errors.password && (
+            <p className="text-red-700">{formik.errors.password}</p>
+          )}
+        </div>
+        {/* conform  PASSWORD */}
+        <div className="mb-4 w-65 ">
+          <input
+            id="confirmpassword"
+            name="confirmpassword"
+            type={showPassword ? "text" : "password"}
+            placeholder="Re-enter password"
+            value={formik.values.confirmpassword}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="border rounded p-2 w-full"
+          />
+          <button
+            type="button"
+            onClick={handletoggle}
+            className="-ml-9 absolute mt-3 w-4 text-amber-600"
+          >
+            {showPassword ? <FiEye /> : <FiEyeOff />}
+          </button>
+          {formik.touched.confirmpassword && formik.errors.confirmpassword && (
+            <p className="text-red-700">{formik.errors.confirmpassword}</p>
+          )}
+        </div>
       </div>
 
       {/* LOCATION */}

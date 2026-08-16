@@ -9,22 +9,33 @@ const JobDetailPage = () => {
   const [similarJobs, setSimilarJobs] = useState([])
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState(null)
 
-  useEffect(() => {
+  const loadJob = () => {
     setLoading(true)
     setNotFound(false)
-    getJobById(id).then((data) => {
-      if (!data) {
-        setNotFound(true)
-        setLoading(false)
-        return
-      }
-      setJob(data)
-      getSimilarJobs(id).then((similar) => {
-        setSimilarJobs(similar)
+    setError(null)
+    getJobById(id)
+      .then((data) => {
+        if (!data) {
+          setNotFound(true)
+          setLoading(false)
+          return
+        }
+        setJob(data)
+        return getSimilarJobs(id).then((similar) => {
+          setSimilarJobs(similar)
+          setLoading(false)
+        })
+      })
+      .catch((err) => {
+        setError(err.message || 'Something went wrong while loading this job.')
         setLoading(false)
       })
-    })
+  }
+
+  useEffect(() => {
+    loadJob()
   }, [id])
 
   if (loading) {
@@ -34,6 +45,21 @@ const JobDetailPage = () => {
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
         <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
         <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 shadow shadow-black/12 rounded p-8 max-w-3xl text-center">
+        <p className="text-red-700 font-medium">Couldn't load this job.</p>
+        <p className="text-gray-500 text-sm mt-1">{error}</p>
+        <button
+          onClick={loadJob}
+          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded hover:bg-[#173a6e] transition-colors cursor-pointer"
+        >
+          Try Again
+        </button>
       </div>
     )
   }

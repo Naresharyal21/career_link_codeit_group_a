@@ -5,10 +5,16 @@ import React, { useState } from 'react'
 import { FiEye } from "react-icons/fi";
 import { FiEyeOff } from "react-icons/fi";
 import { loginValidationSchema } from './validationSchema';
-import { Link } from 'react-router';
+import { Link, useNavigate, } from 'react-router';
+import useAccounts from '../../hooks/useAccounts';
+
+
 
 
 const LoginForm = () => {
+  const navigate = useNavigate();
+
+  const { login, loading } = useAccounts();
 
   const [showPassword, setShowPassword] = useState(false)
   const handletoggle = () => {
@@ -24,10 +30,18 @@ const LoginForm = () => {
     validationSchema: loginValidationSchema,
 
     onSubmit: async (values) => {
-      console.log(values)
+
       try {
+        const response = await login(values)
+        localStorage.setItem("accessToken", response.access);
+        localStorage.setItem("refreshToken", response.refresh);
+
+
+        navigate("/")
+
 
       } catch (err) {
+        console.log(err)
 
       }
     }
@@ -44,7 +58,7 @@ const LoginForm = () => {
 
 
 
-      <div className=" mt-10 mb-10  ">
+      <div className="  mb-4  ">
 
         <input
           id="email"
@@ -101,17 +115,26 @@ const LoginForm = () => {
       </div>
 
 
-      <button className="bg-green-600 text-white p-2 rounded-2xl w-full mt-10" type="submit">Login</button>
+      <button className="bg-green-600 text-white p-2 rounded-2xl w-full mt-7" type="submit">Login</button>
+
+      <div className="flex flex-col items-center ">
 
 
+        <Link
+          className=" mb-8 mt-2 text-x text-blue-600 underline hover:text-purple-800"
+          to="/Signup"
+        >
+          Forget password?
+        </Link>
+        <hr></hr>
+        <Link
+          className="bg-blue-600  pl-9 pr-9 -mt-3 text-white p-3    rounded-2xl "
+          to="/Signup"
+        >
+          Signup
+        </Link>
 
-      <Link
-        className="ml-60 mt-5 text-x text-blue-600 underline hover:text-purple-800"
-        to="/Signup"
-      >
-        needs signup ?
-      </Link>
-
+      </div>
 
 
 

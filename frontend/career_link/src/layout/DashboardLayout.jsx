@@ -11,8 +11,8 @@ import { Outlet } from 'react-router'
 const DashboardLayout = () => {
   return (
     <>
-      <div className="wrapper flex  flex-col">
-        <div className="h-20 bg-gray-50 shadow-lg shadow-black/12 rounded">
+      <div className="wrapper   flex flex-col">
+        <div className=" w-screen bg-gray-70 shadow-lg shadow-black/12 rounded">
 
           <Navbar />
         </div>
