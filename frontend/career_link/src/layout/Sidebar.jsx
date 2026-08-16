@@ -9,31 +9,31 @@ const Sidebar = () => {
     <>
       <div className="wrapper">
       <ul className='pl-4'>
-        <li className="text-black hover:text-white hover:bg-purple-900 transition-colors rounded-md">
+        <li className="text-black hover:text-white  hover:bg-purple-900 transition-colors rounded-md">
           <button className="flex items-center gap-2 pl-4 pr-2 mb-1 h-13 mt-4 w-55">
             <MdOutlineDashboard className="text-xl" />
             <span>Dashboard</span>
           </button>
         </li>
-        <li className="text-black hover:text-white hover:bg-purple-900 transition-colors rounded-md">
+        <li className="text-black hover:text-white  hover:bg-purple-900 transition-colors rounded-md">
           <Link to="/jobs" className="flex items-center gap-2 pl-4 pr-2 mb-1 h-13 w-55">
             <IoBriefcaseOutline className="text-xl" />
             <span>Find Jobs</span>
           </Link>
         </li>
-        <li className="text-black hover:text-white hover:bg-purple-900 transition-colors rounded-md">
+        <li className="text-black hover:text-white  hover:bg-purple-900 transition-colors rounded-md">
           <button className="flex items-center gap-2 pl-4 mb-1 h-13 pr-2 w-55">
             <IoBagOutline className="text-xl" />
             <span>Applied Jobs</span>
           </button>
         </li>
-        <li className="text-black hover:text-white hover:bg-purple-900 transition-colors rounded-md">
+        <li className="text-black hover:text-white  hover:bg-purple-900 transition-colors rounded-md">
           <button className="flex items-center gap-2 pl-4 pr-2 mb-1 h-13 w-55">
             <MdOutlineDataSaverOff className="text-xl" />
             <span>Saved Jobs</span>
           </button>
         </li>
-        <li className="text-black hover:text-white hover:bg-purple-900 transition-colors rounded-md">
+        <li className="text-black hover:text-white  hover:bg-purple-900 transition-colors rounded-md">
           <button className="flex items-center gap-2 pl-4 pr-2 mb-1 h-13 w-55">
             <FaRegFilePdf className="text-xl" />
             <span>Resume/CV</span>
