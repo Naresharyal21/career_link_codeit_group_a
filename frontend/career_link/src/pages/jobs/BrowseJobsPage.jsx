@@ -47,8 +47,8 @@ const BrowseJobsPage = () => {
     })
 
   return (
-    <div>
-      <div className="bg-gray-50 shadow shadow-black/12 rounded p-4 mb-6 flex gap-3">
+    <div className='   p-4 '>
+      <div className="bg-gray-50   shadow shadow-black/12 rounded p-4 mb-6 flex gap-3">
         <input
           type="text"
           placeholder="Job title, skills, or company"

@@ -3,7 +3,7 @@ import apiClient from "./apiClient";
 const accountsApi = {
   register: async (userData) => {
     const formData = new FormData();
-    console.log(userData)
+   
 
     Object.keys(userData).forEach((key) => {
       const value = userData[key];
@@ -33,6 +33,9 @@ const accountsApi = {
   getMe: async () => {
     return await apiClient("/accounts/me/", {
       method: "GET",
+      headers:{
+        Authorization:`Bearer ${localStorage.getItem("accessToken")}`
+      },
     });
   },
 
