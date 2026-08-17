@@ -40,13 +40,13 @@ const Sidebar = () => {
           </button>
         </li>
       </ul>
-      <div className="h-45 mt-35 ml-3 pl-4 pt-3 w-55 flex flex-col bg-gray-50 shadow shadow-black/12  rounded  ">
+      <div className="h-45 mt-35 mb-4 ml-3 pl-4 pt-3 w-55 flex flex-col  dark:bg-gray-600 bg-gray-50 shadow shadow-black/12  rounded  ">
         <span>
         Need Help?<br></br>
         Our Support team is here to assist your career Journey.
         </span>
         <span>
-          <button className="mt-7 rounded bg-amber-200  w-45 h-10">Contact Us</button>
+          <button className="mt-7  rounded bg-amber-200 dark:text-black w-45 h-10">Contact Us</button>
         </span>
       </div>
  </div >

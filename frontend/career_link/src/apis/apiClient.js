@@ -4,7 +4,7 @@ const apiClient = async (endpoint, options = {}) => {
   const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
   const data = await response.json();
-    console.log("API RESPONSE:", data);
+    
 
   if (!response.ok) {
     throw new Error(data.detail || "Something went wrong");
