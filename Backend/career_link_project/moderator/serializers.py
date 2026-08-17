@@ -1,7 +1,17 @@
 from rest_framework import serializers
 
 from moderator.models import Report
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
+class CareerLinkTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["is_staff"] = user.is_staff
+        return token
+
+        
 
 class ReportSerializer(serializers.ModelSerializer):
 
@@ -42,7 +52,6 @@ class ReportSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-
         request = self.context.get("request")
 
         if not request or not request.user.is_authenticated:
@@ -50,23 +59,31 @@ class ReportSerializer(serializers.ModelSerializer):
 
         reported_job = attrs.get("reported_job")
 
-        if reported_job:
+        if not reported_job:
+            return attrs
 
-            already_reported = Report.objects.filter(
-                reported_by=request.user,
-                reported_job=reported_job,
-                status__in=[
-                    Report.Status.PENDING,
-                    Report.Status.UNDER_REVIEW,
-                ],
-            ).exists()
+        if self.instance is not None and reported_job == self.instance.reported_job:
+            return attrs
 
-            if already_reported:
-                raise serializers.ValidationError({
-                    "reported_job": (
-                        "You have already reported this job "
-                        "and that report is still being reviewed."
-                    )
-                })
+        already_reported = Report.objects.filter(
+            reported_by=request.user,
+            reported_job=reported_job,
+            status__in=[
+                Report.Status.PENDING,
+                Report.Status.UNDER_REVIEW,
+            ],
+        ).exclude(
+            pk=self.instance.pk if self.instance else None
+        ).exists()
+
+        if already_reported:
+            raise serializers.ValidationError({
+                "reported_job": (
+                    "You have already reported this job "
+                    "and that report is still being reviewed."
+                )
+            })
 
         return attrs
+
+

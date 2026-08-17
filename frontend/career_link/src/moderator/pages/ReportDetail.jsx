@@ -16,6 +16,7 @@ export default function ReportDetail() {
     const navigate = useNavigate();
 
     const [report, setReport] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -28,6 +29,7 @@ export default function ReportDetail() {
     const [showRejectModal, setShowRejectModal] =
         useState(false);
 
+
     const loadReport = async () => {
         try {
             setLoading(true);
@@ -37,7 +39,7 @@ export default function ReportDetail() {
                 await moderatorApi.getReport(id);
 
             console.log(
-                "REPORT DETAIL DATA:",
+                "REPORT DETAIL RESPONSE:",
                 data
             );
 
@@ -48,8 +50,11 @@ export default function ReportDetail() {
                 err
             );
 
+            setReport(null);
+
             setError(
                 err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
                     err?.message ||
                     "Unable to load report."
             );
@@ -59,20 +64,113 @@ export default function ReportDetail() {
     };
 
     useEffect(() => {
-        if (id) {
-            loadReport();
-        }
+        loadReport();
     }, [id]);
 
-    /*
-     * ---------------------------------------------------------
-     * MODERATION ACTIONS
-     * ---------------------------------------------------------
-     */
+
+    const getStatus = () => {
+        return (
+            report?.status ||
+            report?.report_status ||
+            "Pending"
+        );
+    };
+
+    const getReason = () => {
+        return (
+            report?.report_reason ||
+            report?.reason ||
+            "No reason provided"
+        );
+    };
+
+    const getDescription = () => {
+        return (
+            report?.report_description ||
+            report?.description ||
+            "No description provided."
+        );
+    };
+
+    const getReportedBy = () => {
+        return (
+            report?.reported_by ||
+            report?.reporter ||
+            "Unknown"
+        );
+    };
+
+    const getReportedJob = () => {
+        return (
+            report?.reported_job ||
+            report?.job_id ||
+            report?.job?.id ||
+            null
+        );
+    };
+
+    const getSubmittedDate = () => {
+        return (
+            report?.reported_at ||
+            report?.created_at ||
+            report?.created ||
+            null
+        );
+    };
+
+    const getReviewedBy = () => {
+        return (
+            report?.reviewed_by ||
+            report?.moderated_by ||
+            "Not reviewed"
+        );
+    };
+
+    const getRiskLevel = () => {
+        const reason =
+            String(getReason()).toLowerCase();
+
+        if (
+            reason.includes("scam") ||
+            reason.includes("fake") ||
+            reason.includes("fraud")
+        ) {
+            return "High";
+        }
+
+        if (
+            reason.includes("misleading") ||
+            reason.includes("spam") ||
+            reason.includes("salary")
+        ) {
+            return "Medium";
+        }
+
+        return "Low";
+    };
+
+    const formatDate = (value) => {
+        if (!value) {
+            return "N/A";
+        }
+
+        const date = new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "N/A";
+        }
+
+        return date.toLocaleString();
+    };
 
     const handleStartReview = async () => {
         try {
             setActionLoading(true);
+            setActionError("");
 
             await moderatorApi.startReview(id);
 
@@ -83,8 +181,9 @@ export default function ReportDetail() {
                 err
             );
 
-            alert(
+            setActionError(
                 err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
                     err?.message ||
                     "Unable to start review."
             );
@@ -96,6 +195,7 @@ export default function ReportDetail() {
     const handleResolve = async () => {
         try {
             setActionLoading(true);
+            setActionError("");
 
             await moderatorApi.resolveReport(id);
 
@@ -106,8 +206,9 @@ export default function ReportDetail() {
                 err
             );
 
-            alert(
+            setActionError(
                 err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
                     err?.message ||
                     "Unable to resolve report."
             );
@@ -119,6 +220,7 @@ export default function ReportDetail() {
     const handleReject = async () => {
         try {
             setActionLoading(true);
+            setActionError("");
 
             await moderatorApi.rejectReport(id);
 
@@ -131,8 +233,9 @@ export default function ReportDetail() {
                 err
             );
 
-            alert(
+            setActionError(
                 err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
                     err?.message ||
                     "Unable to reject report."
             );
@@ -140,93 +243,137 @@ export default function ReportDetail() {
             setActionLoading(false);
         }
     };
-    /*
-     * ---------------------------------------------------------
-     * LOADING
-     * ---------------------------------------------------------
-     */
+
+
+
+    const renderStatusActions = () => {
+        const status =
+            String(getStatus()).toLowerCase();
+
+        if (status === "pending") {
+            return (
+                <button
+                    type="button"
+                    onClick={handleStartReview}
+                    disabled={actionLoading}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D4AFF] px-5 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-[#5636D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    <span className="material-symbols-outlined text-[20px]">
+                        rate_review
+                    </span>
+
+                    {actionLoading
+                        ? "Processing..."
+                        : "Start Review"}
+                </button>
+            );
+        }
+
+        if (
+            status === "under review" ||
+            status === "in review"
+        ) {
+            return (
+                <div className="space-y-3">
+
+                    <button
+                        type="button"
+                        onClick={handleResolve}
+                        disabled={actionLoading}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">
+                            check_circle
+                        </span>
+
+                        {actionLoading
+                            ? "Processing..."
+                            : "Resolve Report"}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowRejectModal(true)
+                        }
+                        disabled={actionLoading}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3.5 text-sm font-bold text-red-700 transition duration-200 hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">
+                            close
+                        </span>
+
+                        Reject Report
+                    </button>
+
+                </div>
+            );
+        }
+
+        return (
+            <div className="rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] p-4">
+
+                <div className="flex items-start gap-3">
+
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F3F0FF] text-[#6D4AFF]">
+                        <span className="material-symbols-outlined text-[19px]">
+                            check_circle
+                        </span>
+                    </div>
+
+                    <div>
+                        <p className="text-sm font-bold text-[#172033]">
+                            Report processed
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-[#667085]">
+                            No further moderation action
+                            is required for this report.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+        );
+    };
+
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#f8f9ff] px-4 py-10">
-                <div className="mx-auto max-w-[1100px] rounded-xl border border-[#c2c7d1] bg-white p-16 text-center shadow-sm">
-                    <span className="material-symbols-outlined animate-spin text-4xl text-[#00355f]">
-                        progress_activity
-                    </span>
+            <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
 
-                    <p className="mt-3 text-sm text-[#727780]">
-                        Loading report...
-                    </p>
-                </div>
-            </div>
-        );
-    }
+                <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
-    /*
-     * ---------------------------------------------------------
-     * ERROR
-     * ---------------------------------------------------------
-     */
+                    <div className="mb-6 h-10 w-32 animate-pulse rounded-xl bg-[#F3F0FF]" />
 
-    if (error) {
-        return (
-            <div className="min-h-screen bg-[#f8f9ff] px-4 py-10">
-                <div className="mx-auto max-w-[1100px] rounded-xl border border-[#ffdad6] bg-white p-10 text-center shadow-sm">
-                    <span className="material-symbols-outlined text-5xl text-[#ba1a1a]">
-                        error
-                    </span>
+                    <div className="rounded-2xl border border-[#E7E3F2] bg-white p-8 shadow-sm md:p-12">
 
-                    <h2 className="mt-4 font-['Montserrat'] text-xl font-bold text-[#00355f]">
-                        Unable to load report
-                    </h2>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
+                            <span className="material-symbols-outlined animate-spin text-3xl">
+                                progress_activity
+                            </span>
+                        </div>
 
-                    <p className="mt-2 text-sm text-[#727780]">
-                        {error}
-                    </p>
+                        <p className="mt-5 text-center text-sm font-semibold text-[#667085]">
+                            Loading report...
+                        </p>
 
-                    <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                        <button
-                            type="button"
-                            onClick={loadReport}
-                            className="rounded-lg bg-[#00355f] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f4c81]"
-                        >
-                            Try Again
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                navigate(
-                                    "/moderator/reports"
-                                )
-                            }
-                            className="rounded-lg border border-[#c2c7d1] bg-white px-5 py-3 text-sm font-semibold text-[#00355f] hover:bg-[#eff4ff]"
-                        >
-                            Back to Reports
-                        </button>
                     </div>
+
                 </div>
+
             </div>
         );
     }
 
-    /*
-     * ---------------------------------------------------------
-     * NOT FOUND
-     * ---------------------------------------------------------
-     */
 
-    if (!report) {
+
+    if (error || !report) {
         return (
-            <div className="min-h-screen bg-[#f8f9ff] px-4 py-10">
-                <div className="mx-auto max-w-[1100px] rounded-xl border border-[#c2c7d1] bg-white p-10 text-center shadow-sm">
-                    <span className="material-symbols-outlined text-5xl text-[#727780]">
-                        flag
-                    </span>
+            <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
 
-                    <p className="mt-4 text-[#727780]">
-                        Report not found.
-                    </p>
+                <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
                     <button
                         type="button"
@@ -235,492 +382,559 @@ export default function ReportDetail() {
                                 "/moderator/reports"
                             )
                         }
-                        className="mt-5 rounded-lg bg-[#00355f] px-5 py-3 text-sm font-semibold text-white hover:bg-[#0f4c81]"
+                        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
                     >
+                        <span className="material-symbols-outlined text-[19px]">
+                            arrow_back
+                        </span>
+
                         Back to Reports
                     </button>
+
+                    <div className="rounded-2xl border border-red-200 bg-white p-8 shadow-sm md:p-10">
+
+                        <div className="flex flex-col items-start gap-4 sm:flex-row">
+
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                                <span className="material-symbols-outlined text-2xl">
+                                    error
+                                </span>
+                            </div>
+
+                            <div>
+
+                                <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
+                                    Moderation Error
+                                </p>
+
+                                <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold text-[#172033]">
+                                    Unable to load report
+                                </h1>
+
+                                <p className="mt-2 max-w-xl text-sm leading-6 text-[#667085]">
+                                    {error ||
+                                        "Report not found."}
+                                </p>
+
+                                <button
+                                    type="button"
+                                    onClick={loadReport}
+                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#6D4AFF] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#5636D9]"
+                                >
+                                    <span className="material-symbols-outlined text-[19px]">
+                                        refresh
+                                    </span>
+
+                                    Try Again
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
                 </div>
+
             </div>
         );
     }
 
-    const currentStatus =
-        String(
-            report.status || "Pending"
-        ).toLowerCase();
+    const status = getStatus();
+    const risk = getRiskLevel();
+    const reportedJob = getReportedJob();
 
-    const isPending =
-        currentStatus === "pending";
-
-    const isUnderReview =
-        currentStatus === "under review" ||
-        currentStatus === "in review";
-
-    const isResolved =
-        currentStatus === "resolved";
-
-    const isRejected =
-        currentStatus === "rejected";
-
-    const isClosed =
-        isResolved || isRejected;
 
     return (
-        <div className="min-h-screen bg-[#f8f9ff] text-[#0d1c2f]">
-            <div className="mx-auto max-w-[1100px] px-4 py-8 md:px-8">
+        <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
 
-                {/* ------------------------------------------------
-                    BACK
-                ------------------------------------------------ */}
+            <div className="mx-auto max-w-[1440px] px-4 py-7 md:px-8 lg:px-12">
 
-                <button
-                    type="button"
-                    onClick={() =>
-                        navigate(
-                            "/moderator/reports"
-                        )
-                    }
-                    className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#00355f] hover:text-[#b7102a]"
-                >
-                    <span className="material-symbols-outlined text-[20px]">
-                        arrow_back
-                    </span>
 
-                    Back to Reports
-                </button>
 
-                {/* ------------------------------------------------
-                    HEADER
-                ------------------------------------------------ */}
+                <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                <div className="mb-6 rounded-xl border border-[#c2c7d1] bg-white p-6 shadow-sm">
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(
+                                "/moderator/reports"
+                            )
+                        }
+                        className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
+                    >
+                        <span className="material-symbols-outlined text-[19px]">
+                            arrow_back
+                        </span>
 
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#d2e4ff] text-[#00355f]">
-                                    <span className="material-symbols-outlined">
+                        Back to Reports
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={loadReport}
+                        disabled={loading}
+                        className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#667085] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:text-[#6D4AFF] disabled:opacity-50"
+                    >
+                        <span
+                            className={`material-symbols-outlined text-[19px] ${
+                                loading
+                                    ? "animate-spin"
+                                    : ""
+                            }`}
+                        >
+                            refresh
+                        </span>
+
+                        Refresh
+                    </button>
+
+                </div>
+
+
+
+                <section className="mb-7 overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                    <div className="p-6 md:p-8">
+
+                        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+
+                            <div className="flex min-w-0 items-start gap-4">
+
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
+                                    <span className="material-symbols-outlined text-2xl">
                                         flag
                                     </span>
                                 </div>
 
-                                <div>
-                                    <p className="text-sm font-semibold uppercase tracking-wider text-[#b7102a]">
+                                <div className="min-w-0">
+
+                                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6D4AFF]">
                                         Moderation Report
                                     </p>
 
-                                    <h1 className="mt-1 font-['Montserrat'] text-3xl font-bold text-[#00355f]">
+                                    <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold tracking-tight text-[#172033] md:text-3xl">
                                         Report {report.id}
                                     </h1>
+
+                                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+                                        Review the submitted
+                                        report and determine
+                                        the appropriate
+                                        moderation action.
+                                    </p>
+
                                 </div>
+
                             </div>
 
-                            <p className="mt-4 max-w-2xl text-sm leading-6 text-[#727780]">
-                                Review the submitted report
-                                and take appropriate
-                                moderation action.
-                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+
+                                <ReportStatusBadge
+                                    status={status}
+                                />
+
+                                <RiskBadge
+                                    risk={risk}
+                                />
+
+                            </div>
+
                         </div>
 
-                        <ReportStatusBadge
-                            status={
-                                report.status ||
-                                "Pending"
+                    </div>
+
+                    <div className="grid border-t border-[#E7E3F2] bg-[#FCFBFF] sm:grid-cols-3">
+
+                        <HeaderStat
+                            icon="person"
+                            label="Reported By"
+                            value={getReportedBy()}
+                        />
+
+                        <HeaderStat
+                            icon="work"
+                            label="Reported Job"
+                            value={
+                                reportedJob
+                                    ? `Job ${reportedJob}`
+                                    : "Unknown"
                             }
                         />
-                    </div>
-                </div>
 
-                {/* ------------------------------------------------
-                    ACTION ERROR
-                ------------------------------------------------ */}
+                        <HeaderStat
+                            icon="schedule"
+                            label="Submitted"
+                            value={formatDate(
+                                getSubmittedDate()
+                            )}
+                        />
+
+                    </div>
+
+                </section>
+
 
                 {actionError && (
-                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-[#ffdad6] bg-[#fff7f7] p-4">
-                        <span className="material-symbols-outlined text-[#ba1a1a]">
-                            error
-                        </span>
+                    <div className="mb-6 rounded-2xl border border-red-200 bg-white p-4 shadow-sm">
 
-                        <div>
-                            <p className="font-semibold text-[#93000a]">
-                                Action failed
-                            </p>
+                        <div className="flex items-start gap-3">
 
-                            <p className="mt-1 text-sm text-[#42474f]">
-                                {actionError}
-                            </p>
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+                                <span className="material-symbols-outlined">
+                                    error
+                                </span>
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setActionError("")
-                                }
-                                className="mt-2 text-sm font-semibold text-[#00355f] underline"
-                            >
-                                Dismiss
-                            </button>
+                            <div className="min-w-0">
+
+                                <p className="font-bold text-red-800">
+                                    Action failed
+                                </p>
+
+                                <p className="mt-1 text-sm leading-6 text-[#667085]">
+                                    {actionError}
+                                </p>
+
+                            </div>
+
                         </div>
+
                     </div>
                 )}
 
-                {/* ------------------------------------------------
-                    MAIN CONTENT
-                ------------------------------------------------ */}
 
-                <div className="grid gap-6 lg:grid-cols-3">
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 
-                    {/* --------------------------------------------
-                        REPORT INFORMATION
-                    -------------------------------------------- */}
+                
 
-                    <div className="lg:col-span-2">
-                        <div className="rounded-xl border border-[#c2c7d1] bg-white shadow-sm">
+                    <div className="space-y-6">
 
-                            <div className="border-b border-[#c2c7d1] px-6 py-5">
-                                <h2 className="font-['Montserrat'] text-lg font-bold text-[#00355f]">
-                                    Report Information
-                                </h2>
-                            </div>
+                        
 
-                            <div className="space-y-6 p-6">
+                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
-                                {/* Reason */}
+                            <SectionHeader
+                                icon="flag"
+                                title="Report Details"
+                                description="Information submitted by the reporter."
+                            />
 
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
-                                        Reason
+                            <div className="p-6 md:p-7">
+
+                                <div className="rounded-xl border border-[#E7E3F2] bg-[#FCFBFF] p-5">
+
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                        Report Reason
                                     </p>
 
-                                    <p className="mt-2 text-base font-semibold text-[#0d1c2f]">
-                                        {report.report_reason ||
-                                            "No reason provided"}
+                                    <p className="mt-2 text-lg font-bold text-[#172033]">
+                                        {getReason()}
                                     </p>
+
                                 </div>
 
-                                {/* Description */}
+                                <div className="mt-6">
 
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
                                         Description
                                     </p>
 
-                                    <div className="mt-2 rounded-lg bg-[#f8f9ff] p-4">
-                                        <p className="whitespace-pre-wrap text-sm leading-6 text-[#42474f]">
-                                            {report.report_description ||
-                                                "No description provided."}
+                                    <div className="mt-3 rounded-xl border border-[#E7E3F2] bg-white p-5">
+
+                                        <p className="whitespace-pre-wrap text-sm leading-7 text-[#42474F]">
+                                            {getDescription()}
                                         </p>
+
                                     </div>
-                                </div>
 
-                                {/* Details */}
-
-                                <div className="grid gap-5 border-t border-[#e2e4e9] pt-6 sm:grid-cols-2">
-
-                                    <InfoItem
-                                        label="Report ID"
-                                        value={
-                                            report.id
-                                        }
-                                    />
-
-                                    <InfoItem
-                                        label="Job ID"
-                                        value={
-                                            report.reported_job
-                                                ? `Job #${report.reported_job}`
-                                                : "Unknown"
-                                        }
-                                    />
-
-                                    <InfoItem
-                                        label="Reported By"
-                                        value={
-                                            report.reported_by ||
-                                            "Unknown"
-                                        }
-                                    />
-
-                                    <InfoItem
-                                        label="Submitted"
-                                        value={
-                                            report.reported_at
-                                                ? new Date(
-                                                      report.reported_at
-                                                  ).toLocaleString()
-                                                : "N/A"
-                                        }
-                                    />
                                 </div>
 
                             </div>
-                        </div>
-                    </div>
 
-                    {/* --------------------------------------------
-                        REVIEW SIDEBAR
-                    -------------------------------------------- */}
+                        </section>
 
-                    <div>
-                        <div className="rounded-xl border border-[#c2c7d1] bg-white shadow-sm">
 
-                            <div className="border-b border-[#c2c7d1] px-6 py-5">
-                                <h2 className="font-['Montserrat'] text-lg font-bold text-[#00355f]">
-                                    Review
-                                </h2>
-                            </div>
+                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
-                            <div className="space-y-5 p-6">
+                            <SectionHeader
+                                icon="info"
+                                title="Report Information"
+                                description="Metadata associated with this moderation report."
+                            />
 
-                                {/* Status */}
+                            <div className="grid gap-x-8 gap-y-6 p-6 sm:grid-cols-2 md:p-7">
 
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
-                                        Current Status
-                                    </p>
+                                <InfoItem
+                                    icon="tag"
+                                    label="Report ID"
+                                    value={`${report.id}`}
+                                />
 
-                                    <div className="mt-2">
+                                <InfoItem
+                                    icon="flag"
+                                    label="Status"
+                                    value={
                                         <ReportStatusBadge
                                             status={
-                                                report.status ||
-                                                "Pending"
+                                                status
                                             }
                                         />
-                                    </div>
-                                </div>
+                                    }
+                                />
 
-                                {/* Reviewed By */}
+                                <InfoItem
+                                    icon="person"
+                                    label="Reported By"
+                                    value={
+                                        getReportedBy()
+                                    }
+                                />
 
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
-                                        Reviewed By
-                                    </p>
+                                <InfoItem
+                                    icon="work"
+                                    label="Reported Job"
+                                    value={
+                                        reportedJob
+                                            ? `Job ${reportedJob}`
+                                            : "Unknown"
+                                    }
+                                />
 
-                                    <p className="mt-1 font-semibold text-[#00355f]">
-                                        {report.reviewed_by ||
-                                            "Not reviewed"}
-                                    </p>
-                                </div>
+                                <InfoItem
+                                    icon="schedule"
+                                    label="Submitted"
+                                    value={formatDate(
+                                        getSubmittedDate()
+                                    )}
+                                />
 
-                                {/* Reviewed At */}
-
-                                <div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
-                                        Reviewed At
-                                    </p>
-
-                                    <p className="mt-1 text-sm text-[#42474f]">
-                                        {report.reviewed_at
-                                            ? new Date(
-                                                  report.reviewed_at
-                                              ).toLocaleString()
-                                            : "Not reviewed"}
-                                    </p>
-                                </div>
-
-                                {/* Divider */}
-
-                                <div className="border-t border-[#e2e4e9] pt-5">
-
-                                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[#727780]">
-                                        Moderation Actions
-                                    </p>
-
-                                    {/* Start Review */}
-
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            handleStartReview
-                                        }
-                                        disabled={
-                                            actionLoading ||
-                                            !isPending
-                                        }
-                                        className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#00355f] bg-white px-4 py-3 text-sm font-semibold text-[#00355f] transition hover:bg-[#eff4ff] disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            rate_review
-                                        </span>
-
-                                        {actionLoading &&
-                                        isPending
-                                            ? "Starting..."
-                                            : "Start Review"}
-                                    </button>
-
-                                    {/* Resolve */}
-
-                                    <button
-                                        type="button"
-                                        onClick={
-                                            handleResolve
-                                        }
-                                        disabled={
-                                            actionLoading ||
-                                            isClosed
-                                        }
-                                        className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[#16803c] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#126b32] disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            check_circle
-                                        </span>
-
-                                        {actionLoading
-                                            ? "Processing..."
-                                            : "Resolve Report"}
-                                    </button>
-
-                                    {/* Reject */}
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            setShowRejectModal(
-                                                true
-                                            )
-                                        }
-                                        disabled={
-                                            actionLoading ||
-                                            isClosed
-                                        }
-                                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#b7102a] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#93001d] disabled:cursor-not-allowed disabled:opacity-40"
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            cancel
-                                        </span>
-
-                                        Reject Report
-                                    </button>
-                                </div>
-
-                                {/* Status information */}
-
-                                {isPending && (
-                                    <div className="rounded-lg border border-[#ffe08a] bg-[#fff9e6] p-3">
-                                        <div className="flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[#8a5a00]">
-                                                schedule
-                                            </span>
-
-                                            <p className="text-xs leading-5 text-[#6b4a00]">
-                                                This report is
-                                                waiting for
-                                                moderator
-                                                review.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isUnderReview && (
-                                    <div className="rounded-lg border border-[#b8d7ff] bg-[#eff6ff] p-3">
-                                        <div className="flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[#00355f]">
-                                                rate_review
-                                            </span>
-
-                                            <p className="text-xs leading-5 text-[#00355f]">
-                                                This report is
-                                                currently under
-                                                moderator review.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isResolved && (
-                                    <div className="rounded-lg border border-[#b7e4c7] bg-[#effaf2] p-3">
-                                        <div className="flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[#16803c]">
-                                                check_circle
-                                            </span>
-
-                                            <p className="text-xs leading-5 text-[#126b32]">
-                                                This report has
-                                                been resolved.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {isRejected && (
-                                    <div className="rounded-lg border border-[#ffd0d0] bg-[#fff5f5] p-3">
-                                        <div className="flex items-start gap-2">
-                                            <span className="material-symbols-outlined text-[#b7102a]">
-                                                cancel
-                                            </span>
-
-                                            <p className="text-xs leading-5 text-[#93001d]">
-                                                This report has
-                                                been rejected.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
+                                <InfoItem
+                                    icon="admin_panel_settings"
+                                    label="Reviewed By"
+                                    value={getReviewedBy()}
+                                />
 
                             </div>
-                        </div>
+
+                        </section>
+
+                    
+
+                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                            <SectionHeader
+                                icon="shield"
+                                title="Risk Assessment"
+                                description="Current automated risk classification based on the report reason."
+                            />
+
+                            <div className="p-6 md:p-7">
+
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                                    <div className="flex items-center gap-4">
+
+                                        <div
+                                            className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                                                risk ===
+                                                "High"
+                                                    ? "bg-red-50 text-red-600"
+                                                    : risk ===
+                                                        "Medium"
+                                                      ? "bg-amber-50 text-amber-600"
+                                                      : "bg-emerald-50 text-emerald-600"
+                                            }`}
+                                        >
+                                            <span className="material-symbols-outlined">
+                                                shield
+                                            </span>
+                                        </div>
+
+                                        <div>
+
+                                            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                                Risk Level
+                                            </p>
+
+                                            <p className="mt-1 text-lg font-bold text-[#172033]">
+                                                {risk} Risk
+                                            </p>
+
+                                        </div>
+
+                                    </div>
+
+                                    <RiskBadge
+                                        risk={risk}
+                                    />
+
+                                </div>
+
+                                <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
+
+                                    <p className="text-xs leading-5 text-[#667085]">
+                                        Risk classification
+                                        is based on keywords
+                                        in the submitted
+                                        report reason. The
+                                        moderator should make
+                                        the final decision
+                                        after reviewing the
+                                        complete report.
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
                     </div>
+
+                 
+                    <aside className="h-fit lg:sticky lg:top-6">
+
+                        <div className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                            <SectionHeader
+                                icon="gavel"
+                                title="Moderation Actions"
+                                description="Take action on this report."
+                            />
+
+                            <div className="p-6">
+
+                                <div className="rounded-xl bg-[#F3F0FF] p-4">
+
+                                    <div className="flex items-start gap-3">
+
+                                        <span className="material-symbols-outlined text-[#6D4AFF]">
+                                            tips_and_updates
+                                        </span>
+
+                                        <p className="text-xs leading-5 text-[#5D5570]">
+                                            Review the report
+                                            details carefully
+                                            before changing
+                                            its status.
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                                <div className="mt-5">
+                                    {renderStatusActions()}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        
+
+                        <div className="mt-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
+
+                            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                Current Status
+                            </p>
+
+                            <div className="mt-3 flex items-center justify-between gap-3">
+
+                                <span className="text-sm font-semibold text-[#667085]">
+                                    Report status
+                                </span>
+
+                                <ReportStatusBadge
+                                    status={status}
+                                />
+
+                            </div>
+
+                            <div className="my-4 h-px bg-[#E7E3F2]" />
+
+                            <div className="flex items-center justify-between gap-3">
+
+                                <span className="text-sm font-semibold text-[#667085]">
+                                    Risk
+                                </span>
+
+                                <RiskBadge
+                                    risk={risk}
+                                />
+
+                            </div>
+
+                        </div>
+
+                    </aside>
+
                 </div>
+
             </div>
 
-            {/* ----------------------------------------------------
-                REJECT CONFIRMATION MODAL
-            ---------------------------------------------------- */}
 
             {showRejectModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1c2f]/50 px-4">
-                    <div className="w-full max-w-md rounded-xl border border-[#c2c7d1] bg-white p-6 shadow-2xl">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]">
 
-                        <div className="flex items-start justify-between gap-4">
+                    <div
+                        className="w-full max-w-md rounded-2xl border border-[#E7E3F2] bg-white shadow-2xl"
+                        onClick={(event) =>
+                            event.stopPropagation()
+                        }
+                    >
 
-                            <div className="flex items-start gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#fff1f1] text-[#b7102a]">
-                                    <span className="material-symbols-outlined">
+                        <div className="p-6">
+
+                            <div className="flex items-start gap-4">
+
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                                    <span className="material-symbols-outlined text-2xl">
                                         warning
                                     </span>
                                 </div>
 
                                 <div>
-                                    <h2 className="font-['Montserrat'] text-lg font-bold text-[#00355f]">
+
+                                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
+                                        Moderation Action
+                                    </p>
+
+                                    <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
                                         Reject Report?
                                     </h2>
 
-                                    <p className="mt-1 text-sm text-[#727780]">
-                                        This action will mark
-                                        report {report.id} as
-                                        rejected.
+                                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+                                        Are you sure you want
+                                        to reject this report?
+                                        The report status will
+                                        be updated immediately.
                                     </p>
+
                                 </div>
+
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowRejectModal(
-                                        false
-                                    )
-                                }
-                                disabled={
-                                    actionLoading
-                                }
-                                className="rounded-lg p-2 text-[#727780] hover:bg-[#eff4ff]"
-                            >
-                                <span className="material-symbols-outlined">
-                                    close
-                                </span>
-                            </button>
+                            <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
+
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                    Report
+                                </p>
+
+                                <p className="mt-1 font-bold text-[#172033]">
+                                    Report {report.id}
+                                </p>
+
+                                <p className="mt-1 text-sm text-[#667085]">
+                                    {getReason()}
+                                </p>
+
+                            </div>
+
                         </div>
 
-                        <div className="mt-6 rounded-lg bg-[#f8f9ff] p-4">
-                            <p className="text-sm leading-6 text-[#42474f]">
-                                Only reject the report if it
-                                does not meet the requirements
-                                for a valid moderation report.
-                            </p>
-                        </div>
-
-                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                        <div className="flex flex-col-reverse gap-2 border-t border-[#E7E3F2] bg-[#FCFBFF] p-5 sm:flex-row sm:justify-end">
 
                             <button
                                 type="button"
@@ -729,53 +943,159 @@ export default function ReportDetail() {
                                         false
                                     )
                                 }
-                                disabled={
-                                    actionLoading
-                                }
-                                className="rounded-lg border border-[#c2c7d1] bg-white px-5 py-3 text-sm font-semibold text-[#00355f] hover:bg-[#eff4ff] disabled:opacity-50"
+                                disabled={actionLoading}
+                                className="rounded-xl border border-[#E7E3F2] bg-white px-5 py-3 text-sm font-bold text-[#667085] transition hover:bg-[#F8F7FC] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Cancel
                             </button>
 
                             <button
                                 type="button"
-                                onClick={
-                                    handleReject
-                                }
-                                disabled={
-                                    actionLoading
-                                }
-                                className="rounded-lg bg-[#b7102a] px-5 py-3 text-sm font-semibold text-white hover:bg-[#93001d] disabled:cursor-not-allowed disabled:opacity-50"
+                                onClick={handleReject}
+                                disabled={actionLoading}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                             >
+                                <span className="material-symbols-outlined text-[18px]">
+                                    close
+                                </span>
+
                                 {actionLoading
                                     ? "Rejecting..."
                                     : "Yes, Reject Report"}
                             </button>
 
                         </div>
+
                     </div>
+
                 </div>
             )}
+
         </div>
     );
 }
 
-/*
- * =========================================================
- * INFO ITEM
- * =========================================================
- */
 
-function InfoItem({ label, value }) {
+function SectionHeader({
+    icon,
+    title,
+    description,
+}) {
     return (
-        <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-[#727780]">
-                {label}
-            </p>
+        <div className="border-b border-[#E7E3F2] px-6 py-5 md:px-7">
 
-            <p className="mt-1 font-semibold text-[#00355f]">
-                {value || "N/A"}
-            </p>
+            <div className="flex items-center gap-3">
+
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
+                    <span className="material-symbols-outlined">
+                        {icon}
+                    </span>
+                </div>
+
+                <div>
+
+                    <h2 className="font-['Montserrat'] text-lg font-bold text-[#172033]">
+                        {title}
+                    </h2>
+
+                    {description && (
+                        <p className="mt-0.5 text-xs text-[#98A2B3]">
+                            {description}
+                        </p>
+                    )}
+
+                </div>
+
+            </div>
+
         </div>
+    );
+}
+
+
+
+function HeaderStat({
+    icon,
+    label,
+    value,
+}) {
+    return (
+        <div className="border-b border-[#E7E3F2] px-6 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
+
+            <div className="flex items-center gap-3">
+
+                <span className="material-symbols-outlined text-[19px] text-[#6D4AFF]">
+                    {icon}
+                </span>
+
+                <div className="min-w-0">
+
+                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                        {label}
+                    </p>
+
+                    <p className="mt-0.5 truncate text-sm font-bold text-[#172033]">
+                        {value}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
+
+
+
+function InfoItem({
+    icon,
+    label,
+    value,
+}) {
+    return (
+        <div className="min-w-0">
+
+            <div className="flex items-center gap-2">
+
+                <span className="material-symbols-outlined text-[17px] text-[#6D4AFF]">
+                    {icon}
+                </span>
+
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                    {label}
+                </p>
+
+            </div>
+
+            <div className="mt-2 break-words text-sm font-semibold text-[#172033]">
+                {value}
+            </div>
+
+        </div>
+    );
+}
+
+
+function RiskBadge({
+    risk,
+}) {
+    const styles = {
+        High: "bg-red-50 text-red-700 ring-red-100",
+        Medium: "bg-amber-50 text-amber-700 ring-amber-100",
+        Low: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    };
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${
+                styles[risk] ||
+                "bg-slate-50 text-slate-700 ring-slate-100"
+            }`}
+        >
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+
+            {risk || "Low"} Risk
+        </span>
     );
 }

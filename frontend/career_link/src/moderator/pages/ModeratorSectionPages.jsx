@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ArrowLeft, Check, Eye, Flag, MoreHorizontal, ShieldAlert } from "lucide-react";
 import moderatorApi from "../../apis/moderatorApi";
 import ModerationTablePage from "./ModerationTablePage";
+import ReportStatusBadge from "../components/ReportStatusBadge";
 
 const staticRows = {
     jobApprovals: [

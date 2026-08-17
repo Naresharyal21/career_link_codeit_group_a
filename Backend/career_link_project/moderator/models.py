@@ -98,3 +98,43 @@ class Report(TimeStamp):
 
 
 
+# class JobModeration(TimeStamp):
+
+#     class Status(models.TextChoices):
+#         PENDING = "Pending", "Pending"
+#         APPROVED = "Approved", "Approved"
+#         REJECTED = "Rejected", "Rejected"
+#         REMOVED = "Removed", "Removed"
+
+#     job = models.OneToOneField(
+#         JobPosting,
+#         on_delete=models.CASCADE,
+#         related_name="moderation",
+#     )
+
+#     status = models.CharField(
+#         max_length=20,
+#         choices=Status.choices,
+#         default=Status.PENDING,
+#     )
+
+#     reviewed_by = models.ForeignKey(
+#         settings.AUTH_USER_MODEL,
+#         on_delete=models.SET_NULL,
+#         null=True,
+#         blank=True,
+#         related_name="moderated_jobs",
+#     )
+
+#     review_reason = models.TextField(
+#         blank=True,
+#     )
+
+#     reviewed_at = models.DateTimeField(
+#         null=True,
+#         blank=True,
+#     )
+
+#     def __str__(self):
+#         return f"{self.job} - {self.status}"
+

@@ -18,14 +18,6 @@ from moderator.services import (
 
 
 class ModeratorDashboardAPIView(APIView):
-    """Return the aggregate data needed by the moderator dashboard.
-
-    The current schema only models moderation reports. Job approval and
-    company-flag workflows are not represented by dedicated fields/models,
-    so those dashboard values are returned as null rather than guessing
-    from unrelated fields such as JobPosting.is_active or
-    EmployerProfile.is_varified.
-    """
 
     permission_classes = [IsAuthenticated, IsModerator]
 
@@ -175,6 +167,8 @@ class ModeratorDashboardAPIView(APIView):
         })
 
 
+
+
 class ReportListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ReportSerializer
 
@@ -196,10 +190,11 @@ class ReportListCreateAPIView(generics.ListCreateAPIView):
             reported_by=self.request.user
         )
 
-        
-class ReportDetailAPIView(generics.RetrieveAPIView):
+
+class ReportDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+
     serializer_class = ReportSerializer
-    permission_classes = [IsModerator]
+    permission_classes = [IsAuthenticated, IsModerator]
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
@@ -209,6 +204,28 @@ class ReportDetailAPIView(generics.RetrieveAPIView):
             "reviewed_by",
         )
 
+    def destroy(self, request, *args, **kwargs):
+        report = self.get_object()
+
+        if report.status in (
+            Report.Status.RESOLVED,
+            Report.Status.REJECTED,
+        ):
+            return Response(
+                {
+                    "detail": (
+                        "Reports that have already been reviewed "
+                        "cannot be deleted. This preserves the "
+                        "moderation audit trail — reject the report "
+                        "if it needs to be closed."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return super().destroy(request, *args, **kwargs)
+
+
 class ReportReviewView(APIView):
     permission_classes = [IsAuthenticated, IsModerator]
     lookup_url_kwarg = "id"
@@ -216,7 +233,7 @@ class ReportReviewView(APIView):
     def post(self, request, id):
         report = get_object_or_404(Report, id=id)
 
-        if report.status != "Pending":
+        if report.status != Report.Status.PENDING:
             return Response(
                 {
                     "detail": (
@@ -245,7 +262,7 @@ class ReportResolveView(APIView):
     def post(self, request, id):
         report = get_object_or_404(Report, id=id)
 
-        if report.status != "Under Review":
+        if report.status != Report.Status.UNDER_REVIEW:
             return Response(
                 {
                     "detail": (
@@ -274,7 +291,7 @@ class ReportRejectView(APIView):
     def post(self, request, id):
         report = get_object_or_404(Report, id=id)
 
-        if report.status != "Under Review":
+        if report.status != Report.Status.UNDER_REVIEW:
             return Response(
                 {
                     "detail": (
@@ -294,5 +311,3 @@ class ReportRejectView(APIView):
             ReportSerializer(report).data,
             status=status.HTTP_200_OK,
         )
-
-
