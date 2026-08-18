@@ -4,7 +4,7 @@ import './index.css';
 
 
 
-
+import AppRoutes from './Routes'
 import { BrowserRouter } from 'react-router'
 import AppRoutes from './routes/Routes';
 import { ToastContainer } from "react-toastify";

@@ -1,5 +1,10 @@
 from django.urls import path
 
+from .views import ReportListCreateAPIView, ReportDetailAPIView
+
+app_name = "moderator"
+
 urlpatterns = [
-    # Leave this empty for now, or add your app's URL paths here
+    path("api/reports/", ReportListCreateAPIView.as_view(), name="report-list-create" ),
+    path("api/reports/<int:pk>/", ReportDetailAPIView.as_view(), name="report-detail" ),
 ]
