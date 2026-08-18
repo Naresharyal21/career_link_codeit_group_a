@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from 'react'
-import { getJobs } from '../apis/jobsApi'
+import { getJobsPage, API_BASE } from '../apis/jobsApi'
 import JobList from '../jobs/components/JobList'
 import JobFilters from '../jobs/components/JobFilters'
 
+const PAGE_SIZE = 3
+
 const BrowseJobsPage = () => {
   const [jobs, setJobs] = useState([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({ jobType: '', location: '', experience: '' })
 
-  const loadJobs = () => {
+  const loadPage = (page) => {
     setLoading(true)
     setError(null)
-    getJobs()
+    const url = `${API_BASE}/?page=${page}`
+    getJobsPage(url)
       .then((data) => {
-        setJobs(data)
+        setJobs(data.results)
+        setTotalCount(data.count)
+        setCurrentPage(page)
         setLoading(false)
       })
       .catch((err) => {
@@ -26,8 +33,10 @@ const BrowseJobsPage = () => {
   }
 
   useEffect(() => {
-    loadJobs()
+    loadPage(1)
   }, [])
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   const filteredJobs = jobs
     .filter((job) => {
@@ -62,7 +71,7 @@ const BrowseJobsPage = () => {
         <p className="text-red-700 font-medium">Couldn't load jobs.</p>
         <p className="text-gray-500 text-sm mt-1">{error}</p>
         <button
-          onClick={loadJobs}
+          onClick={() => loadPage(currentPage)}
           className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded hover:bg-[#173a6e] transition-colors cursor-pointer"
         >
           Try Again
@@ -85,6 +94,7 @@ const BrowseJobsPage = () => {
           Search
         </button>
       </div>
+
       <div className="flex flex-col md:flex-row gap-6">
         <div className="w-full md:w-auto">
           <JobFilters filters={filters} onChange={setFilters} />
@@ -94,7 +104,7 @@ const BrowseJobsPage = () => {
             <h2 className="text-xl font-bold">Browse Jobs</h2>
             <div className="flex flex-wrap items-center gap-3">
               {!loading && (
-                <span className="text-sm text-gray-500">{filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} found</span>
+                <span className="text-sm text-gray-500">{totalCount} job{totalCount !== 1 ? 's' : ''} found</span>
               )}
               <select
                 className="border rounded p-2 text-sm"
@@ -107,7 +117,42 @@ const BrowseJobsPage = () => {
               </select>
             </div>
           </div>
+
           <JobList jobs={filteredJobs} loading={loading} />
+
+          {!loading && totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-6">
+              <button
+                onClick={() => loadPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="w-9 h-9 flex items-center justify-center rounded border border-gray-300 text-[#0f2a52] hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                &lt;
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => loadPage(page)}
+                  className={
+                    page === currentPage
+                      ? 'w-9 h-9 flex items-center justify-center rounded bg-[#0f2a52] text-white font-medium cursor-pointer'
+                      : 'w-9 h-9 flex items-center justify-center rounded border border-gray-300 text-[#0f2a52] hover:bg-gray-100 cursor-pointer'
+                  }
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => loadPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="w-9 h-9 flex items-center justify-center rounded border border-gray-300 text-[#0f2a52] hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                &gt;
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
