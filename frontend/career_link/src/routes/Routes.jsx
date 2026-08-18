@@ -1,7 +1,7 @@
 import React from 'react'
 
 
-import { Route, Routes } from 'react-router'
+import { Route, Routes } from 'react-router-dom'
 
 
 import Home from '../pages/Home'
@@ -20,6 +20,8 @@ import BrowseJobsPage from '../pages/jobs/BrowseJobsPage'
 
 import MyProfilecart from '../pages/accounts/MyProfilecart'
 import ThemeContext from '../context/ThemeContext'
+import ProtectedRoute from '../context/ProtectedRoute'
+
 
 
 
@@ -36,6 +38,7 @@ const AppRoutes = () => {
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
 
+<Route element={<ProtectedRoute/>}>
 
 
         {/* DashboardLayout */}
@@ -57,6 +60,7 @@ const AppRoutes = () => {
 
           {/* Jobs routes ends  */}
         </Route>
+</Route>
 
 
 

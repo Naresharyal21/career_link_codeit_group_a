@@ -6,6 +6,9 @@ import './index.css';
 
 import AppRoutes from './Routes'
 import { BrowserRouter } from 'react-router'
+import AppRoutes from './routes/Routes';
+import { ToastContainer } from "react-toastify";
+import AuthContext from './context/AuthContext';
 
 
 
@@ -14,8 +17,22 @@ import { BrowserRouter } from 'react-router'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+
     <BrowserRouter>
-      <AppRoutes/>
+
+      <AuthContext>
+
+        <AppRoutes />
+
+      </AuthContext>
+
+      <ToastContainer
+        position='top-right'
+        autoClose={3000}
+        closeOnClick
+        pauseOnHover />
+
     </BrowserRouter>
+
   </StrictMode>,
 )

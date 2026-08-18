@@ -1,4 +1,4 @@
-import React, { use, useEffect, useRef, useState } from 'react'
+import React, { use, useContext, useEffect, useRef, useState } from 'react'
 
 import { useNavigate } from "react-router";
 
@@ -11,16 +11,18 @@ import logo from "../assets/logo.png";
 import MyProfilecart from '../pages/accounts/MyProfilecart';
 import { useTheme } from '../context/ThemeContext';
 import accountsApi from '../apis/accountsApi';
+import { AuthenticationContext } from '../context/AuthContext';
 
 
 
 const Navbar = () => {
 
-  const [user, setUser] = useState(null);
 
   const { theme, toggleModes } = useTheme();
 
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+ const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+ const {user,setUser} =useContext(AuthenticationContext);
 
   const navigate = useNavigate();
 
@@ -32,7 +34,7 @@ const Navbar = () => {
 
       try {
         const data = await accountsApi.getMe();
-        console.log(data)
+       
         setUser(data);
       } catch (err) {
         console.error("error")
@@ -43,7 +45,7 @@ const Navbar = () => {
   }, []);
 
 
-  const initials = user?.username
+   const initials = user?.username
     ?.split(" ")
     .map((name) => name[0])
     .join("")
@@ -83,7 +85,7 @@ const Navbar = () => {
 
       <div className="flex  gap-2 justify-between items-center w-70 pr-[3%]">
 
-        <button onClick={toggleModes} className=" pl-20 hover:cursor-pointer " >  {theme === "light" ? <CiDark className="text-2xl" />
+        <button onClick={toggleModes} className="  p-1 rounded-xl ml-20 hover:cursor-pointer hover:bg-purple-100  " >  {theme === "light" ? <CiDark className="text-2xl" />
           : <CiLight className="text-2xl text-black" />}</button>
         <div className="">
           <button className="text-2xl text-black mt-1"><IoIosNotificationsOutline />
