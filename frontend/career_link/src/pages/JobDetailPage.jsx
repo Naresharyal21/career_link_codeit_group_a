@@ -23,7 +23,7 @@ const JobDetailPage = () => {
           return
         }
         setJob(data)
-        return getSimilarJobs(id).then((similar) => {
+        return getSimilarJobs(data).then((similar) => {
           setSimilarJobs(similar)
           setLoading(false)
         })
