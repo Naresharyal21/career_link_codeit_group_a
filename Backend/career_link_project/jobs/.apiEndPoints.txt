@@ -1,0 +1,4 @@
+GET    /api/v1/jobs/
+GET    /api/v1/jobs/<id>/
+GET    /api/v1/jobs/categories/
+GET    /api/v1/jobs/skills/

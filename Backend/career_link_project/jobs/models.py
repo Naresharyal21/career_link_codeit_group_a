@@ -1,8 +1,8 @@
 from django.db import models
-from accounts.models import Timestamp, EmployerProfile
+from accounts.models import TimeStamp, EmployerProfile
 
 
-class JobCategory(Timestamp):
+class JobCategory(TimeStamp):
     name = models.CharField(max_length=100, unique=True)
 
     class Meta:
@@ -13,14 +13,14 @@ class JobCategory(Timestamp):
         return self.name
 
 
-class Skill(Timestamp):
+class Skill(TimeStamp):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
 
-class JobPosting(Timestamp):
+class JobPosting(TimeStamp):
     class JobType(models.TextChoices):
         FULL_TIME = "FT", "Full-time"
         PART_TIME = "PT", "Part-time"
@@ -74,4 +74,4 @@ class JobPosting(Timestamp):
         verbose_name_plural = "Job Postings"
 
     def __str__(self):
-        return f"{self.title} - {self.employer.company_name}"
+        return self.employer.company_name
