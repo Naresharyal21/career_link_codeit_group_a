@@ -8,7 +8,7 @@ from .views import (
 
 urlpatterns = [
     path("", JobPostingListView.as_view(), name="job-list"),
-    path("<int:pk>/", JobPostingDetailView.as_view(), name="job-detail"),
+    path("<int:id>/", JobPostingDetailView.as_view(), name="job-detail"),
     path("categories/", JobCategoryListView.as_view(), name="job-category-list"),
     path("skills/", SkillListView.as_view(), name="skill-list"),
 ]

@@ -1,48 +1,31 @@
 import React from 'react'
-import { useContext } from 'react';
 
 import { useNavigate } from 'react-router'
-import { AuthenticationContext } from '../../context/AuthContext';
-
 
 const MyProfilecart = () => {
   const navigate = useNavigate();
-
-  const { user } = useContext(AuthenticationContext);
- const initials = user?.username
-    ?.split(" ")
-    .map((name) => name[0])
-    .join("")
-    .toUpperCase();
-
-
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
     navigate("/login")
   }
+
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
+    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4  w-65 -ml-45 position absolute rounded-b-2xl  h-fit">
       <ul>
-        <h2 className="pl-4  mt-5 mb-5 font-bold">Account</h2>
-        <li className="pl-4 flex">
-          <div className="  flex rounded-full h-9 w-9 text-white justify-center items-center p-2 bg-gray-600">
+        <li>
 
-
-{initials}
-          </div>
-          <div className="ml-1 -mt-2">
-            <div className="">  {user?.username}</div>
-        <div className="-mt-1"> {user?.email}</div>
-         
-          </div>
         </li>
-       
-       
-        <li  className="pl-4  mt-5  font-medium" >Manage Accounts</li>
-        <li  className="pl-4  mt-5 font-medium" >Settings</li>
-      
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
+        <li>a</li>
         <hr className='m-2'></hr>
         <li> <button onClick={handleLogout} className=" w-full  p-2  hover:text-purple hover:bg-purple-900 cursor-pointer">Logout</button></li>
       </ul>

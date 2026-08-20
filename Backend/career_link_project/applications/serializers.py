@@ -113,7 +113,7 @@ class SavedJobSerializer(serializers.ModelSerializer):
             )
 
             if self.instance:
-                queryset = queryset.exclude(pk=self.instance.pk)
+                queryset = queryset.exclude(id=self.instance.id)
 
             if queryset.exists():
                 raise serializers.ValidationError(
