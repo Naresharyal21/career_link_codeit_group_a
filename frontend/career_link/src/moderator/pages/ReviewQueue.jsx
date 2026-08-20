@@ -13,7 +13,7 @@ import {
 import { useNavigate } from "react-router";
 
 import moderatorApi from "../../apis/moderatorApi";
-import ModeratorSectionPage from "./ModeratorSectionPage";
+import ModeratorSectionPage from "../components/ModeratorSectionPage";
 
 const ReviewQueue = () => {
     const navigate = useNavigate();
@@ -169,7 +169,7 @@ const ReviewQueue = () => {
                 </button>
             }
         >
-            {/* Queue Summary */}
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <QueueStat
                     icon={Clock3}
@@ -200,7 +200,7 @@ const ReviewQueue = () => {
                 />
             </div>
 
-            {/* Additional Moderation Sections */}
+   
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <QueueSectionCard
                     icon={BriefcaseBusiness}
@@ -239,7 +239,7 @@ const ReviewQueue = () => {
                 />
             </div>
 
-            {/* Error */}
+
             {error && (
                 <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
                     <p className="text-sm font-semibold text-red-700">
@@ -256,7 +256,7 @@ const ReviewQueue = () => {
                 </div>
             )}
 
-            {/* Queue Table */}
+
             <div className="mt-6 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
                 <div className="flex flex-col gap-3 border-b border-[#f1f5f9] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -307,7 +307,7 @@ const ReviewQueue = () => {
                     </div>
                 ) : (
                     <>
-                        {/* Desktop */}
+                        
                         <div className="hidden overflow-x-auto md:block">
                             <table className="w-full min-w-[850px]">
                                 <thead>
@@ -411,7 +411,7 @@ const ReviewQueue = () => {
                             </table>
                         </div>
 
-                        {/* Mobile */}
+                        
                         <div className="divide-y divide-[#f1f5f9] md:hidden">
                             {queueItems.map((item) => {
                                 const Icon =

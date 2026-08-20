@@ -6,17 +6,17 @@ export const useTheme = () => useContext(ThemeModes);
 
 const ThemeContext = ({ children }) => {
 
-  // Get saved theme
+
   const [theme, settheme] = useState(() => {
     return localStorage.getItem('theme') || 'light';
   });
 
-  // Save theme
+
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Change theme
+
   const toggleModes = () => {
     settheme((current) => (
       current === 'light' ? 'dark' : 'light'

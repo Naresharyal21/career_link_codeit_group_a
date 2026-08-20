@@ -98,7 +98,7 @@ export default function ModeratorDashboard() {
         <div className="min-h-screen bg-background text-on-surface">
             <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-6 lg:px-12">
 
-                {/* ================= HEADER ================= */}
+
 
                 <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
 
@@ -148,8 +148,6 @@ export default function ModeratorDashboard() {
                     </button>
                 </header>
 
-                {/* ================= ERROR ================= */}
-
                 {error && (
                     <div className="mb-6 rounded-lg border border-secondary-fixed bg-white p-4 shadow-ambient">
 
@@ -174,7 +172,7 @@ export default function ModeratorDashboard() {
                     </div>
                 )}
 
-                {/* ================= STATISTICS ================= */}
+
 
                 <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
@@ -220,11 +218,11 @@ export default function ModeratorDashboard() {
                     />
                 </section>
 
-                {/* ================= MAIN CONTENT ================= */}
+            
 
                 <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 
-                    {/* ================= REVIEW QUEUE ================= */}
+                 
 
                     <section className="career-card overflow-hidden">
 
@@ -293,7 +291,7 @@ export default function ModeratorDashboard() {
                         )}
                     </section>
 
-                    {/* ================= SUMMARY ================= */}
+                    
 
                     <aside className="career-card h-fit p-6">
 
@@ -372,9 +370,6 @@ export default function ModeratorDashboard() {
 }
 
 
-/* =========================================================
-   STAT CARD
-========================================================= */
 
 function StatCard({
     icon,
@@ -423,9 +418,7 @@ function StatCard({
 }
 
 
-/* =========================================================
-   REPORT QUEUE ITEM
-========================================================= */
+
 
 function ReportQueueItem({
     item,
@@ -520,9 +513,7 @@ function ReportQueueItem({
 }
 
 
-/* =========================================================
-   SUMMARY ROW
-========================================================= */
+
 
 function SummaryRow({
     label,
@@ -561,10 +552,6 @@ function SummaryRow({
 }
 
 
-/* =========================================================
-   PRIORITY BADGE
-========================================================= */
-
 function PriorityBadge({
     priority,
 }) {
@@ -595,9 +582,7 @@ function PriorityBadge({
 }
 
 
-/* =========================================================
-   LOADING STATE
-========================================================= */
+
 
 function LoadingState() {
     return (
@@ -615,9 +600,7 @@ function LoadingState() {
 }
 
 
-/* =========================================================
-   EMPTY STATE
-========================================================= */
+
 
 function EmptyState() {
     return (

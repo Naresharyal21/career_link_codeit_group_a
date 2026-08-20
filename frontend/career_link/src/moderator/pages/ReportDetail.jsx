@@ -1,7 +1,24 @@
 import {
     useEffect,
+    useMemo,
     useState,
 } from "react";
+
+import {
+    AlertCircle,
+    ArrowLeft,
+    CalendarDays,
+    CheckCircle2,
+    Clock3,
+    Eye,
+    Flag,
+    Gavel,
+    RefreshCw,
+    ShieldAlert,
+    UserRound,
+    X,
+    XCircle,
+} from "lucide-react";
 
 import {
     useNavigate,
@@ -10,9 +27,10 @@ import {
 
 import moderatorApi from "../../apis/moderatorApi";
 import ReportStatusBadge from "../components/ReportStatusBadge";
+import ModeratorSectionPage from "../components/ModeratorSectionPage";
 
 
-// Report Id
+
 
 function formatReportId(id) {
     if (
@@ -27,6 +45,62 @@ function formatReportId(id) {
 }
 
 
+function formatDate(value) {
+    if (!value) {
+        return "N/A";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+
+function formatDateTime(value) {
+    if (!value) {
+        return "N/A";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+    return date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    });
+}
+
+
+function getInitials(value) {
+    if (!value) {
+        return "U";
+    }
+
+    return String(value)
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+}
+
+
+
 
 export default function ReportDetail() {
     const { id } = useParams();
@@ -34,8 +108,11 @@ export default function ReportDetail() {
 
     const [report, setReport] = useState(null);
 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
 
     const [actionLoading, setActionLoading] =
         useState(false);
@@ -46,8 +123,6 @@ export default function ReportDetail() {
     const [showRejectModal, setShowRejectModal] =
         useState(false);
 
-    const [showDeleteModal, setShowDeleteModal] =
-        useState(false);
 
 
 
@@ -122,16 +197,37 @@ export default function ReportDetail() {
 
 
     const getReportedBy = () => {
+        if (
+            typeof report?.reported_by === "object" &&
+            report?.reported_by !== null
+        ) {
+            return (
+                report.reported_by.username ||
+                report.reported_by.email ||
+                "Unknown user"
+            );
+        }
+
         return (
             report?.reported_by_name ||
             report?.reported_by ||
             report?.reporter ||
-            "Unknown"
+            "Unknown user"
         );
     };
 
 
     const getReportedJob = () => {
+        if (
+            typeof report?.reported_job === "object" &&
+            report?.reported_job !== null
+        ) {
+            return (
+                report.reported_job.id ||
+                null
+            );
+        }
+
         return (
             report?.reported_job ||
             report?.job_id ||
@@ -142,6 +238,16 @@ export default function ReportDetail() {
 
 
     const getReportedJobTitle = () => {
+        if (
+            typeof report?.reported_job === "object" &&
+            report?.reported_job !== null
+        ) {
+            return (
+                report.reported_job.title ||
+                null
+            );
+        }
+
         return (
             report?.reported_job_title ||
             report?.job?.title ||
@@ -151,6 +257,17 @@ export default function ReportDetail() {
 
 
     const getReviewedBy = () => {
+        if (
+            typeof report?.reviewed_by === "object" &&
+            report?.reviewed_by !== null
+        ) {
+            return (
+                report.reviewed_by.username ||
+                report.reviewed_by.email ||
+                "Moderator"
+            );
+        }
+
         return (
             report?.reviewed_by_name ||
             report?.reviewed_by ||
@@ -172,9 +289,11 @@ export default function ReportDetail() {
     const getReviewedDate = () => {
         return (
             report?.reviewed_at ||
+            report?.reviewed_on ||
             null
         );
     };
+
 
 
 
@@ -187,15 +306,15 @@ export default function ReportDetail() {
             reason.includes("fake") ||
             reason.includes("fraud") ||
             reason.includes("phishing") ||
-            reason.includes("illegal")
+            reason.includes("harassment") ||
+            reason.includes("abuse")
         ) {
             return "High";
         }
 
         if (
-            reason.includes("misleading") ||
             reason.includes("spam") ||
-            reason.includes("salary") ||
+            reason.includes("misleading") ||
             reason.includes("duplicate") ||
             reason.includes("inappropriate")
         ) {
@@ -206,49 +325,25 @@ export default function ReportDetail() {
     };
 
 
-
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "N/A";
-        }
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "N/A";
-        }
-
-        return date.toLocaleString();
-    };
+    const risk = useMemo(
+        () => getRiskLevel(),
+        [report]
+    );
 
 
 
 
-    const updateStatus = async (newStatus) => {
+    const handleStartReview = async () => {
         try {
             setActionLoading(true);
             setActionError("");
 
-            const updatedReport =
-                await moderatorApi.updateReport(
-                    id,
-                    {
-                        status: newStatus,
-                    }
-                );
+            await moderatorApi.startReview(id);
 
-            console.log(
-                "UPDATED REPORT:",
-                updatedReport
-            );
-
-            setReport(updatedReport);
-
-            setShowRejectModal(false);
+            await loadReport();
         } catch (err) {
             console.error(
-                "Failed to update report:",
+                "Failed to start review:",
                 err
             );
 
@@ -256,41 +351,25 @@ export default function ReportDetail() {
                 err?.response?.data?.detail ||
                     err?.response?.data?.message ||
                     err?.message ||
-                    "Unable to update report status."
+                    "Unable to start review."
             );
         } finally {
             setActionLoading(false);
         }
-    };
-
-
-    const handleStartReview = async () => {
-        await updateStatus("Under Review");
     };
 
 
     const handleResolve = async () => {
-        await updateStatus("Resolved");
-    };
-
-
-    const handleReject = async () => {
-        await updateStatus("Rejected");
-    };
-
-
-
-    const handleDelete = async () => {
         try {
             setActionLoading(true);
             setActionError("");
 
-            await moderatorApi.deleteReport(id);
+            await moderatorApi.resolveReport(id);
 
-            navigate("/moderator/reports");
+            await loadReport();
         } catch (err) {
             console.error(
-                "Failed to delete report:",
+                "Failed to resolve report:",
                 err
             );
 
@@ -298,202 +377,83 @@ export default function ReportDetail() {
                 err?.response?.data?.detail ||
                     err?.response?.data?.message ||
                     err?.message ||
-                    "Unable to delete report."
+                    "Unable to resolve report."
             );
         } finally {
             setActionLoading(false);
-            setShowDeleteModal(false);
+        }
+    };
+
+
+    const handleReject = async () => {
+        try {
+            setActionLoading(true);
+            setActionError("");
+
+            await moderatorApi.rejectReport(id);
+
+            setShowRejectModal(false);
+
+            await loadReport();
+        } catch (err) {
+            console.error(
+                "Failed to reject report:",
+                err
+            );
+
+            setActionError(
+                err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "Unable to reject report."
+            );
+        } finally {
+            setActionLoading(false);
         }
     };
 
 
 
 
-    const renderStatusActions = () => {
-        const status =
-            String(getStatus()).toLowerCase();
+    const status = String(getStatus())
+        .toLowerCase()
+        .trim();
 
-
-        if (status === "pending") {
-            return (
-                <button
-                    type="button"
-                    onClick={handleStartReview}
-                    disabled={actionLoading}
-                    className="
-                        flex w-full items-center
-                        justify-center gap-2
-                        rounded-xl
-                        bg-[#6D4AFF]
-                        px-5 py-3.5
-                        text-sm font-bold
-                        text-white
-                        shadow-sm
-                        transition
-                        duration-200
-                        hover:bg-[#5636D9]
-                        hover:shadow-md
-                        disabled:cursor-not-allowed
-                        disabled:opacity-50
-                    "
-                >
-                    <span className="material-symbols-outlined text-[20px]">
-                        rate_review
-                    </span>
-
-                    {actionLoading
-                        ? "Processing..."
-                        : "Start Review"}
-                </button>
-            );
-        }
-
-
-        if (
-            status === "under review" ||
-            status === "in review"
-        ) {
-            return (
-                <div className="space-y-3">
-
-                    <button
-                        type="button"
-                        onClick={handleResolve}
-                        disabled={actionLoading}
-                        className="
-                            flex w-full items-center
-                            justify-center gap-2
-                            rounded-xl
-                            bg-emerald-600
-                            px-5 py-3.5
-                            text-sm font-bold
-                            text-white
-                            shadow-sm
-                            transition
-                            duration-200
-                            hover:bg-emerald-700
-                            hover:shadow-md
-                            disabled:cursor-not-allowed
-                            disabled:opacity-50
-                        "
-                    >
-                        <span className="material-symbols-outlined text-[20px]">
-                            check_circle
-                        </span>
-
-                        {actionLoading
-                            ? "Processing..."
-                            : "Resolve Report"}
-                    </button>
-
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            setShowRejectModal(true)
-                        }
-                        disabled={actionLoading}
-                        className="
-                            flex w-full items-center
-                            justify-center gap-2
-                            rounded-xl
-                            border border-red-200
-                            bg-red-50
-                            px-5 py-3.5
-                            text-sm font-bold
-                            text-red-700
-                            transition
-                            duration-200
-                            hover:border-red-300
-                            hover:bg-red-100
-                            disabled:cursor-not-allowed
-                            disabled:opacity-50
-                        "
-                    >
-                        <span className="material-symbols-outlined text-[20px]">
-                            close
-                        </span>
-
-                        Reject Report
-                    </button>
-
-                </div>
-            );
-        }
-
-
-        return (
-            <div className="rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] p-4">
-
-                <div className="flex items-start gap-3">
-
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                        <span className="material-symbols-outlined text-[19px]">
-                            check_circle
-                        </span>
-                    </div>
-
-                    <div>
-                        <p className="text-sm font-bold text-[#172033]">
-                            Report processed
-                        </p>
-
-                        <p className="mt-1 text-xs leading-5 text-[#667085]">
-                            This report has already been
-                            processed and requires no
-                            further moderation action.
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-        );
-    };
-
+    const isClosed =
+        status === "resolved" ||
+        status === "rejected";
 
 
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
-
+            <div className="min-h-screen bg-[#F8F9FF]">
                 <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
-                    <div className="mb-6 h-10 w-40 animate-pulse rounded-xl bg-[#EDE8FF]" />
+                    <div className="animate-pulse">
 
-                    <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+                        <div className="mb-6 h-10 w-40 rounded-xl bg-[#EDE8FF]" />
 
-                        <div className="p-10 md:p-14">
+                        <div className="h-28 rounded-2xl bg-white" />
 
-                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
+                        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+                            <div className="h-[500px] rounded-2xl bg-white" />
 
-                                <span className="material-symbols-outlined animate-spin text-3xl">
-                                    progress_activity
-                                </span>
-
-                            </div>
-
-                            <p className="mt-5 text-center text-sm font-semibold text-[#667085]">
-                                Loading report...
-                            </p>
-
+                            <div className="h-[350px] rounded-2xl bg-white" />
                         </div>
 
                     </div>
-
                 </div>
-
             </div>
         );
     }
+
 
 
 
     if (error || !report) {
         return (
-            <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
-
+            <div className="min-h-screen bg-[#F8F9FF]">
                 <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
                     <button
@@ -503,701 +463,396 @@ export default function ReportDetail() {
                                 "/moderator/reports"
                             )
                         }
-                        className="
-                            mb-6 inline-flex
-                            items-center gap-2
-                            rounded-xl
-                            border border-[#E7E3F2]
-                            bg-white
-                            px-4 py-2.5
-                            text-sm font-bold
-                            text-[#6D4AFF]
-                            shadow-sm
-                            transition
-                            hover:border-[#6D4AFF]
-                            hover:bg-[#F3F0FF]
-                        "
+                        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
                     >
-                        <span className="material-symbols-outlined text-[19px]">
-                            arrow_back
-                        </span>
-
+                        <ArrowLeft className="h-4 w-4" />
                         Back to Reports
                     </button>
 
+                    <div className="rounded-2xl border border-red-200 bg-white p-10 text-center shadow-sm">
 
-                    <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
-
-                        <div className="p-8 md:p-10">
-
-                            <div className="flex flex-col gap-5 sm:flex-row">
-
-                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-
-                                    <span className="material-symbols-outlined text-2xl">
-                                        error
-                                    </span>
-
-                                </div>
-
-
-                                <div>
-
-                                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
-                                        Moderation Error
-                                    </p>
-
-                                    <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold text-[#172033]">
-                                        Unable to load report
-                                    </h1>
-
-                                    <p className="mt-2 max-w-xl text-sm leading-6 text-[#667085]">
-                                        {error ||
-                                            "The requested report could not be found."}
-                                    </p>
-
-
-                                    <button
-                                        type="button"
-                                        onClick={loadReport}
-                                        className="
-                                            mt-5 inline-flex
-                                            items-center gap-2
-                                            rounded-xl
-                                            bg-[#6D4AFF]
-                                            px-5 py-3
-                                            text-sm font-bold
-                                            text-white
-                                            transition
-                                            hover:bg-[#5636D9]
-                                        "
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            refresh
-                                        </span>
-
-                                        Try Again
-                                    </button>
-
-                                </div>
-
-                            </div>
-
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                            <AlertCircle className="h-7 w-7" />
                         </div>
 
+                        <h2 className="mt-5 text-lg font-extrabold text-[#172033]">
+                            Unable to load report
+                        </h2>
+
+                        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[#667085]">
+                            {error ||
+                                "The requested report could not be found."}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={loadReport}
+                            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#6D4AFF] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#5B21B6]"
+                        >
+                            <RefreshCw className="h-4 w-4" />
+                            Try Again
+                        </button>
+
                     </div>
-
                 </div>
-
             </div>
         );
     }
 
 
 
-
-    const status = getStatus();
-    const risk = getRiskLevel();
-
-    const reportedJob = getReportedJob();
-    const reportedJobTitle =
-        getReportedJobTitle();
-
-
-
     return (
-        <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
-
-            <div className="mx-auto max-w-[1440px] px-4 py-7 md:px-8 lg:px-12">
-
-
-
-                <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/moderator/reports"
-                            )
-                        }
-                        className="
-                            inline-flex w-fit
-                            items-center gap-2
-                            rounded-xl
-                            border border-[#E7E3F2]
-                            bg-white
-                            px-4 py-2.5
-                            text-sm font-bold
-                            text-[#6D4AFF]
-                            shadow-sm
-                            transition
-                            duration-200
-                            hover:border-[#6D4AFF]
-                            hover:bg-[#F3F0FF]
-                            hover:shadow-md
-                        "
-                    >
-                        <span className="material-symbols-outlined text-[19px]">
-                            arrow_back
-                        </span>
-
-                        Back to Reports
-                    </button>
-
-
-                    <button
-                        type="button"
-                        onClick={loadReport}
-                        disabled={loading}
-                        className="
-                            inline-flex w-fit
-                            items-center gap-2
-                            rounded-xl
-                            border border-[#E7E3F2]
-                            bg-white
-                            px-4 py-2.5
-                            text-sm font-bold
-                            text-[#667085]
-                            shadow-sm
-                            transition
-                            duration-200
-                            hover:border-[#6D4AFF]
-                            hover:bg-[#F3F0FF]
-                            hover:text-[#6D4AFF]
-                            disabled:cursor-not-allowed
-                            disabled:opacity-50
-                        "
-                    >
-                        <span
-                            className={`material-symbols-outlined text-[19px] ${
-                                loading
-                                    ? "animate-spin"
-                                    : ""
-                            }`}
-                        >
-                            refresh
-                        </span>
-
-                        {loading
-                            ? "Refreshing..."
-                            : "Refresh"}
-                    </button>
-
-                </div>
+        <ModeratorSectionPage
+            title={`Report ${formatReportId(
+                report.id
+            )}`}
+            description="Review the submitted report, investigate the reported content, and take the appropriate moderation action."
+            backLabel="Reports"
+            backTo="/moderator/reports"
+        >
 
 
 
-                <section className="mb-7 overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+            <div className="mb-6 overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
-                    <div className="p-6 md:p-8">
+                <div className="p-6 md:p-7">
 
-                        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
-                            <div className="flex min-w-0 items-start gap-4">
+                        <div className="flex min-w-0 items-start gap-4">
 
-                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
-
-                                    <span className="material-symbols-outlined text-2xl">
-                                        flag
-                                    </span>
-
-                                </div>
-
-
-                                <div className="min-w-0">
-
-                                    <div className="flex flex-wrap items-center gap-2">
-
-                                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6D4AFF]">
-                                            Moderation Report
-                                        </p>
-
-                                        <span className="h-1 w-1 rounded-full bg-[#C4BDD8]" />
-
-                                        <span className="text-xs font-semibold text-[#98A2B3]">
-                                            {formatReportId(
-                                                report.id
-                                            )}
-                                        </span>
-
-                                    </div>
-
-
-                                    <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold tracking-tight text-[#172033] md:text-3xl">
-                                        Report{" "}
-                                        {formatReportId(
-                                            report.id
-                                        )}
-                                    </h1>
-
-
-                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
-                                        Review the submitted
-                                        report and determine
-                                        the appropriate
-                                        moderation action.
-                                    </p>
-
-                                </div>
-
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F0ECFF] text-[#6D4AFF]">
+                                <Flag className="h-6 w-6" />
                             </div>
-
-
-                            <div className="flex flex-wrap items-center gap-2">
-
-                                <ReportStatusBadge
-                                    status={status}
-                                />
-
-                                <RiskBadge
-                                    risk={risk}
-                                />
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    {/* HERO STATS */}
-
-                    <div className="grid border-t border-[#E7E3F2] bg-[#FCFBFF] sm:grid-cols-3">
-
-                        <HeaderStat
-                            icon="person"
-                            label="Reported By"
-                            value={getReportedBy()}
-                        />
-
-                        <HeaderStat
-                            icon="work"
-                            label="Reported Job"
-                            value={
-                                reportedJob
-                                    ? `Job ${reportedJob}`
-                                    : "Unknown"
-                            }
-                        />
-
-                        <HeaderStat
-                            icon="schedule"
-                            label="Submitted"
-                            value={formatDate(
-                                getSubmittedDate()
-                            )}
-                        />
-
-                    </div>
-
-                </section>
-
-
-
-
-                {actionError && (
-                    <div className="mb-6 rounded-2xl border border-red-200 bg-white p-4 shadow-sm">
-
-                        <div className="flex items-start gap-3">
-
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
-
-                                <span className="material-symbols-outlined">
-                                    error
-                                </span>
-
-                            </div>
-
 
                             <div className="min-w-0">
 
-                                <p className="font-bold text-red-800">
-                                    Action failed
-                                </p>
+                                <div className="flex flex-wrap items-center gap-2">
 
-                                <p className="mt-1 text-sm leading-6 text-[#667085]">
-                                    {actionError}
-                                </p>
+                                    <span className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#6D4AFF]">
+                                        Moderation Report
+                                    </span>
 
-                            </div>
+                                    <span className="h-1 w-1 rounded-full bg-[#C4BDD8]" />
 
-                        </div>
-
-                    </div>
-                )}
-
-
-
-
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-
-
-
-
-                    <div className="space-y-6">
-
-
-                        {/* REPORT DETAILS */}
-
-                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-
-                            <SectionHeader
-                                icon="flag"
-                                title="Report Details"
-                                description="Information submitted by the reporter."
-                            />
-
-
-                            <div className="p-6 md:p-7">
-
-                                <div className="rounded-xl border border-[#E7E3F2] bg-[#FCFBFF] p-5">
-
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                        Report Reason
-                                    </p>
-
-                                    <p className="mt-2 text-lg font-bold text-[#172033]">
-                                        {getReason()}
-                                    </p>
-
-                                </div>
-
-
-                                <div className="mt-6">
-
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                        Description
-                                    </p>
-
-
-                                    <div className="mt-3 rounded-xl border border-[#E7E3F2] bg-white p-5">
-
-                                        <p className="whitespace-pre-wrap text-sm leading-7 text-[#42474F]">
-                                            {getDescription()}
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </section>
-
-
-                        {/* REPORTED JOB */}
-
-                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-
-                            <SectionHeader
-                                icon="work"
-                                title="Reported Job"
-                                description="Job associated with this moderation report."
-                            />
-
-
-                            <div className="p-6 md:p-7">
-
-                                <div className="grid gap-4 sm:grid-cols-2">
-
-                                    <InfoCard
-                                        icon="tag"
-                                        label="Job ID"
-                                        value={
-                                            reportedJob
-                                                ? `Job ${reportedJob}`
-                                                : "Unknown"
-                                        }
-                                    />
-
-
-                                    <InfoCard
-                                        icon="work"
-                                        label="Job Title"
-                                        value={
-                                            reportedJobTitle ||
-                                            "Not available"
-                                        }
-                                    />
-
-                                </div>
-
-                            </div>
-
-                        </section>
-
-
-                        {/* REPORT INFORMATION */}
-
-                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-
-                            <SectionHeader
-                                icon="info"
-                                title="Report Information"
-                                description="Metadata associated with this moderation report."
-                            />
-
-
-                            <div className="grid gap-x-8 gap-y-7 p-6 sm:grid-cols-2 md:p-7">
-
-                                <InfoItem
-                                    icon="tag"
-                                    label="Report ID"
-                                    value={formatReportId(
-                                        report.id
-                                    )}
-                                />
-
-
-                                <InfoItem
-                                    icon="flag"
-                                    label="Status"
-                                    value={
-                                        <ReportStatusBadge
-                                            status={status}
-                                        />
-                                    }
-                                />
-
-
-                                <InfoItem
-                                    icon="person"
-                                    label="Reported By"
-                                    value={getReportedBy()}
-                                />
-
-
-                                <InfoItem
-                                    icon="admin_panel_settings"
-                                    label="Reviewed By"
-                                    value={getReviewedBy()}
-                                />
-
-
-                                <InfoItem
-                                    icon="schedule"
-                                    label="Submitted"
-                                    value={formatDate(
-                                        getSubmittedDate()
-                                    )}
-                                />
-
-
-                                <InfoItem
-                                    icon="event_available"
-                                    label="Reviewed At"
-                                    value={formatDate(
-                                        getReviewedDate()
-                                    )}
-                                />
-
-                            </div>
-
-                        </section>
-
-
-                        {/* RISK ASSESSMENT */}
-
-                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-
-                            <SectionHeader
-                                icon="shield"
-                                title="Risk Assessment"
-                                description="Current risk classification based on the report reason."
-                            />
-
-
-                            <div className="p-6 md:p-7">
-
-                                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-                                    <div className="flex items-center gap-4">
-
-                                        <div
-                                            className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                                                risk === "High"
-                                                    ? "bg-red-50 text-red-600"
-                                                    : risk === "Medium"
-                                                      ? "bg-amber-50 text-amber-600"
-                                                      : "bg-emerald-50 text-emerald-600"
-                                            }`}
-                                        >
-
-                                            <span className="material-symbols-outlined">
-                                                shield
-                                            </span>
-
-                                        </div>
-
-
-                                        <div>
-
-                                            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                                Risk Level
-                                            </p>
-
-                                            <p className="mt-1 text-lg font-bold text-[#172033]">
-                                                {risk} Risk
-                                            </p>
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <RiskBadge
-                                        risk={risk}
-                                    />
-
-                                </div>
-
-
-                                <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
-
-                                    <div className="flex items-start gap-3">
-
-                                        <span className="material-symbols-outlined shrink-0 text-[19px] text-[#6D4AFF]">
-                                            info
-                                        </span>
-
-                                        <p className="text-xs leading-5 text-[#667085]">
-                                            Risk classification is
-                                            automatically estimated
-                                            from keywords in the
-                                            submitted reason.
-                                            Moderators should make
-                                            the final decision after
-                                            reviewing the complete
-                                            report.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </section>
-
-                    </div>
-
-
-
-
-                    <aside className="h-fit lg:sticky lg:top-6">
-
-
-                        {/* ACTION PANEL */}
-
-                        <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-
-                            <SectionHeader
-                                icon="gavel"
-                                title="Moderation Actions"
-                                description="Take action on this report."
-                            />
-
-
-                            <div className="p-6">
-
-                                <div className="rounded-xl bg-[#F3F0FF] p-4">
-
-                                    <div className="flex items-start gap-3">
-
-                                        <span className="material-symbols-outlined shrink-0 text-[#6D4AFF]">
-                                            tips_and_updates
-                                        </span>
-
-                                        <p className="text-xs leading-5 text-[#5D5570]">
-                                            Review the report
-                                            carefully before
-                                            changing its status.
-                                            Actions may affect
-                                            moderation records.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div className="mt-5">
-                                    {renderStatusActions()}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        {/* STATUS SUMMARY */}
-
-                        <div className="mt-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
-
-                            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                Current Status
-                            </p>
-
-
-                            <div className="mt-4 flex items-center justify-between gap-3">
-
-                                <span className="text-sm font-semibold text-[#667085]">
-                                    Report status
-                                </span>
-
-                                <ReportStatusBadge
-                                    status={status}
-                                />
-
-                            </div>
-
-
-                            <div className="my-4 h-px bg-[#E7E3F2]" />
-
-
-                            <div className="flex items-center justify-between gap-3">
-
-                                <span className="text-sm font-semibold text-[#667085]">
-                                    Risk
-                                </span>
-
-                                <RiskBadge
-                                    risk={risk}
-                                />
-
-                            </div>
-
-                        </div>
-
-
-                        {/* REPORT ID CARD */}
-
-                        <div className="mt-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
-
-                            <div className="flex items-center gap-3">
-
-                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-
-                                    <span className="material-symbols-outlined">
-                                        tag
+                                    <span className="text-xs font-bold text-[#98A2B3]">
+                                        {formatReportId(
+                                            report.id
+                                        )}
                                     </span>
 
                                 </div>
 
+                                <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold tracking-tight text-[#172033] md:text-3xl">
+                                    Report{" "}
+                                    {formatReportId(
+                                        report.id
+                                    )}
+                                </h1>
+
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
+                                    Review the submitted report
+                                    and determine the
+                                    appropriate moderation
+                                    action.
+                                </p>
+
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+
+                            <div className="rounded-xl border border-[#E7E3F2] bg-[#FBFAFE] px-4 py-3">
+                                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#98A2B3]">
+                                    Risk
+                                </p>
+
+                                <p
+                                    className={`mt-1 text-sm font-extrabold ${
+                                        risk === "High"
+                                            ? "text-red-600"
+                                            : risk === "Medium"
+                                            ? "text-amber-600"
+                                            : "text-emerald-600"
+                                    }`}
+                                >
+                                    {risk}
+                                </p>
+                            </div>
+
+                            <ReportStatusBadge
+                                status={
+                                    getStatus()
+                                }
+                            />
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+
+            {actionError && (
+                <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+
+                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+
+                    <div className="min-w-0">
+
+                        <p className="text-sm font-extrabold text-red-700">
+                            Moderation action failed
+                        </p>
+
+                        <p className="mt-1 text-sm leading-6 text-red-600">
+                            {actionError}
+                        </p>
+
+                    </div>
+
+                </div>
+            )}
+
+
+
+            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
+
+
+                <div className="space-y-6">
+
+             
+
+                    <section className="rounded-2xl border border-[#E7E3F2] bg-white p-6 shadow-sm">
+
+                        <SectionHeading
+                            icon={Flag}
+                            title="Report Details"
+                            description="Information submitted by the reporter."
+                        />
+
+                        <div className="mt-7 space-y-6">
+
+                            <div>
+                                <Label>
+                                    Reason
+                                </Label>
+
+                                <div className="mt-2 inline-flex rounded-xl bg-[#F0ECFF] px-4 py-2.5">
+                                    <span className="text-sm font-extrabold text-[#6D4AFF]">
+                                        {getReason()}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label>
+                                    Description
+                                </Label>
+
+                                <div className="mt-2 rounded-xl border border-[#F0EDF7] bg-[#FBFAFE] p-4">
+                                    <p className="whitespace-pre-wrap text-sm leading-7 text-[#475467]">
+                                        {getDescription()}
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+
+         
+
+                    <section className="rounded-2xl border border-[#E7E3F2] bg-white p-6 shadow-sm">
+
+                        <SectionHeading
+                            icon={ShieldAlert}
+                            title="Report Information"
+                            description="Metadata associated with this report."
+                        />
+
+                        <div className="mt-7 grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+
+                            <InfoItem
+                                icon={Flag}
+                                label="Report ID"
+                                value={formatReportId(
+                                    report.id
+                                )}
+                            />
+
+                            <InfoItem
+                                icon={Eye}
+                                label="Status"
+                                value={
+                                    <ReportStatusBadge
+                                        status={
+                                            getStatus()
+                                        }
+                                    />
+                                }
+                            />
+
+                            <InfoItem
+                                icon={UserRound}
+                                label="Reported By"
+                                value={
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F0ECFF] text-[10px] font-extrabold text-[#6D4AFF]">
+                                            {getInitials(
+                                                getReportedBy()
+                                            )}
+                                        </div>
+
+                                        <span>
+                                            {getReportedBy()}
+                                        </span>
+                                    </div>
+                                }
+                            />
+
+                            <InfoItem
+                                icon={Flag}
+                                label="Reported Job"
+                                value={
+                                    <div>
+                                        <p>
+                                            {getReportedJobTitle() ||
+                                                (getReportedJob()
+                                                    ? `Job #${getReportedJob()}`
+                                                    : "Unknown job")}
+                                        </p>
+
+                                        {getReportedJob() && (
+                                            <p className="mt-1 text-xs font-medium text-[#98A2B3]">
+                                                Job #
+                                                {
+                                                    getReportedJob()
+                                                }
+                                            </p>
+                                        )}
+                                    </div>
+                                }
+                            />
+
+                            <InfoItem
+                                icon={CalendarDays}
+                                label="Submitted"
+                                value={formatDateTime(
+                                    getSubmittedDate()
+                                )}
+                            />
+
+                            <InfoItem
+                                icon={UserRound}
+                                label="Reviewed By"
+                                value={getReviewedBy()}
+                            />
+
+                            {getReviewedDate() && (
+                                <InfoItem
+                                    icon={CalendarDays}
+                                    label="Reviewed At"
+                                    value={formatDateTime(
+                                        getReviewedDate()
+                                    )}
+                                />
+                            )}
+
+                        </div>
+                    </section>
+
+
+           
+
+                    <section className="rounded-2xl border border-[#E7E3F2] bg-white p-6 shadow-sm">
+
+                        <SectionHeading
+                            icon={ShieldAlert}
+                            title="Risk Assessment"
+                            description="Initial moderation assessment based on the report reason."
+                        />
+
+                        <div className="mt-6 rounded-2xl border border-[#E7E3F2] bg-[#FBFAFE] p-5">
+
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                                <div className="flex items-center gap-3">
+
+                                    <div
+                                        className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                                            risk === "High"
+                                                ? "bg-red-50 text-red-600"
+                                                : risk === "Medium"
+                                                ? "bg-amber-50 text-amber-600"
+                                                : "bg-emerald-50 text-emerald-600"
+                                        }`}
+                                    >
+                                        <ShieldAlert className="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+                                        <p className="text-xs font-extrabold uppercase tracking-wider text-[#98A2B3]">
+                                            Current Risk Level
+                                        </p>
+
+                                        <p
+                                            className={`mt-1 text-lg font-extrabold ${
+                                                risk === "High"
+                                                    ? "text-red-600"
+                                                    : risk === "Medium"
+                                                    ? "text-amber-600"
+                                                    : "text-emerald-600"
+                                            }`}
+                                        >
+                                            {risk}
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                <div className="text-left sm:text-right">
+                                    <p className="text-xs leading-5 text-[#98A2B3]">
+                                        This is an initial
+                                        classification and
+                                        should support — not
+                                        replace — moderator
+                                        judgment.
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </section>
+
+                </div>
+
+
+
+
+                <aside className="h-fit lg:sticky lg:top-6">
+
+                    <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                        <div className="border-b border-[#F0EDF7] p-6">
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F0ECFF] text-[#6D4AFF]">
+                                    <Gavel className="h-5 w-5" />
+                                </div>
 
                                 <div>
+                                    <h2 className="text-base font-extrabold text-[#172033]">
+                                        Moderation Actions
+                                    </h2>
 
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                        Report Reference
+                                    <p className="mt-1 text-xs text-[#98A2B3]">
+                                        Manage report status
                                     </p>
-
-                                    <p className="mt-0.5 font-['Montserrat'] text-lg font-bold text-[#172033]">
-                                        {formatReportId(
-                                            report.id
-                                        )}
-                                    </p>
-
                                 </div>
 
                             </div>
@@ -1205,368 +860,333 @@ export default function ReportDetail() {
                         </div>
 
 
-                        {/* DANGER ZONE */}
+                        <div className="p-6">
 
-                        <div className="mt-5 rounded-2xl border border-red-200 bg-white p-5 shadow-sm">
+                            {!isClosed ? (
+                                <div className="space-y-3">
 
-                            <div className="flex items-center gap-2">
+                                    {status ===
+                                        "pending" && (
+                                        <button
+                                            type="button"
+                                            onClick={
+                                                handleStartReview
+                                            }
+                                            disabled={
+                                                actionLoading
+                                            }
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D4AFF] px-4 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#5B21B6] disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <Clock3 className="h-4 w-4" />
 
-                                <span className="material-symbols-outlined text-[19px] text-red-500">
-                                    warning
-                                </span>
+                                            {actionLoading
+                                                ? "Processing..."
+                                                : "Start Review"}
+                                        </button>
+                                    )}
 
-                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-500">
-                                    Danger Zone
-                                </p>
+                                    {status ===
+                                        "under review" && (
+                                        <button
+                                            type="button"
+                                            onClick={
+                                                handleResolve
+                                            }
+                                            disabled={
+                                                actionLoading
+                                            }
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <CheckCircle2 className="h-4 w-4" />
 
-                            </div>
+                                            {actionLoading
+                                                ? "Processing..."
+                                                : "Resolve Report"}
+                                        </button>
+                                    )}
+
+                                    {status ===
+                                        "under review" && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowRejectModal(
+                                                    true
+                                                )
+                                            }
+                                            disabled={
+                                                actionLoading
+                                            }
+                                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3.5 text-sm font-extrabold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <XCircle className="h-4 w-4" />
+                                            Reject Report
+                                        </button>
+                                    )}
+
+                                    {status ===
+                                        "pending" && (
+                                        <p className="rounded-xl bg-[#FBFAFE] p-4 text-xs leading-5 text-[#667085]">
+                                            Start the review
+                                            before taking a
+                                            final moderation
+                                            action.
+                                        </p>
+                                    )}
+
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-[#E7E3F2] bg-[#FBFAFE] p-4">
+
+                                    <div className="flex items-start gap-3">
+
+                                        <div
+                                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                                                status ===
+                                                "resolved"
+                                                    ? "bg-emerald-50 text-emerald-600"
+                                                    : "bg-red-50 text-red-600"
+                                            }`}
+                                        >
+                                            {status ===
+                                            "resolved" ? (
+                                                <CheckCircle2 className="h-5 w-5" />
+                                            ) : (
+                                                <XCircle className="h-5 w-5" />
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <p className="text-sm font-extrabold text-[#172033]">
+                                                Report{" "}
+                                                {status ===
+                                                "resolved"
+                                                    ? "resolved"
+                                                    : "rejected"}
+                                            </p>
+
+                                            <p className="mt-1 text-xs leading-5 text-[#667085]">
+                                                This report has
+                                                been processed
+                                                and requires no
+                                                further
+                                                moderation
+                                                action.
+                                            </p>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
 
 
-                            <p className="mt-2 text-xs leading-5 text-[#667085]">
-                                Delete this report permanently.
-                                This action cannot be undone.
-                            </p>
+                
 
+                    <div className="mt-4 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
 
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowDeleteModal(true)
-                                }
-                                disabled={actionLoading}
-                                className="
-                                    mt-4 flex w-full
-                                    items-center
-                                    justify-center gap-2
-                                    rounded-xl
-                                    border border-red-200
-                                    bg-red-50
-                                    px-4 py-3
-                                    text-sm font-bold
-                                    text-red-700
-                                    transition
-                                    duration-200
-                                    hover:border-red-300
-                                    hover:bg-red-100
-                                    disabled:cursor-not-allowed
-                                    disabled:opacity-50
-                                "
-                            >
+                        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#98A2B3]">
+                            Report Summary
+                        </p>
 
-                                <span className="material-symbols-outlined text-[19px]">
-                                    delete
-                                </span>
+                        <div className="mt-4 space-y-3">
 
-                                Delete Report
+                            <QuickItem
+                                label="Report"
+                                value={formatReportId(
+                                    report.id
+                                )}
+                            />
 
-                            </button>
+                            <QuickItem
+                                label="Reason"
+                                value={getReason()}
+                            />
+
+                            <QuickItem
+                                label="Status"
+                                value={getStatus()}
+                            />
 
                         </div>
 
-                    </aside>
+                    </div>
 
-                </div>
+                </aside>
 
             </div>
-
 
 
 
             {showRejectModal && (
-                <ModalOverlay
-                    onClose={() =>
-                        !actionLoading &&
-                        setShowRejectModal(false)
-                    }
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-[#172033]/45 px-4 backdrop-blur-sm"
+                    onMouseDown={(event) => {
+                        if (
+                            event.target ===
+                            event.currentTarget &&
+                            !actionLoading
+                        ) {
+                            setShowRejectModal(
+                                false
+                            );
+                        }
+                    }}
                 >
 
-                    <ModalIcon
-                        icon="warning"
-                        variant="danger"
-                    />
+                    <div
+                        className="w-full max-w-md overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-2xl"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="reject-report-title"
+                    >
 
-                    <div className="mt-4">
+                        <div className="p-6">
 
-                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
-                            Moderation Action
-                        </p>
+                            <div className="flex items-start gap-4">
 
-                        <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
-                            Reject Report?
-                        </h2>
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+                                    <AlertCircle className="h-6 w-6" />
+                                </div>
 
-                        <p className="mt-2 text-sm leading-6 text-[#667085]">
-                            Are you sure you want to reject
-                            this report?
-                        </p>
+                                <div className="min-w-0 flex-1">
+
+                                    <div className="flex items-start justify-between gap-3">
+
+                                        <div>
+                                            <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-red-600">
+                                                Moderation Action
+                                            </p>
+
+                                            <h2
+                                                id="reject-report-title"
+                                                className="mt-1 text-xl font-extrabold text-[#172033]"
+                                            >
+                                                Reject Report?
+                                            </h2>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                !actionLoading &&
+                                                setShowRejectModal(
+                                                    false
+                                                )
+                                            }
+                                            disabled={
+                                                actionLoading
+                                            }
+                                            className="rounded-lg p-1.5 text-[#98A2B3] transition hover:bg-[#F8F9FF] hover:text-[#475467] disabled:opacity-50"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+
+                                    </div>
+
+                                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+                                        Are you sure you want
+                                        to reject this report?
+                                        This will mark it as
+                                        rejected and close the
+                                        moderation workflow.
+                                    </p>
+
+                                </div>
+                            </div>
+
+
+                            <div className="mt-5 rounded-xl bg-[#FBFAFE] p-4">
+
+                                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                    Report
+                                </p>
+
+                                <p className="mt-1 text-sm font-extrabold text-[#172033]">
+                                    {formatReportId(
+                                        report.id
+                                    )}
+                                </p>
+
+                                <p className="mt-2 text-sm font-semibold text-[#475467]">
+                                    {getReason()}
+                                </p>
+
+                            </div>
+
+
+                            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowRejectModal(
+                                            false
+                                        )
+                                    }
+                                    disabled={
+                                        actionLoading
+                                    }
+                                    className="rounded-xl border border-[#E4E7EC] bg-white px-5 py-3 text-sm font-bold text-[#475467] transition hover:bg-[#F8F9FF] disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        handleReject
+                                    }
+                                    disabled={
+                                        actionLoading
+                                    }
+                                    className="rounded-xl bg-red-600 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {actionLoading
+                                        ? "Rejecting..."
+                                        : "Yes, Reject Report"}
+                                </button>
+
+                            </div>
+
+                        </div>
 
                     </div>
-
-
-                    <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
-
-                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                            Report
-                        </p>
-
-                        <p className="mt-1 font-bold text-[#172033]">
-                            Report{" "}
-                            {formatReportId(
-                                report.id
-                            )}
-                        </p>
-
-                        <p className="mt-1 text-sm text-[#667085]">
-                            {getReason()}
-                        </p>
-
-                    </div>
-
-
-                    <ModalFooter>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowRejectModal(false)
-                            }
-                            disabled={actionLoading}
-                            className="
-                                rounded-xl
-                                border border-[#E7E3F2]
-                                bg-white
-                                px-5 py-3
-                                text-sm font-bold
-                                text-[#667085]
-                                transition
-                                hover:bg-[#F8F7FC]
-                                disabled:opacity-50
-                            "
-                        >
-                            Cancel
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onClick={handleReject}
-                            disabled={actionLoading}
-                            className="
-                                inline-flex
-                                items-center
-                                justify-center gap-2
-                                rounded-xl
-                                bg-red-600
-                                px-5 py-3
-                                text-sm font-bold
-                                text-white
-                                transition
-                                hover:bg-red-700
-                                disabled:cursor-not-allowed
-                                disabled:opacity-50
-                            "
-                        >
-
-                            <span className="material-symbols-outlined text-[18px]">
-                                close
-                            </span>
-
-                            {actionLoading
-                                ? "Rejecting..."
-                                : "Yes, Reject Report"}
-
-                        </button>
-
-                    </ModalFooter>
-
-                </ModalOverlay>
+                </div>
             )}
 
-
-
-
-            {showDeleteModal && (
-                <ModalOverlay
-                    onClose={() =>
-                        !actionLoading &&
-                        setShowDeleteModal(false)
-                    }
-                >
-
-                    <ModalIcon
-                        icon="delete"
-                        variant="danger"
-                    />
-
-                    <div className="mt-4">
-
-                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
-                            Permanent Action
-                        </p>
-
-                        <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
-                            Delete Report?
-                        </h2>
-
-                        <p className="mt-2 text-sm leading-6 text-[#667085]">
-                            This report will be permanently
-                            deleted. This action cannot be undone.
-                        </p>
-
-                    </div>
-
-
-                    <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
-
-                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                            Report
-                        </p>
-
-                        <p className="mt-1 font-bold text-[#172033]">
-                            Report{" "}
-                            {formatReportId(
-                                report.id
-                            )}
-                        </p>
-
-                    </div>
-
-
-                    <ModalFooter>
-
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setShowDeleteModal(false)
-                            }
-                            disabled={actionLoading}
-                            className="
-                                rounded-xl
-                                border border-[#E7E3F2]
-                                bg-white
-                                px-5 py-3
-                                text-sm font-bold
-                                text-[#667085]
-                                transition
-                                hover:bg-[#F8F7FC]
-                                disabled:opacity-50
-                            "
-                        >
-                            Cancel
-                        </button>
-
-
-                        <button
-                            type="button"
-                            onClick={handleDelete}
-                            disabled={actionLoading}
-                            className="
-                                inline-flex
-                                items-center
-                                justify-center gap-2
-                                rounded-xl
-                                bg-red-600
-                                px-5 py-3
-                                text-sm font-bold
-                                text-white
-                                transition
-                                hover:bg-red-700
-                                disabled:cursor-not-allowed
-                                disabled:opacity-50
-                            "
-                        >
-
-                            <span className="material-symbols-outlined text-[18px]">
-                                delete
-                            </span>
-
-                            {actionLoading
-                                ? "Deleting..."
-                                : "Delete Report"}
-
-                        </button>
-
-                    </ModalFooter>
-
-                </ModalOverlay>
-            )}
-
-        </div>
+        </ModeratorSectionPage>
     );
 }
 
 
 
 
-function SectionHeader({
-    icon,
+function SectionHeading({
+    icon: Icon,
     title,
     description,
 }) {
     return (
-        <div className="border-b border-[#E7E3F2] px-6 py-5 md:px-7">
+        <div className="flex items-center gap-3">
 
-            <div className="flex items-center gap-3">
-
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-
-                    <span className="material-symbols-outlined">
-                        {icon}
-                    </span>
-
-                </div>
-
-
-                <div className="min-w-0">
-
-                    <h2 className="font-['Montserrat'] text-lg font-bold text-[#172033]">
-                        {title}
-                    </h2>
-
-                    {description && (
-                        <p className="mt-0.5 text-xs text-[#98A2B3]">
-                            {description}
-                        </p>
-                    )}
-
-                </div>
-
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F0ECFF] text-[#6D4AFF]">
+                <Icon className="h-5 w-5" />
             </div>
 
-        </div>
-    );
-}
+            <div>
+                <h2 className="text-base font-extrabold text-[#172033]">
+                    {title}
+                </h2>
 
-
-
-
-function HeaderStat({
-    icon,
-    label,
-    value,
-}) {
-    return (
-        <div className="border-b border-[#E7E3F2] px-6 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-
-            <div className="flex items-center gap-3">
-
-                <span className="material-symbols-outlined text-[19px] text-[#6D4AFF]">
-                    {icon}
-                </span>
-
-
-                <div className="min-w-0">
-
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                        {label}
+                {description && (
+                    <p className="mt-1 text-xs text-[#98A2B3]">
+                        {description}
                     </p>
-
-                    <p className="mt-0.5 truncate text-sm font-bold text-[#172033]">
-                        {value}
-                    </p>
-
-                </div>
-
+                )}
             </div>
 
         </div>
@@ -1574,41 +1194,17 @@ function HeaderStat({
 }
 
 
-
-function InfoCard({
-    icon,
-    label,
-    value,
-}) {
+function Label({ children }) {
     return (
-        <div className="rounded-xl border border-[#E7E3F2] bg-[#FCFBFF] p-4">
-
-            <div className="flex items-center gap-2">
-
-                <span className="material-symbols-outlined text-[17px] text-[#6D4AFF]">
-                    {icon}
-                </span>
-
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                    {label}
-                </p>
-
-            </div>
-
-
-            <p className="mt-3 break-words text-sm font-bold text-[#172033]">
-                {value}
-            </p>
-
-        </div>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#98A2B3]">
+            {children}
+        </p>
     );
 }
-
-
 
 
 function InfoItem({
-    icon,
+    icon: Icon,
     label,
     value,
 }) {
@@ -1616,19 +1212,14 @@ function InfoItem({
         <div className="min-w-0">
 
             <div className="flex items-center gap-2">
+                <Icon className="h-3.5 w-3.5 text-[#98A2B3]" />
 
-                <span className="material-symbols-outlined text-[17px] text-[#6D4AFF]">
-                    {icon}
-                </span>
-
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#98A2B3]">
                     {label}
                 </p>
-
             </div>
 
-
-            <div className="mt-2 break-words text-sm font-semibold text-[#172033]">
+            <div className="mt-2 text-sm font-bold text-[#344054]">
                 {value}
             </div>
 
@@ -1637,131 +1228,21 @@ function InfoItem({
 }
 
 
-
-function RiskBadge({
-    risk,
-}) {
-    const styles = {
-        High:
-            "bg-red-50 text-red-700 ring-red-100",
-
-        Medium:
-            "bg-amber-50 text-amber-700 ring-amber-100",
-
-        Low:
-            "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    };
-
-
-    return (
-        <span
-            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${
-                styles[risk] ||
-                "bg-slate-50 text-slate-700 ring-slate-100"
-            }`}
-        >
-
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-
-            {risk || "Low"} Risk
-
-        </span>
-    );
-}
-
-
-
-function ModalOverlay({
-    children,
-    onClose,
+function QuickItem({
+    label,
+    value,
 }) {
     return (
-        <div
-            className="
-                fixed inset-0 z-50
-                flex items-center
-                justify-center
-                bg-slate-950/45
-                p-4
-                backdrop-blur-[2px]
-            "
-            onClick={onClose}
-        >
+        <div className="flex items-start justify-between gap-4 border-b border-[#F0EDF7] pb-3 last:border-0 last:pb-0">
 
-            <div
-                className="
-                    w-full max-w-md
-                    overflow-hidden
-                    rounded-2xl
-                    border border-[#E7E3F2]
-                    bg-white
-                    shadow-2xl
-                "
-                onClick={(event) =>
-                    event.stopPropagation()
-                }
-            >
-
-                <div className="p-6">
-                    {children}
-                </div>
-
-            </div>
-
-        </div>
-    );
-}
-
-
-
-
-function ModalIcon({
-    icon,
-    variant = "danger",
-}) {
-    const styles = {
-        danger:
-            "bg-red-50 text-red-600",
-
-        primary:
-            "bg-[#F3F0FF] text-[#6D4AFF]",
-
-        success:
-            "bg-emerald-50 text-emerald-600",
-    };
-
-
-    return (
-        <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                styles[variant]
-            }`}
-        >
-
-            <span className="material-symbols-outlined text-2xl">
-                {icon}
+            <span className="text-xs font-semibold text-[#98A2B3]">
+                {label}
             </span>
 
-        </div>
-    );
-}
+            <span className="max-w-[190px] truncate text-right text-xs font-bold text-[#475467]">
+                {value}
+            </span>
 
-
-
-function ModalFooter({
-    children,
-}) {
-    return (
-        <div className="
-            flex flex-col-reverse
-            gap-2
-            border-t border-[#E7E3F2]
-            bg-[#FCFBFF]
-            p-5
-            sm:flex-row
-            sm:justify-end
-        ">
-            {children}
         </div>
     );
 }

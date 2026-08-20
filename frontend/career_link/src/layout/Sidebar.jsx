@@ -7,9 +7,6 @@ import { FaRegFilePdf } from "react-icons/fa";
 import { MdOutlineDataSaverOff, MdReport } from "react-icons/md";
 import { FiHeadphones } from "react-icons/fi";
 
-/* ============================================================
-   SIDEBAR LINKS
-============================================================ */
 
 const navigationLinks = [
   {
@@ -44,9 +41,7 @@ const navigationLinks = [
   },
 ];
 
-/* ============================================================
-   SIDEBAR
-============================================================ */
+
 
 const Sidebar = () => {
   const location = useLocation();
@@ -63,13 +58,10 @@ const Sidebar = () => {
   return (
     <div className="flex h-full flex-col">
 
-      {/* ======================================================
-          NAVIGATION
-      ====================================================== */}
 
       <nav className="flex-1 px-4 py-7">
 
-        {/* Main label */}
+
 
         <p className="
           mb-4
@@ -120,7 +112,7 @@ const Sidebar = () => {
                   `}
                 >
 
-                  {/* Active indicator */}
+                 
 
                   {active && (
                     <span className="
@@ -133,7 +125,7 @@ const Sidebar = () => {
                     " />
                   )}
 
-                  {/* Icon */}
+               
 
                   <Icon
                     className={`
@@ -148,7 +140,7 @@ const Sidebar = () => {
                     `}
                   />
 
-                  {/* Text */}
+             
 
                   <span>{item.name}</span>
                 </Link>
@@ -160,9 +152,7 @@ const Sidebar = () => {
         </ul>
       </nav>
 
-      {/* ======================================================
-          SUPPORT CARD
-      ====================================================== */}
+
 
       <div className="px-4 pb-5">
 
@@ -175,7 +165,6 @@ const Sidebar = () => {
           shadow-lg
         ">
 
-          {/* Decorative violet circle */}
 
           <div className="
             absolute
@@ -192,7 +181,7 @@ const Sidebar = () => {
             z-10
           ">
 
-            {/* Icon */}
+        
 
             <div className="
               mb-4
@@ -205,7 +194,7 @@ const Sidebar = () => {
               <FiHeadphones className="text-xl" />
             </div>
 
-            {/* Title */}
+      
 
             <h3 className="
               text-sm
@@ -215,7 +204,7 @@ const Sidebar = () => {
               Need Help?
             </h3>
 
-            {/* Description */}
+
 
             <p className="
               mt-2
@@ -227,7 +216,7 @@ const Sidebar = () => {
               with your career journey.
             </p>
 
-            {/* Contact button */}
+
 
             <button
               type="button"
