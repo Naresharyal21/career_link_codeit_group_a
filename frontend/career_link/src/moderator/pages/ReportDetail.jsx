@@ -11,6 +11,23 @@ import {
 import moderatorApi from "../../apis/moderatorApi";
 import ReportStatusBadge from "../components/ReportStatusBadge";
 
+
+// Report Id
+
+function formatReportId(id) {
+    if (
+        id === null ||
+        id === undefined ||
+        id === ""
+    ) {
+        return "R--";
+    }
+
+    return `R${String(id).padStart(3, "0")}`;
+}
+
+
+
 export default function ReportDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -28,6 +45,10 @@ export default function ReportDetail() {
 
     const [showRejectModal, setShowRejectModal] =
         useState(false);
+
+    const [showDeleteModal, setShowDeleteModal] =
+        useState(false);
+
 
 
     const loadReport = async () => {
@@ -63,9 +84,14 @@ export default function ReportDetail() {
         }
     };
 
+
     useEffect(() => {
-        loadReport();
+        if (id) {
+            loadReport();
+        }
     }, [id]);
+
+
 
 
     const getStatus = () => {
@@ -76,6 +102,7 @@ export default function ReportDetail() {
         );
     };
 
+
     const getReason = () => {
         return (
             report?.report_reason ||
@@ -83,6 +110,7 @@ export default function ReportDetail() {
             "No reason provided"
         );
     };
+
 
     const getDescription = () => {
         return (
@@ -92,13 +120,16 @@ export default function ReportDetail() {
         );
     };
 
+
     const getReportedBy = () => {
         return (
+            report?.reported_by_name ||
             report?.reported_by ||
             report?.reporter ||
             "Unknown"
         );
     };
+
 
     const getReportedJob = () => {
         return (
@@ -109,6 +140,25 @@ export default function ReportDetail() {
         );
     };
 
+
+    const getReportedJobTitle = () => {
+        return (
+            report?.reported_job_title ||
+            report?.job?.title ||
+            null
+        );
+    };
+
+
+    const getReviewedBy = () => {
+        return (
+            report?.reviewed_by_name ||
+            report?.reviewed_by ||
+            "Not reviewed"
+        );
+    };
+
+
     const getSubmittedDate = () => {
         return (
             report?.reported_at ||
@@ -118,13 +168,15 @@ export default function ReportDetail() {
         );
     };
 
-    const getReviewedBy = () => {
+
+    const getReviewedDate = () => {
         return (
-            report?.reviewed_by ||
-            report?.moderated_by ||
-            "Not reviewed"
+            report?.reviewed_at ||
+            null
         );
     };
+
+
 
     const getRiskLevel = () => {
         const reason =
@@ -133,7 +185,9 @@ export default function ReportDetail() {
         if (
             reason.includes("scam") ||
             reason.includes("fake") ||
-            reason.includes("fraud")
+            reason.includes("fraud") ||
+            reason.includes("phishing") ||
+            reason.includes("illegal")
         ) {
             return "High";
         }
@@ -141,13 +195,18 @@ export default function ReportDetail() {
         if (
             reason.includes("misleading") ||
             reason.includes("spam") ||
-            reason.includes("salary")
+            reason.includes("salary") ||
+            reason.includes("duplicate") ||
+            reason.includes("inappropriate")
         ) {
             return "Medium";
         }
 
         return "Low";
     };
+
+
+
 
     const formatDate = (value) => {
         if (!value) {
@@ -156,80 +215,40 @@ export default function ReportDetail() {
 
         const date = new Date(value);
 
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
+        if (Number.isNaN(date.getTime())) {
             return "N/A";
         }
 
         return date.toLocaleString();
     };
 
-    const handleStartReview = async () => {
+
+
+
+    const updateStatus = async (newStatus) => {
         try {
             setActionLoading(true);
             setActionError("");
 
-            await moderatorApi.startReview(id);
+            const updatedReport =
+                await moderatorApi.updateReport(
+                    id,
+                    {
+                        status: newStatus,
+                    }
+                );
 
-            await loadReport();
-        } catch (err) {
-            console.error(
-                "Failed to start review:",
-                err
+            console.log(
+                "UPDATED REPORT:",
+                updatedReport
             );
 
-            setActionError(
-                err?.response?.data?.detail ||
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    "Unable to start review."
-            );
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleResolve = async () => {
-        try {
-            setActionLoading(true);
-            setActionError("");
-
-            await moderatorApi.resolveReport(id);
-
-            await loadReport();
-        } catch (err) {
-            console.error(
-                "Failed to resolve report:",
-                err
-            );
-
-            setActionError(
-                err?.response?.data?.detail ||
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    "Unable to resolve report."
-            );
-        } finally {
-            setActionLoading(false);
-        }
-    };
-
-    const handleReject = async () => {
-        try {
-            setActionLoading(true);
-            setActionError("");
-
-            await moderatorApi.rejectReport(id);
+            setReport(updatedReport);
 
             setShowRejectModal(false);
-
-            await loadReport();
         } catch (err) {
             console.error(
-                "Failed to reject report:",
+                "Failed to update report:",
                 err
             );
 
@@ -237,12 +256,56 @@ export default function ReportDetail() {
                 err?.response?.data?.detail ||
                     err?.response?.data?.message ||
                     err?.message ||
-                    "Unable to reject report."
+                    "Unable to update report status."
             );
         } finally {
             setActionLoading(false);
         }
     };
+
+
+    const handleStartReview = async () => {
+        await updateStatus("Under Review");
+    };
+
+
+    const handleResolve = async () => {
+        await updateStatus("Resolved");
+    };
+
+
+    const handleReject = async () => {
+        await updateStatus("Rejected");
+    };
+
+
+
+    const handleDelete = async () => {
+        try {
+            setActionLoading(true);
+            setActionError("");
+
+            await moderatorApi.deleteReport(id);
+
+            navigate("/moderator/reports");
+        } catch (err) {
+            console.error(
+                "Failed to delete report:",
+                err
+            );
+
+            setActionError(
+                err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "Unable to delete report."
+            );
+        } finally {
+            setActionLoading(false);
+            setShowDeleteModal(false);
+        }
+    };
+
 
 
 
@@ -250,13 +313,29 @@ export default function ReportDetail() {
         const status =
             String(getStatus()).toLowerCase();
 
+
         if (status === "pending") {
             return (
                 <button
                     type="button"
                     onClick={handleStartReview}
                     disabled={actionLoading}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D4AFF] px-5 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-[#5636D9] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                    className="
+                        flex w-full items-center
+                        justify-center gap-2
+                        rounded-xl
+                        bg-[#6D4AFF]
+                        px-5 py-3.5
+                        text-sm font-bold
+                        text-white
+                        shadow-sm
+                        transition
+                        duration-200
+                        hover:bg-[#5636D9]
+                        hover:shadow-md
+                        disabled:cursor-not-allowed
+                        disabled:opacity-50
+                    "
                 >
                     <span className="material-symbols-outlined text-[20px]">
                         rate_review
@@ -269,6 +348,7 @@ export default function ReportDetail() {
             );
         }
 
+
         if (
             status === "under review" ||
             status === "in review"
@@ -280,7 +360,22 @@ export default function ReportDetail() {
                         type="button"
                         onClick={handleResolve}
                         disabled={actionLoading}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-emerald-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                        className="
+                            flex w-full items-center
+                            justify-center gap-2
+                            rounded-xl
+                            bg-emerald-600
+                            px-5 py-3.5
+                            text-sm font-bold
+                            text-white
+                            shadow-sm
+                            transition
+                            duration-200
+                            hover:bg-emerald-700
+                            hover:shadow-md
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
                     >
                         <span className="material-symbols-outlined text-[20px]">
                             check_circle
@@ -291,13 +386,29 @@ export default function ReportDetail() {
                             : "Resolve Report"}
                     </button>
 
+
                     <button
                         type="button"
                         onClick={() =>
                             setShowRejectModal(true)
                         }
                         disabled={actionLoading}
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3.5 text-sm font-bold text-red-700 transition duration-200 hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="
+                            flex w-full items-center
+                            justify-center gap-2
+                            rounded-xl
+                            border border-red-200
+                            bg-red-50
+                            px-5 py-3.5
+                            text-sm font-bold
+                            text-red-700
+                            transition
+                            duration-200
+                            hover:border-red-300
+                            hover:bg-red-100
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
                     >
                         <span className="material-symbols-outlined text-[20px]">
                             close
@@ -310,12 +421,13 @@ export default function ReportDetail() {
             );
         }
 
+
         return (
             <div className="rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] p-4">
 
                 <div className="flex items-start gap-3">
 
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F3F0FF] text-[#6D4AFF]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                         <span className="material-symbols-outlined text-[19px]">
                             check_circle
                         </span>
@@ -327,8 +439,9 @@ export default function ReportDetail() {
                         </p>
 
                         <p className="mt-1 text-xs leading-5 text-[#667085]">
-                            No further moderation action
-                            is required for this report.
+                            This report has already been
+                            processed and requires no
+                            further moderation action.
                         </p>
                     </div>
 
@@ -339,25 +452,33 @@ export default function ReportDetail() {
     };
 
 
+
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
 
                 <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
-                    <div className="mb-6 h-10 w-32 animate-pulse rounded-xl bg-[#F3F0FF]" />
+                    <div className="mb-6 h-10 w-40 animate-pulse rounded-xl bg-[#EDE8FF]" />
 
-                    <div className="rounded-2xl border border-[#E7E3F2] bg-white p-8 shadow-sm md:p-12">
+                    <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
-                            <span className="material-symbols-outlined animate-spin text-3xl">
-                                progress_activity
-                            </span>
+                        <div className="p-10 md:p-14">
+
+                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
+
+                                <span className="material-symbols-outlined animate-spin text-3xl">
+                                    progress_activity
+                                </span>
+
+                            </div>
+
+                            <p className="mt-5 text-center text-sm font-semibold text-[#667085]">
+                                Loading report...
+                            </p>
+
                         </div>
-
-                        <p className="mt-5 text-center text-sm font-semibold text-[#667085]">
-                            Loading report...
-                        </p>
 
                     </div>
 
@@ -382,7 +503,20 @@ export default function ReportDetail() {
                                 "/moderator/reports"
                             )
                         }
-                        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
+                        className="
+                            mb-6 inline-flex
+                            items-center gap-2
+                            rounded-xl
+                            border border-[#E7E3F2]
+                            bg-white
+                            px-4 py-2.5
+                            text-sm font-bold
+                            text-[#6D4AFF]
+                            shadow-sm
+                            transition
+                            hover:border-[#6D4AFF]
+                            hover:bg-[#F3F0FF]
+                        "
                     >
                         <span className="material-symbols-outlined text-[19px]">
                             arrow_back
@@ -391,42 +525,61 @@ export default function ReportDetail() {
                         Back to Reports
                     </button>
 
-                    <div className="rounded-2xl border border-red-200 bg-white p-8 shadow-sm md:p-10">
 
-                        <div className="flex flex-col items-start gap-4 sm:flex-row">
+                    <div className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
 
-                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
-                                <span className="material-symbols-outlined text-2xl">
-                                    error
-                                </span>
-                            </div>
+                        <div className="p-8 md:p-10">
 
-                            <div>
+                            <div className="flex flex-col gap-5 sm:flex-row">
 
-                                <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
-                                    Moderation Error
-                                </p>
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
 
-                                <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold text-[#172033]">
-                                    Unable to load report
-                                </h1>
-
-                                <p className="mt-2 max-w-xl text-sm leading-6 text-[#667085]">
-                                    {error ||
-                                        "Report not found."}
-                                </p>
-
-                                <button
-                                    type="button"
-                                    onClick={loadReport}
-                                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#6D4AFF] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#5636D9]"
-                                >
-                                    <span className="material-symbols-outlined text-[19px]">
-                                        refresh
+                                    <span className="material-symbols-outlined text-2xl">
+                                        error
                                     </span>
 
-                                    Try Again
-                                </button>
+                                </div>
+
+
+                                <div>
+
+                                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-red-600">
+                                        Moderation Error
+                                    </p>
+
+                                    <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold text-[#172033]">
+                                        Unable to load report
+                                    </h1>
+
+                                    <p className="mt-2 max-w-xl text-sm leading-6 text-[#667085]">
+                                        {error ||
+                                            "The requested report could not be found."}
+                                    </p>
+
+
+                                    <button
+                                        type="button"
+                                        onClick={loadReport}
+                                        className="
+                                            mt-5 inline-flex
+                                            items-center gap-2
+                                            rounded-xl
+                                            bg-[#6D4AFF]
+                                            px-5 py-3
+                                            text-sm font-bold
+                                            text-white
+                                            transition
+                                            hover:bg-[#5636D9]
+                                        "
+                                    >
+                                        <span className="material-symbols-outlined text-[19px]">
+                                            refresh
+                                        </span>
+
+                                        Try Again
+                                    </button>
+
+                                </div>
 
                             </div>
 
@@ -440,9 +593,16 @@ export default function ReportDetail() {
         );
     }
 
+
+
+
     const status = getStatus();
     const risk = getRiskLevel();
+
     const reportedJob = getReportedJob();
+    const reportedJobTitle =
+        getReportedJobTitle();
+
 
 
     return (
@@ -452,7 +612,7 @@ export default function ReportDetail() {
 
 
 
-                <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <button
                         type="button"
@@ -461,7 +621,22 @@ export default function ReportDetail() {
                                 "/moderator/reports"
                             )
                         }
-                        className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
+                        className="
+                            inline-flex w-fit
+                            items-center gap-2
+                            rounded-xl
+                            border border-[#E7E3F2]
+                            bg-white
+                            px-4 py-2.5
+                            text-sm font-bold
+                            text-[#6D4AFF]
+                            shadow-sm
+                            transition
+                            duration-200
+                            hover:border-[#6D4AFF]
+                            hover:bg-[#F3F0FF]
+                            hover:shadow-md
+                        "
                     >
                         <span className="material-symbols-outlined text-[19px]">
                             arrow_back
@@ -470,11 +645,29 @@ export default function ReportDetail() {
                         Back to Reports
                     </button>
 
+
                     <button
                         type="button"
                         onClick={loadReport}
                         disabled={loading}
-                        className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#667085] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:text-[#6D4AFF] disabled:opacity-50"
+                        className="
+                            inline-flex w-fit
+                            items-center gap-2
+                            rounded-xl
+                            border border-[#E7E3F2]
+                            bg-white
+                            px-4 py-2.5
+                            text-sm font-bold
+                            text-[#667085]
+                            shadow-sm
+                            transition
+                            duration-200
+                            hover:border-[#6D4AFF]
+                            hover:bg-[#F3F0FF]
+                            hover:text-[#6D4AFF]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
                     >
                         <span
                             className={`material-symbols-outlined text-[19px] ${
@@ -486,7 +679,9 @@ export default function ReportDetail() {
                             refresh
                         </span>
 
-                        Refresh
+                        {loading
+                            ? "Refreshing..."
+                            : "Refresh"}
                     </button>
 
                 </div>
@@ -502,22 +697,42 @@ export default function ReportDetail() {
                             <div className="flex min-w-0 items-start gap-4">
 
                                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
+
                                     <span className="material-symbols-outlined text-2xl">
                                         flag
                                     </span>
+
                                 </div>
+
 
                                 <div className="min-w-0">
 
-                                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6D4AFF]">
-                                        Moderation Report
-                                    </p>
+                                    <div className="flex flex-wrap items-center gap-2">
+
+                                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#6D4AFF]">
+                                            Moderation Report
+                                        </p>
+
+                                        <span className="h-1 w-1 rounded-full bg-[#C4BDD8]" />
+
+                                        <span className="text-xs font-semibold text-[#98A2B3]">
+                                            {formatReportId(
+                                                report.id
+                                            )}
+                                        </span>
+
+                                    </div>
+
 
                                     <h1 className="mt-1 font-['Montserrat'] text-2xl font-bold tracking-tight text-[#172033] md:text-3xl">
-                                        Report {report.id}
+                                        Report{" "}
+                                        {formatReportId(
+                                            report.id
+                                        )}
                                     </h1>
 
-                                    <p className="mt-2 text-sm leading-6 text-[#667085]">
+
+                                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
                                         Review the submitted
                                         report and determine
                                         the appropriate
@@ -527,6 +742,7 @@ export default function ReportDetail() {
                                 </div>
 
                             </div>
+
 
                             <div className="flex flex-wrap items-center gap-2">
 
@@ -543,6 +759,9 @@ export default function ReportDetail() {
                         </div>
 
                     </div>
+
+
+                    {/* HERO STATS */}
 
                     <div className="grid border-t border-[#E7E3F2] bg-[#FCFBFF] sm:grid-cols-3">
 
@@ -575,16 +794,21 @@ export default function ReportDetail() {
                 </section>
 
 
+
+
                 {actionError && (
                     <div className="mb-6 rounded-2xl border border-red-200 bg-white p-4 shadow-sm">
 
                         <div className="flex items-start gap-3">
 
                             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
+
                                 <span className="material-symbols-outlined">
                                     error
                                 </span>
+
                             </div>
+
 
                             <div className="min-w-0">
 
@@ -604,21 +828,26 @@ export default function ReportDetail() {
                 )}
 
 
+
+
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
 
-                
+
+
 
                     <div className="space-y-6">
 
-                        
 
-                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+                        {/* REPORT DETAILS */}
+
+                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
                             <SectionHeader
                                 icon="flag"
                                 title="Report Details"
                                 description="Information submitted by the reporter."
                             />
+
 
                             <div className="p-6 md:p-7">
 
@@ -634,11 +863,13 @@ export default function ReportDetail() {
 
                                 </div>
 
+
                                 <div className="mt-6">
 
                                     <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
                                         Description
                                     </p>
+
 
                                     <div className="mt-3 rounded-xl border border-[#E7E3F2] bg-white p-5">
 
@@ -655,7 +886,51 @@ export default function ReportDetail() {
                         </section>
 
 
-                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+                        {/* REPORTED JOB */}
+
+                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                            <SectionHeader
+                                icon="work"
+                                title="Reported Job"
+                                description="Job associated with this moderation report."
+                            />
+
+
+                            <div className="p-6 md:p-7">
+
+                                <div className="grid gap-4 sm:grid-cols-2">
+
+                                    <InfoCard
+                                        icon="tag"
+                                        label="Job ID"
+                                        value={
+                                            reportedJob
+                                                ? `Job ${reportedJob}`
+                                                : "Unknown"
+                                        }
+                                    />
+
+
+                                    <InfoCard
+                                        icon="work"
+                                        label="Job Title"
+                                        value={
+                                            reportedJobTitle ||
+                                            "Not available"
+                                        }
+                                    />
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        {/* REPORT INFORMATION */}
+
+                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
                             <SectionHeader
                                 icon="info"
@@ -663,43 +938,42 @@ export default function ReportDetail() {
                                 description="Metadata associated with this moderation report."
                             />
 
-                            <div className="grid gap-x-8 gap-y-6 p-6 sm:grid-cols-2 md:p-7">
+
+                            <div className="grid gap-x-8 gap-y-7 p-6 sm:grid-cols-2 md:p-7">
 
                                 <InfoItem
                                     icon="tag"
                                     label="Report ID"
-                                    value={`${report.id}`}
+                                    value={formatReportId(
+                                        report.id
+                                    )}
                                 />
+
 
                                 <InfoItem
                                     icon="flag"
                                     label="Status"
                                     value={
                                         <ReportStatusBadge
-                                            status={
-                                                status
-                                            }
+                                            status={status}
                                         />
                                     }
                                 />
 
+
                                 <InfoItem
                                     icon="person"
                                     label="Reported By"
-                                    value={
-                                        getReportedBy()
-                                    }
+                                    value={getReportedBy()}
                                 />
 
+
                                 <InfoItem
-                                    icon="work"
-                                    label="Reported Job"
-                                    value={
-                                        reportedJob
-                                            ? `Job ${reportedJob}`
-                                            : "Unknown"
-                                    }
+                                    icon="admin_panel_settings"
+                                    label="Reviewed By"
+                                    value={getReviewedBy()}
                                 />
+
 
                                 <InfoItem
                                     icon="schedule"
@@ -709,25 +983,30 @@ export default function ReportDetail() {
                                     )}
                                 />
 
+
                                 <InfoItem
-                                    icon="admin_panel_settings"
-                                    label="Reviewed By"
-                                    value={getReviewedBy()}
+                                    icon="event_available"
+                                    label="Reviewed At"
+                                    value={formatDate(
+                                        getReviewedDate()
+                                    )}
                                 />
 
                             </div>
 
                         </section>
 
-                    
 
-                        <section className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+                        {/* RISK ASSESSMENT */}
+
+                        <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
                             <SectionHeader
                                 icon="shield"
                                 title="Risk Assessment"
-                                description="Current automated risk classification based on the report reason."
+                                description="Current risk classification based on the report reason."
                             />
+
 
                             <div className="p-6 md:p-7">
 
@@ -737,19 +1016,20 @@ export default function ReportDetail() {
 
                                         <div
                                             className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                                                risk ===
-                                                "High"
+                                                risk === "High"
                                                     ? "bg-red-50 text-red-600"
-                                                    : risk ===
-                                                        "Medium"
+                                                    : risk === "Medium"
                                                       ? "bg-amber-50 text-amber-600"
                                                       : "bg-emerald-50 text-emerald-600"
                                             }`}
                                         >
+
                                             <span className="material-symbols-outlined">
                                                 shield
                                             </span>
+
                                         </div>
+
 
                                         <div>
 
@@ -765,24 +1045,34 @@ export default function ReportDetail() {
 
                                     </div>
 
+
                                     <RiskBadge
                                         risk={risk}
                                     />
 
                                 </div>
 
+
                                 <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
 
-                                    <p className="text-xs leading-5 text-[#667085]">
-                                        Risk classification
-                                        is based on keywords
-                                        in the submitted
-                                        report reason. The
-                                        moderator should make
-                                        the final decision
-                                        after reviewing the
-                                        complete report.
-                                    </p>
+                                    <div className="flex items-start gap-3">
+
+                                        <span className="material-symbols-outlined shrink-0 text-[19px] text-[#6D4AFF]">
+                                            info
+                                        </span>
+
+                                        <p className="text-xs leading-5 text-[#667085]">
+                                            Risk classification is
+                                            automatically estimated
+                                            from keywords in the
+                                            submitted reason.
+                                            Moderators should make
+                                            the final decision after
+                                            reviewing the complete
+                                            report.
+                                        </p>
+
+                                    </div>
 
                                 </div>
 
@@ -792,10 +1082,15 @@ export default function ReportDetail() {
 
                     </div>
 
-                 
+
+
+
                     <aside className="h-fit lg:sticky lg:top-6">
 
-                        <div className="rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
+
+                        {/* ACTION PANEL */}
+
+                        <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
                             <SectionHeader
                                 icon="gavel"
@@ -803,26 +1098,29 @@ export default function ReportDetail() {
                                 description="Take action on this report."
                             />
 
+
                             <div className="p-6">
 
                                 <div className="rounded-xl bg-[#F3F0FF] p-4">
 
                                     <div className="flex items-start gap-3">
 
-                                        <span className="material-symbols-outlined text-[#6D4AFF]">
+                                        <span className="material-symbols-outlined shrink-0 text-[#6D4AFF]">
                                             tips_and_updates
                                         </span>
 
                                         <p className="text-xs leading-5 text-[#5D5570]">
                                             Review the report
-                                            details carefully
-                                            before changing
-                                            its status.
+                                            carefully before
+                                            changing its status.
+                                            Actions may affect
+                                            moderation records.
                                         </p>
 
                                     </div>
 
                                 </div>
+
 
                                 <div className="mt-5">
                                     {renderStatusActions()}
@@ -832,7 +1130,8 @@ export default function ReportDetail() {
 
                         </div>
 
-                        
+
+                        {/* STATUS SUMMARY */}
 
                         <div className="mt-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
 
@@ -840,7 +1139,8 @@ export default function ReportDetail() {
                                 Current Status
                             </p>
 
-                            <div className="mt-3 flex items-center justify-between gap-3">
+
+                            <div className="mt-4 flex items-center justify-between gap-3">
 
                                 <span className="text-sm font-semibold text-[#667085]">
                                     Report status
@@ -852,7 +1152,9 @@ export default function ReportDetail() {
 
                             </div>
 
+
                             <div className="my-4 h-px bg-[#E7E3F2]" />
+
 
                             <div className="flex items-center justify-between gap-3">
 
@@ -868,6 +1170,99 @@ export default function ReportDetail() {
 
                         </div>
 
+
+                        {/* REPORT ID CARD */}
+
+                        <div className="mt-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm">
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
+
+                                    <span className="material-symbols-outlined">
+                                        tag
+                                    </span>
+
+                                </div>
+
+
+                                <div>
+
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                                        Report Reference
+                                    </p>
+
+                                    <p className="mt-0.5 font-['Montserrat'] text-lg font-bold text-[#172033]">
+                                        {formatReportId(
+                                            report.id
+                                        )}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {/* DANGER ZONE */}
+
+                        <div className="mt-5 rounded-2xl border border-red-200 bg-white p-5 shadow-sm">
+
+                            <div className="flex items-center gap-2">
+
+                                <span className="material-symbols-outlined text-[19px] text-red-500">
+                                    warning
+                                </span>
+
+                                <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-500">
+                                    Danger Zone
+                                </p>
+
+                            </div>
+
+
+                            <p className="mt-2 text-xs leading-5 text-[#667085]">
+                                Delete this report permanently.
+                                This action cannot be undone.
+                            </p>
+
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setShowDeleteModal(true)
+                                }
+                                disabled={actionLoading}
+                                className="
+                                    mt-4 flex w-full
+                                    items-center
+                                    justify-center gap-2
+                                    rounded-xl
+                                    border border-red-200
+                                    bg-red-50
+                                    px-4 py-3
+                                    text-sm font-bold
+                                    text-red-700
+                                    transition
+                                    duration-200
+                                    hover:border-red-300
+                                    hover:bg-red-100
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-50
+                                "
+                            >
+
+                                <span className="material-symbols-outlined text-[19px]">
+                                    delete
+                                </span>
+
+                                Delete Report
+
+                            </button>
+
+                        </div>
+
                     </aside>
 
                 </div>
@@ -875,105 +1270,232 @@ export default function ReportDetail() {
             </div>
 
 
+
+
             {showRejectModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[2px]">
+                <ModalOverlay
+                    onClose={() =>
+                        !actionLoading &&
+                        setShowRejectModal(false)
+                    }
+                >
 
-                    <div
-                        className="w-full max-w-md rounded-2xl border border-[#E7E3F2] bg-white shadow-2xl"
-                        onClick={(event) =>
-                            event.stopPropagation()
-                        }
-                    >
+                    <ModalIcon
+                        icon="warning"
+                        variant="danger"
+                    />
 
-                        <div className="p-6">
+                    <div className="mt-4">
 
-                            <div className="flex items-start gap-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
+                            Moderation Action
+                        </p>
 
-                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
-                                    <span className="material-symbols-outlined text-2xl">
-                                        warning
-                                    </span>
-                                </div>
+                        <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
+                            Reject Report?
+                        </h2>
 
-                                <div>
-
-                                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
-                                        Moderation Action
-                                    </p>
-
-                                    <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
-                                        Reject Report?
-                                    </h2>
-
-                                    <p className="mt-2 text-sm leading-6 text-[#667085]">
-                                        Are you sure you want
-                                        to reject this report?
-                                        The report status will
-                                        be updated immediately.
-                                    </p>
-
-                                </div>
-
-                            </div>
-
-                            <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
-
-                                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                                    Report
-                                </p>
-
-                                <p className="mt-1 font-bold text-[#172033]">
-                                    Report {report.id}
-                                </p>
-
-                                <p className="mt-1 text-sm text-[#667085]">
-                                    {getReason()}
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                        <div className="flex flex-col-reverse gap-2 border-t border-[#E7E3F2] bg-[#FCFBFF] p-5 sm:flex-row sm:justify-end">
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowRejectModal(
-                                        false
-                                    )
-                                }
-                                disabled={actionLoading}
-                                className="rounded-xl border border-[#E7E3F2] bg-white px-5 py-3 text-sm font-bold text-[#667085] transition hover:bg-[#F8F7FC] disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={handleReject}
-                                disabled={actionLoading}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <span className="material-symbols-outlined text-[18px]">
-                                    close
-                                </span>
-
-                                {actionLoading
-                                    ? "Rejecting..."
-                                    : "Yes, Reject Report"}
-                            </button>
-
-                        </div>
+                        <p className="mt-2 text-sm leading-6 text-[#667085]">
+                            Are you sure you want to reject
+                            this report?
+                        </p>
 
                     </div>
 
-                </div>
+
+                    <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
+
+                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                            Report
+                        </p>
+
+                        <p className="mt-1 font-bold text-[#172033]">
+                            Report{" "}
+                            {formatReportId(
+                                report.id
+                            )}
+                        </p>
+
+                        <p className="mt-1 text-sm text-[#667085]">
+                            {getReason()}
+                        </p>
+
+                    </div>
+
+
+                    <ModalFooter>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowRejectModal(false)
+                            }
+                            disabled={actionLoading}
+                            className="
+                                rounded-xl
+                                border border-[#E7E3F2]
+                                bg-white
+                                px-5 py-3
+                                text-sm font-bold
+                                text-[#667085]
+                                transition
+                                hover:bg-[#F8F7FC]
+                                disabled:opacity-50
+                            "
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onClick={handleReject}
+                            disabled={actionLoading}
+                            className="
+                                inline-flex
+                                items-center
+                                justify-center gap-2
+                                rounded-xl
+                                bg-red-600
+                                px-5 py-3
+                                text-sm font-bold
+                                text-white
+                                transition
+                                hover:bg-red-700
+                                disabled:cursor-not-allowed
+                                disabled:opacity-50
+                            "
+                        >
+
+                            <span className="material-symbols-outlined text-[18px]">
+                                close
+                            </span>
+
+                            {actionLoading
+                                ? "Rejecting..."
+                                : "Yes, Reject Report"}
+
+                        </button>
+
+                    </ModalFooter>
+
+                </ModalOverlay>
+            )}
+
+
+
+
+            {showDeleteModal && (
+                <ModalOverlay
+                    onClose={() =>
+                        !actionLoading &&
+                        setShowDeleteModal(false)
+                    }
+                >
+
+                    <ModalIcon
+                        icon="delete"
+                        variant="danger"
+                    />
+
+                    <div className="mt-4">
+
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-red-600">
+                            Permanent Action
+                        </p>
+
+                        <h2 className="mt-1 font-['Montserrat'] text-xl font-bold text-[#172033]">
+                            Delete Report?
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-[#667085]">
+                            This report will be permanently
+                            deleted. This action cannot be undone.
+                        </p>
+
+                    </div>
+
+
+                    <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
+
+                        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                            Report
+                        </p>
+
+                        <p className="mt-1 font-bold text-[#172033]">
+                            Report{" "}
+                            {formatReportId(
+                                report.id
+                            )}
+                        </p>
+
+                    </div>
+
+
+                    <ModalFooter>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowDeleteModal(false)
+                            }
+                            disabled={actionLoading}
+                            className="
+                                rounded-xl
+                                border border-[#E7E3F2]
+                                bg-white
+                                px-5 py-3
+                                text-sm font-bold
+                                text-[#667085]
+                                transition
+                                hover:bg-[#F8F7FC]
+                                disabled:opacity-50
+                            "
+                        >
+                            Cancel
+                        </button>
+
+
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={actionLoading}
+                            className="
+                                inline-flex
+                                items-center
+                                justify-center gap-2
+                                rounded-xl
+                                bg-red-600
+                                px-5 py-3
+                                text-sm font-bold
+                                text-white
+                                transition
+                                hover:bg-red-700
+                                disabled:cursor-not-allowed
+                                disabled:opacity-50
+                            "
+                        >
+
+                            <span className="material-symbols-outlined text-[18px]">
+                                delete
+                            </span>
+
+                            {actionLoading
+                                ? "Deleting..."
+                                : "Delete Report"}
+
+                        </button>
+
+                    </ModalFooter>
+
+                </ModalOverlay>
             )}
 
         </div>
     );
 }
+
+
 
 
 function SectionHeader({
@@ -987,12 +1509,15 @@ function SectionHeader({
             <div className="flex items-center gap-3">
 
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
+
                     <span className="material-symbols-outlined">
                         {icon}
                     </span>
+
                 </div>
 
-                <div>
+
+                <div className="min-w-0">
 
                     <h2 className="font-['Montserrat'] text-lg font-bold text-[#172033]">
                         {title}
@@ -1014,6 +1539,7 @@ function SectionHeader({
 
 
 
+
 function HeaderStat({
     icon,
     label,
@@ -1027,6 +1553,7 @@ function HeaderStat({
                 <span className="material-symbols-outlined text-[19px] text-[#6D4AFF]">
                     {icon}
                 </span>
+
 
                 <div className="min-w-0">
 
@@ -1045,6 +1572,38 @@ function HeaderStat({
         </div>
     );
 }
+
+
+
+function InfoCard({
+    icon,
+    label,
+    value,
+}) {
+    return (
+        <div className="rounded-xl border border-[#E7E3F2] bg-[#FCFBFF] p-4">
+
+            <div className="flex items-center gap-2">
+
+                <span className="material-symbols-outlined text-[17px] text-[#6D4AFF]">
+                    {icon}
+                </span>
+
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                    {label}
+                </p>
+
+            </div>
+
+
+            <p className="mt-3 break-words text-sm font-bold text-[#172033]">
+                {value}
+            </p>
+
+        </div>
+    );
+}
+
 
 
 
@@ -1068,6 +1627,7 @@ function InfoItem({
 
             </div>
 
+
             <div className="mt-2 break-words text-sm font-semibold text-[#172033]">
                 {value}
             </div>
@@ -1077,14 +1637,21 @@ function InfoItem({
 }
 
 
+
 function RiskBadge({
     risk,
 }) {
     const styles = {
-        High: "bg-red-50 text-red-700 ring-red-100",
-        Medium: "bg-amber-50 text-amber-700 ring-amber-100",
-        Low: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+        High:
+            "bg-red-50 text-red-700 ring-red-100",
+
+        Medium:
+            "bg-amber-50 text-amber-700 ring-amber-100",
+
+        Low:
+            "bg-emerald-50 text-emerald-700 ring-emerald-100",
     };
+
 
     return (
         <span
@@ -1093,9 +1660,108 @@ function RiskBadge({
                 "bg-slate-50 text-slate-700 ring-slate-100"
             }`}
         >
+
             <span className="h-1.5 w-1.5 rounded-full bg-current" />
 
             {risk || "Low"} Risk
+
         </span>
+    );
+}
+
+
+
+function ModalOverlay({
+    children,
+    onClose,
+}) {
+    return (
+        <div
+            className="
+                fixed inset-0 z-50
+                flex items-center
+                justify-center
+                bg-slate-950/45
+                p-4
+                backdrop-blur-[2px]
+            "
+            onClick={onClose}
+        >
+
+            <div
+                className="
+                    w-full max-w-md
+                    overflow-hidden
+                    rounded-2xl
+                    border border-[#E7E3F2]
+                    bg-white
+                    shadow-2xl
+                "
+                onClick={(event) =>
+                    event.stopPropagation()
+                }
+            >
+
+                <div className="p-6">
+                    {children}
+                </div>
+
+            </div>
+
+        </div>
+    );
+}
+
+
+
+
+function ModalIcon({
+    icon,
+    variant = "danger",
+}) {
+    const styles = {
+        danger:
+            "bg-red-50 text-red-600",
+
+        primary:
+            "bg-[#F3F0FF] text-[#6D4AFF]",
+
+        success:
+            "bg-emerald-50 text-emerald-600",
+    };
+
+
+    return (
+        <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                styles[variant]
+            }`}
+        >
+
+            <span className="material-symbols-outlined text-2xl">
+                {icon}
+            </span>
+
+        </div>
+    );
+}
+
+
+
+function ModalFooter({
+    children,
+}) {
+    return (
+        <div className="
+            flex flex-col-reverse
+            gap-2
+            border-t border-[#E7E3F2]
+            bg-[#FCFBFF]
+            p-5
+            sm:flex-row
+            sm:justify-end
+        ">
+            {children}
+        </div>
     );
 }

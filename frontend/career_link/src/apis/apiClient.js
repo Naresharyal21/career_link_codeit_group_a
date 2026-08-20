@@ -3,45 +3,69 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const request = async (endpoint, options = {}) => {
     const token = localStorage.getItem("accessToken");
 
-    const response = await fetch(
-        `${BASE_URL}${endpoint}`,
-        {
-            ...options,
+    const finalURL = `${BASE_URL}${endpoint}`;
 
-            headers: {
-                "Content-Type": "application/json",
+    console.log("API REQUEST:", {
+        BASE_URL,
+        endpoint,
+        finalURL,
+        hasToken: !!token,
+        tokenPreview: token
+            ? `${token.substring(0, 20)}...`
+            : null,
+    });
 
-                ...(token
-                    ? {
-                          Authorization: `Bearer ${token}`,
-                      }
-                    : {}),
+    const response = await fetch(finalURL, {
+        ...options,
 
-                ...options.headers,
-            },
-        }
-    );
+        headers: {
+            "Content-Type": "application/json",
 
-    const contentType =
-        response.headers.get("content-type");
+            ...(token
+                ? {
+                      Authorization: `Bearer ${token}`,
+                  }
+                : {}),
 
-    const data = contentType?.includes(
-        "application/json"
-    )
+            ...options.headers,
+        },
+    });
+
+    const contentType = response.headers.get("content-type");
+
+    const data = contentType?.includes("application/json")
         ? await response.json()
         : await response.text();
 
     if (!response.ok) {
-        throw new Error(
-            typeof data === "object"
-                ? data?.detail ||
-                      data?.message ||
-                      "Something went wrong."
-                : data ||
-                      "Something went wrong."
+        let message = "Something went wrong.";
+
+        if (typeof data === "object" && data !== null) {
+            if (data.detail) {
+                message = data.detail;
+            } else if (data.message) {
+                message = data.message;
+            } else {
+                message = Object.entries(data)
+                    .map(([field, errors]) => {
+                        const errorText = Array.isArray(errors)
+                            ? errors.join(", ")
+                            : String(errors);
+
+                        return `${field}: ${errorText}`;
+                    })
+                    .join(" | ");
+            }
+        } else if (data) {
+            message = String(data);
+        }
+
+        setError(
+            err?.response?.data?.detail ||
+                err?.message ||
+                "Unable to load reports."
         );
     }
-
     return data;
 };
 
@@ -52,11 +76,7 @@ const apiClient = {
             method: "GET",
         }),
 
-    post: (
-        endpoint,
-        body,
-        options = {}
-    ) =>
+    post: (endpoint, body, options = {}) =>
         request(endpoint, {
             ...options,
             method: "POST",
@@ -68,21 +88,14 @@ const apiClient = {
                 : {}),
         }),
 
-    put: (
-        endpoint,
-        body,
-        options = {}
-    ) =>
+    put: (endpoint, body, options = {}) =>
         request(endpoint, {
             ...options,
             method: "PUT",
             body: JSON.stringify(body),
         }),
 
-    delete: (
-        endpoint,
-        options = {}
-    ) =>
+    delete: (endpoint, options = {}) =>
         request(endpoint, {
             ...options,
             method: "DELETE",

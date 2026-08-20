@@ -5,26 +5,17 @@ import moderatorApi from "../../apis/moderatorApi";
 import ReportStatusBadge from "../components/ReportStatusBadge";
 
 const EMPTY_DASHBOARD = {
-    stats: {
-        review_queue: { count: 0, critical_priority: 0 },
-        reported_content: { count: 0, resolved_today: 0 },
-        pending_job_approvals: null,
-        flagged_companies: null,
-    },
-    queue: [],
-    content_flags: [],
-    performance: {
-        today_reviews: 0,
-        average_resolution_minutes: null,
-        sla_resolution_rate: null,
-    },
-    meta: { sla_hours: null },
+    total_reports: 0,
+    pending_reports: 0,
+    resolved_reports: 0,
+    rejected_reports: 0,
 };
 
 export default function ModeratorDashboard() {
     const navigate = useNavigate();
 
     const [dashboard, setDashboard] = useState(EMPTY_DASHBOARD);
+    const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -33,19 +24,46 @@ export default function ModeratorDashboard() {
             setLoading(true);
             setError("");
 
-            const data = await moderatorApi.getDashboard();
+            const [dashboardData, reportsData] = await Promise.all([
+                moderatorApi.getDashboard(),
+                moderatorApi.getReports(),
+            ]);
+
+            console.log("Dashboard API:", dashboardData);
+            console.log("Reports API:", reportsData);
 
             setDashboard({
-                stats: data?.stats ?? EMPTY_DASHBOARD.stats,
-                queue: Array.isArray(data?.queue) ? data.queue : [],
-                content_flags: Array.isArray(data?.content_flags)
-                    ? data.content_flags
-                    : [],
-                performance: data?.performance ?? EMPTY_DASHBOARD.performance,
-                meta: data?.meta ?? EMPTY_DASHBOARD.meta,
+                total_reports: Number(
+                    dashboardData?.total_reports ?? 0
+                ),
+                pending_reports: Number(
+                    dashboardData?.pending_reports ?? 0
+                ),
+                resolved_reports: Number(
+                    dashboardData?.resolved_reports ?? 0
+                ),
+                rejected_reports: Number(
+                    dashboardData?.rejected_reports ?? 0
+                ),
             });
+
+            const reportList = Array.isArray(reportsData)
+                ? reportsData
+                : Array.isArray(reportsData?.results)
+                    ? reportsData.results
+                    : [];
+
+            setReports(reportList);
         } catch (err) {
-            console.error("Failed to load moderator dashboard:", err);
+            console.error(
+                "Failed to load moderator dashboard:",
+                err
+            );
+
+            console.error(
+                "Response:",
+                err?.response?.data
+            );
 
             setError(
                 err?.response?.data?.detail ||
@@ -54,6 +72,7 @@ export default function ModeratorDashboard() {
             );
 
             setDashboard(EMPTY_DASHBOARD);
+            setReports([]);
         } finally {
             setLoading(false);
         }
@@ -63,32 +82,47 @@ export default function ModeratorDashboard() {
         loadDashboard();
     }, []);
 
-    const { stats, queue, content_flags: contentFlags, performance } = dashboard;
+    const pendingReports = reports.filter(
+        (report) =>
+            report.status === "Pending" ||
+            report.status === "Under Review"
+    );
+
+    const criticalReports = pendingReports.filter(
+        (report) =>
+            report.priority === "High" ||
+            report.priority === "Critical"
+    );
 
     return (
-        <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
-            <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
+        <div className="min-h-screen bg-background text-on-surface">
+            <main className="mx-auto max-w-[1440px] px-4 py-8 md:px-6 lg:px-12">
 
-                {/* HEADER */}
-                <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                {/* ================= HEADER ================= */}
+
+                <header className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+
                     <div>
-                        <div className="mb-3 flex items-center gap-2">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F3F0FF] text-[#6D4AFF]">
-                                <span className="material-symbols-outlined text-[20px]">
+                        <div className="mb-4 flex items-center gap-3">
+
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+                                <span className="material-symbols-outlined">
                                     admin_panel_settings
                                 </span>
                             </div>
-                            <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#6D4AFF]">
+
+                            <span className="text-label-md uppercase text-primary">
                                 Moderator Panel
-                            </p>
+                            </span>
                         </div>
 
-                        <h1 className="font-['Montserrat'] text-3xl font-bold tracking-tight text-[#172033] md:text-4xl">
+                        <h1 className="font-montserrat text-headline-lg text-on-surface md:text-headline-xl">
                             Moderation Dashboard
                         </h1>
 
-                        <p className="mt-2 max-w-2xl text-base leading-6 text-[#667085]">
-                            Monitor submitted reports and manage moderation activity from one place.
+                        <p className="mt-3 max-w-2xl text-body-md text-on-surface-variant">
+                            Monitor submitted reports and manage
+                            moderation activity from one place.
                         </p>
                     </div>
 
@@ -96,260 +130,514 @@ export default function ModeratorDashboard() {
                         type="button"
                         onClick={loadDashboard}
                         disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-5 py-3 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                        className="career-secondary-button"
                     >
-                        <span className={`material-symbols-outlined text-[20px] ${loading ? "animate-spin" : ""}`}>
+                        <span
+                            className={`material-symbols-outlined ${
+                                loading
+                                    ? "animate-spin"
+                                    : ""
+                            }`}
+                        >
                             refresh
                         </span>
-                        {loading ? "Refreshing..." : "Refresh"}
-                    </button>
-                </div>
 
-                {/* ERROR */}
+                        {loading
+                            ? "Refreshing..."
+                            : "Refresh"}
+                    </button>
+                </header>
+
+                {/* ================= ERROR ================= */}
+
                 {error && (
-                    <div className="mb-6 rounded-2xl border border-[#FFD6D6] bg-white p-4 shadow-sm">
+                    <div className="mb-6 rounded-lg border border-secondary-fixed bg-white p-4 shadow-ambient">
+
                         <div className="flex items-start gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF1F1] text-[#B7102A]">
-                                <span className="material-symbols-outlined">error</span>
+
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary-fixed text-secondary">
+                                <span className="material-symbols-outlined">
+                                    error
+                                </span>
                             </div>
+
                             <div>
-                                <p className="font-bold text-[#93000A]">Unable to load dashboard</p>
-                                <p className="mt-1 text-sm text-[#667085]">{error}</p>
+                                <p className="font-semibold text-error">
+                                    Unable to load dashboard
+                                </p>
+
+                                <p className="mt-1 text-body-sm text-on-surface-variant">
+                                    {error}
+                                </p>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* STATISTICS - now server-computed */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {/* ================= STATISTICS ================= */}
+
+                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
                     <StatCard
                         icon="pending_actions"
                         label="Review Queue"
-                        value={stats.review_queue.count}
-                        sublabel={`${stats.review_queue.critical_priority} critical`}
-                        onClick={() => navigate("/moderator/reports")}
+                        value={
+                            dashboard.pending_reports
+                        }
+                        sublabel={`${criticalReports.length} high priority`}
+                        onClick={() =>
+                            navigate(
+                                "/moderator/reports"
+                            )
+                        }
                     />
 
                     <StatCard
                         icon="flag"
-                        label="Total Reported Content"
-                        value={stats.reported_content.count}
-                        sublabel={`${stats.reported_content.resolved_today} resolved today`}
+                        label="Total Reports"
+                        value={
+                            dashboard.total_reports
+                        }
+                        sublabel="All submitted reports"
                     />
 
                     <StatCard
                         icon="task_alt"
-                        label="Your Reviews Today"
-                        value={performance.today_reviews}
+                        label="Resolved Reports"
+                        value={
+                            dashboard.resolved_reports
+                        }
+                        sublabel="Successfully resolved"
                     />
 
                     <StatCard
-                        icon="speed"
-                        label="SLA Resolution Rate"
+                        icon="cancel"
+                        label="Rejected Reports"
                         value={
-                            performance.sla_resolution_rate !== null
-                                ? `${performance.sla_resolution_rate}%`
-                                : "—"
+                            dashboard.rejected_reports
                         }
-                        sublabel={
-                            performance.average_resolution_minutes !== null
-                                ? `avg ${performance.average_resolution_minutes} min`
-                                : "No closed reports yet"
-                        }
+                        sublabel="Reports rejected"
                     />
-                </div>
+                </section>
 
-                {/* MAIN GRID */}
-                <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
+                {/* ================= MAIN CONTENT ================= */}
 
-                    {/* REVIEW QUEUE (server-prioritized, not client re-sorted) */}
-                    <section className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
-                        <div className="flex flex-col gap-3 border-b border-[#E7E3F2] p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+
+                    {/* ================= REVIEW QUEUE ================= */}
+
+                    <section className="career-card overflow-hidden">
+
+                        <div className="flex flex-col gap-4 border-b border-outline-variant p-6 sm:flex-row sm:items-center sm:justify-between">
+
                             <div>
+
                                 <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-                                        <span className="material-symbols-outlined">flag</span>
+
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+                                        <span className="material-symbols-outlined">
+                                            flag
+                                        </span>
                                     </div>
-                                    <h2 className="font-['Montserrat'] text-xl font-bold text-[#172033]">
+
+                                    <h2 className="font-montserrat text-headline-md text-on-surface">
                                         Review Queue
                                     </h2>
                                 </div>
-                                <p className="mt-2 text-sm text-[#667085]">
-                                    Pending &amp; under-review reports, highest priority first.
+
+                                <p className="mt-2 text-body-sm text-on-surface-variant">
+                                    Pending and under-review
+                                    reports requiring moderator
+                                    attention.
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={() => navigate("/moderator/reports")}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-[#6D4AFF] transition hover:bg-[#F3F0FF]"
+                                onClick={() =>
+                                    navigate(
+                                        "/moderator/reports"
+                                    )
+                                }
+                                className="career-ghost-button"
                             >
                                 View all
-                                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+
+                                <span className="material-symbols-outlined text-[18px]">
+                                    arrow_forward
+                                </span>
                             </button>
                         </div>
 
                         {loading ? (
-                            <div className="p-12 text-center">
-                                <span className="material-symbols-outlined animate-spin text-3xl text-[#6D4AFF]">
-                                    progress_activity
-                                </span>
-                                <p className="mt-3 text-sm text-[#667085]">Loading queue...</p>
-                            </div>
-                        ) : queue.length === 0 ? (
-                            <div className="p-12 text-center">
-                                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-                                    <span className="material-symbols-outlined text-2xl">inbox</span>
-                                </div>
-                                <p className="mt-4 font-bold text-[#172033]">Queue is empty</p>
-                                <p className="mt-1 text-sm text-[#667085]">
-                                    There are no reports awaiting review.
-                                </p>
-                            </div>
+                            <LoadingState />
+                        ) : pendingReports.length === 0 ? (
+                            <EmptyState />
                         ) : (
-                            <div className="divide-y divide-[#F0EDF7]">
-                                {queue.map((item) => (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        onClick={() => navigate(`/moderator/reports/${item.id}`)}
-                                        className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FCFBFF]"
-                                    >
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-                                            <span className="material-symbols-outlined">flag</span>
-                                        </div>
+                            <div className="divide-y divide-outline-variant">
 
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                                                <p className="font-bold text-[#172033]">
-                                                    {item.item_title || `Report #${item.id}`}
-                                                </p>
-                                                <div className="flex items-center gap-2">
-                                                    <PriorityBadge priority={item.priority} />
-                                                    <ReportStatusBadge status={item.status} />
-                                                </div>
-                                            </div>
-
-                                            <p className="mt-1 truncate text-sm text-[#667085]">
-                                                {item.status_reason}
-                                            </p>
-
-                                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#98A2B3]">
-                                                <span>{item.item_type} #{item.item_id}</span>
-                                                <span>Submitted by {item.submitted_by}</span>
-                                                <span>
-                                                    {item.date
-                                                        ? new Date(item.date).toLocaleDateString()
-                                                        : "N/A"}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <span className="material-symbols-outlined shrink-0 text-[#98A2B3] transition group-hover:translate-x-1 group-hover:text-[#6D4AFF]">
-                                            arrow_forward
-                                        </span>
-                                    </button>
-                                ))}
+                                {pendingReports
+                                    .slice(0, 6)
+                                    .map((item) => (
+                                        <ReportQueueItem
+                                            key={item.id}
+                                            item={item}
+                                            onClick={() =>
+                                                navigate(
+                                                    `/moderator/reports/${item.id}`
+                                                )
+                                            }
+                                        />
+                                    ))}
                             </div>
                         )}
                     </section>
 
-                    {/* CONTENT FLAGS BREAKDOWN */}
-                    <aside className="h-fit rounded-2xl border border-[#E7E3F2] bg-white p-6 shadow-sm">
+                    {/* ================= SUMMARY ================= */}
+
+                    <aside className="career-card h-fit p-6">
+
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-                                <span className="material-symbols-outlined">bar_chart</span>
+
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+                                <span className="material-symbols-outlined">
+                                    bar_chart
+                                </span>
                             </div>
-                            <h2 className="font-['Montserrat'] text-xl font-bold text-[#172033]">
-                                Report Reasons
+
+                            <h2 className="font-montserrat text-headline-md text-on-surface">
+                                Report Summary
                             </h2>
                         </div>
 
-                        <p className="mt-3 text-sm leading-6 text-[#667085]">
-                            Breakdown of all reports by reason.
+                        <p className="mt-3 text-body-sm leading-6 text-on-surface-variant">
+                            Current moderation activity and
+                            report status distribution.
                         </p>
 
-                        <div className="mt-6 space-y-4">
-                            {contentFlags.length === 0 ? (
-                                <p className="text-sm text-[#98A2B3]">No reports yet.</p>
-                            ) : (
-                                contentFlags.map((flag) => (
-                                    <div key={flag.reason}>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-[#667085]">{flag.reason}</span>
-                                            <span className="font-bold text-[#172033]">
-                                                {flag.count} ({flag.percentage}%)
-                                            </span>
-                                        </div>
-                                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#EDEAF5]">
-                                            <div
-                                                className="h-full rounded-full bg-[#6D4AFF]"
-                                                style={{ width: `${flag.percentage}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))
-                            )}
+                        <div className="mt-6 space-y-3">
+
+                            <SummaryRow
+                                label="Pending"
+                                value={
+                                    dashboard.pending_reports
+                                }
+                                tone="warning"
+                            />
+
+                            <SummaryRow
+                                label="Resolved"
+                                value={
+                                    dashboard.resolved_reports
+                                }
+                                tone="success"
+                            />
+
+                            <SummaryRow
+                                label="Rejected"
+                                value={
+                                    dashboard.rejected_reports
+                                }
+                                tone="danger"
+                            />
+
+                            <SummaryRow
+                                label="Total"
+                                value={
+                                    dashboard.total_reports
+                                }
+                            />
                         </div>
 
-                        {(stats.pending_job_approvals === null ||
-                            stats.flagged_companies === null) && (
-                            <div className="mt-6 rounded-xl bg-[#FAF9FF] p-4">
-                                <p className="text-xs leading-5 text-[#667085]">
-                                    Job approvals and flagged-company metrics aren't
-                                    tracked by the current data model yet.
-                                </p>
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate(
+                                    "/moderator/reports"
+                                )
+                            }
+                            className="career-primary-button mt-6 w-full"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">
+                                manage_search
+                            </span>
+
+                            Manage Reports
+                        </button>
                     </aside>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }
 
-function StatCard({ icon, label, value, sublabel, onClick }) {
+
+/* =========================================================
+   STAT CARD
+========================================================= */
+
+function StatCard({
+    icon,
+    label,
+    value,
+    sublabel,
+    onClick,
+}) {
     return (
         <button
             type="button"
             onClick={onClick}
             disabled={!onClick}
-            className={`flex items-center justify-between rounded-2xl border border-[#E7E3F2] bg-white p-5 text-left shadow-sm transition duration-200 ${
+            className={`career-card career-card-hover flex items-center justify-between p-5 ${
                 onClick
-                    ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#D8D0F7] hover:shadow-md"
+                    ? "cursor-pointer"
                     : "cursor-default"
             }`}
         >
             <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+
+                <p className="text-label-sm uppercase text-outline">
                     {label}
                 </p>
-                <p className="mt-2 text-2xl font-bold text-[#172033]">{value}</p>
+
+                <p className="mt-2 font-montserrat text-3xl font-bold text-on-surface">
+                    {value}
+                </p>
+
                 {sublabel && (
-                    <p className="mt-1 text-xs text-[#98A2B3]">{sublabel}</p>
+                    <p className="mt-1 text-body-sm text-on-surface-variant">
+                        {sublabel}
+                    </p>
                 )}
             </div>
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
-                <span className="material-symbols-outlined">{icon}</span>
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+
+                <span className="material-symbols-outlined">
+                    {icon}
+                </span>
+
             </div>
         </button>
     );
 }
 
-function PriorityBadge({ priority }) {
+
+/* =========================================================
+   REPORT QUEUE ITEM
+========================================================= */
+
+function ReportQueueItem({
+    item,
+    onClick,
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-surface-low"
+        >
+
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+
+                <span className="material-symbols-outlined">
+                    flag
+                </span>
+
+            </div>
+
+            <div className="min-w-0 flex-1">
+
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+
+                    <p className="truncate font-semibold text-on-surface">
+                        {item.title ||
+                            item.item_title ||
+                            item.reason ||
+                            `Report R00${item.id}`}
+                    </p>
+
+                    <div className="flex items-center gap-2">
+
+                        <PriorityBadge
+                            priority={
+                                item.priority
+                            }
+                        />
+
+                        <ReportStatusBadge
+                            status={
+                                item.status
+                            }
+                        />
+                    </div>
+                </div>
+
+                <p className="mt-1 truncate text-body-sm text-on-surface-variant">
+                    {item.description ||
+                        item.status_reason ||
+                        item.reason ||
+                        "No description available."}
+                </p>
+
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-label-sm text-outline">
+
+                    {item.reported_job && (
+                        <span>
+                            Job{" "}
+                            {item.reported_job}
+                        </span>
+                    )}
+
+                    {item.reported_by && (
+                        <span>
+                            Submitted by{" "}
+                            {typeof item.reported_by ===
+                            "object"
+                                ? item.reported_by
+                                      .username ||
+                                  item.reported_by
+                                      .email
+                                : item.reported_by}
+                        </span>
+                    )}
+
+                    <span>
+                        {item.created_at
+                            ? new Date(
+                                  item.created_at
+                              ).toLocaleDateString()
+                            : "N/A"}
+                    </span>
+                </div>
+            </div>
+
+            <span className="material-symbols-outlined shrink-0 text-outline transition group-hover:translate-x-1 group-hover:text-primary">
+                arrow_forward
+            </span>
+        </button>
+    );
+}
+
+
+/* =========================================================
+   SUMMARY ROW
+========================================================= */
+
+function SummaryRow({
+    label,
+    value,
+    tone,
+}) {
     const styles = {
-        High: "bg-red-50 text-red-700 ring-red-100",
-        Medium: "bg-amber-50 text-amber-700 ring-amber-100",
-        Low: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+        warning:
+            "bg-tertiary-fixed text-on-tertiary-fixed-variant",
+
+        success:
+            "bg-primary-fixed text-on-primary-fixed-variant",
+
+        danger:
+            "bg-secondary-fixed text-on-secondary-fixed-variant",
+
+        default:
+            "bg-surface-low text-on-surface",
+    };
+
+    return (
+        <div
+            className={`flex items-center justify-between rounded-lg px-4 py-3 ${
+                styles[tone] || styles.default
+            }`}
+        >
+            <span className="text-body-sm">
+                {label}
+            </span>
+
+            <span className="font-semibold">
+                {value}
+            </span>
+        </div>
+    );
+}
+
+
+/* =========================================================
+   PRIORITY BADGE
+========================================================= */
+
+function PriorityBadge({
+    priority,
+}) {
+    const styles = {
+        Critical:
+            "bg-secondary-fixed text-on-secondary-fixed-variant",
+
+        High:
+            "bg-secondary-fixed text-on-secondary-fixed-variant",
+
+        Medium:
+            "bg-tertiary-fixed text-on-tertiary-fixed-variant",
+
+        Low:
+            "bg-primary-fixed text-on-primary-fixed-variant",
     };
 
     return (
         <span
-            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${
-                styles[priority] || "bg-slate-50 text-slate-700 ring-slate-100"
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-label-sm ${
+                styles[priority] ||
+                "bg-surface-container text-on-surface-variant"
             }`}
         >
-            {priority}
+            {priority || "Normal"}
         </span>
+    );
+}
+
+
+/* =========================================================
+   LOADING STATE
+========================================================= */
+
+function LoadingState() {
+    return (
+        <div className="p-12 text-center">
+
+            <span className="material-symbols-outlined animate-spin text-3xl text-primary">
+                progress_activity
+            </span>
+
+            <p className="mt-3 text-body-sm text-on-surface-variant">
+                Loading review queue...
+            </p>
+        </div>
+    );
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+function EmptyState() {
+    return (
+        <div className="p-12 text-center">
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary-fixed text-primary">
+
+                <span className="material-symbols-outlined text-2xl">
+                    inbox
+                </span>
+
+            </div>
+
+            <p className="mt-4 font-semibold text-on-surface">
+                Queue is empty
+            </p>
+
+            <p className="mt-1 text-body-sm text-on-surface-variant">
+                There are no reports awaiting review.
+            </p>
+        </div>
     );
 }

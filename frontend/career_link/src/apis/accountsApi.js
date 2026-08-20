@@ -6,13 +6,17 @@ const accountsApi = {
     },
 
     login: (credentials) => {
-        return apiClient.post("/api/token/", credentials);
+        return apiClient.post("/auth/token/", credentials);
     },
 
     refreshToken: (refresh) => {
-        return apiClient.post("/api/token/refresh/", {
+        return apiClient.post("/auth/token/refresh/", {
             refresh,
         });
+    },
+
+    getMe: () => {
+        return apiClient.get("/accounts/me/");
     },
 };
 

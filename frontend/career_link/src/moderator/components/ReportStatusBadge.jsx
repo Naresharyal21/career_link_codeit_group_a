@@ -1,21 +1,28 @@
 const statusStyles = {
-    Pending: "bg-[#ffdea9] text-[#634500]",
-    "Under Review": "bg-[#d2e4ff] text-[#00355f]",
-    Resolved: "bg-[#d9f2df] text-[#17652d]",
-    Rejected: "bg-[#ffdad6] text-[#93000a]",
+    Pending:
+        "bg-tertiary-fixed text-on-tertiary-fixed-variant",
+
+    "Under Review":
+        "bg-primary-fixed text-on-primary-fixed-variant",
+
+    Resolved:
+        "bg-[#D9F2DF] text-[#17652D]",
+
+    Rejected:
+        "bg-secondary-fixed text-on-secondary-fixed-variant",
 };
 
-export default function ReportStatusBadge({ status }) {
-    const style =
-        statusStyles[status] ||
-        "bg-[#e6eeff] text-[#00355f]";
-
+export default function ReportStatusBadge({
+    status,
+}) {
     return (
         <span
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${style}`}
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-label-sm ${
+                statusStyles[status] ||
+                "bg-surface-container text-on-surface-variant"
+            }`}
         >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            {status || "Pending"}
+            {status || "Unknown"}
         </span>
     );
 }

@@ -1,35 +1,52 @@
 from django.urls import path
 
 from .views import (
-    ModeratorDashboardAPIView,
+    ModeratorDashboardView,
     ReportListCreateAPIView,
     ReportDetailAPIView,
-    ReportRejectView,
-    ReportResolveView,
-    ReportReviewView,
+    StartReviewAPIView,
+    ResolveReportAPIView,
+    RejectReportAPIView,
 )
+
 
 app_name = "moderator"
 
+
 urlpatterns = [
-    path("dashboard/", ModeratorDashboardAPIView.as_view(), name="dashboard"),
-    path("reports/", ReportListCreateAPIView.as_view(), name="report-list-create" ),
-    path("reports/<int:id>/", ReportDetailAPIView.as_view(), name="report-detail" ),
+    path(
+        "dashboard/",
+        ModeratorDashboardView.as_view(),
+        name="dashboard",
+    ),
+
+    path(
+        "reports/",
+        ReportListCreateAPIView.as_view(),
+        name="report-list-create",
+    ),
+
+    path(
+        "reports/<int:id>/",
+        ReportDetailAPIView.as_view(),
+        name="report-detail",
+    ),
+
     path(
         "reports/<int:id>/review/",
-        ReportReviewView.as_view(),
-        name="report-review",
+        StartReviewAPIView.as_view(),
+        name="report-start-review",
     ),
 
     path(
         "reports/<int:id>/resolve/",
-        ReportResolveView.as_view(),
+        ResolveReportAPIView.as_view(),
         name="report-resolve",
     ),
 
     path(
         "reports/<int:id>/reject/",
-        ReportRejectView.as_view(),
+        RejectReportAPIView.as_view(),
         name="report-reject",
     ),
 ]

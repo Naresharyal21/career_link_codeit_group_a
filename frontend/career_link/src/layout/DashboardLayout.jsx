@@ -1,28 +1,38 @@
-import React from 'react'
+import React from "react";
+import { Outlet } from "react-router";
 
-import Navbar from './Navbar'
-import Sidebar from './Sidebar'
-
-import { Outlet } from 'react-router'
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
 const DashboardLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="h-20 shrink-0 bg-gray-50 shadow-lg shadow-black/12 rounded">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#F7F8FC] text-[#172337]">
+
+      {/* ================= HEADER ================= */}
+      <header className="relative z-50 h-20 shrink-0 border-b border-[#E5E7EB] bg-white shadow-sm">
         <Navbar />
-      </div>
+      </header>
 
-      <div className="flex flex-1">
-        <div className="w-60 shrink-0 bg-gray-50">
+      {/* ================= MAIN AREA ================= */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+
+        {/* ================= SIDEBAR ================= */}
+        <aside className="hidden w-64 shrink-0 bg-[#172337] text-white md:block">
           <Sidebar />
-        </div>
+        </aside>
 
-        <div className="content flex-1 p-6">
-          <Outlet />
-        </div>
+        {/* ================= CONTENT ================= */}
+        <main className="min-w-0 flex-1 overflow-y-auto bg-[#F7F8FC]">
+
+          <div className="min-h-full p-4 sm:p-6 lg:p-8">
+            <Outlet />
+          </div>
+
+        </main>
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardLayout
+export default DashboardLayout;

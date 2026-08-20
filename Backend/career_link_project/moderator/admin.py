@@ -1,19 +1,21 @@
 from django.contrib import admin
-from moderator.models import Report
+from .models import Report
 
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
-
     list_display = (
         "id",
         "reported_job",
         "reported_by",
         "report_reason",
         "status",
-        "reviewed_by",
         "reported_at",
-        "reviewed_at",
+    )
+
+    search_fields = (
+        "reported_job__title",
+        "reported_by__username",
     )
 
     list_filter = (
@@ -22,24 +24,11 @@ class ReportAdmin(admin.ModelAdmin):
         "reported_at",
     )
 
-    search_fields = (
-        "reported_job__title",
-        "reported_by__username",
-        "reviewed_by__username",
-        "report_description",
-    )
-
     readonly_fields = (
-        "reported_by",
-        "reviewed_by",
         "reported_at",
-        "reviewed_at",
         "created_at",
         "updated_at",
+        "reviewed_at",
     )
 
-    def save_model(self, request, obj, form, change):
-        if not change and not obj.reported_by_id:
-            obj.reported_by = request.user
-
-        super().save_model(request, obj, form, change)
+    ordering = ("-reported_at",)

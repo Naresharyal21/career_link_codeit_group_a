@@ -5,6 +5,7 @@ import accountsApi from "../../apis/accountsApi";
 const Loginform = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [email, setEmail] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -18,10 +19,9 @@ const Loginform = () => {
 
         try {
             const data = await accountsApi.login({
-                username: username.trim(),
+                email: email.trim(),
                 password,
             });
-
             if (!data?.access || !data?.refresh) {
                 throw new Error("Login response did not contain valid tokens.");
             }
@@ -51,14 +51,15 @@ const Loginform = () => {
                 <div className="space-y-4">
                     <div>
                         <label className="mb-1 block text-sm font-medium text-gray-700">
-                            Username
+                            Email
                         </label>
+
                         <input
-                            type="text"
-                            value={username}
-                            onChange={(event) => setUsername(event.target.value)}
+                            type="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
                             className="w-full rounded-md border border-gray-300 p-2 outline-none focus:border-purple-700"
-                            autoComplete="username"
+                            autoComplete="email"
                             required
                         />
                     </div>

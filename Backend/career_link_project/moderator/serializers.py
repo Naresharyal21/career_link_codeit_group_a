@@ -1,26 +1,21 @@
 from rest_framework import serializers
+from .models import Report
 
-from moderator.models import Report
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
-class CareerLinkTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        token["is_staff"] = user.is_staff
-        return token
-
-        
 
 class ReportSerializer(serializers.ModelSerializer):
-
-    reported_by = serializers.ReadOnlyField(
-        source="reported_by.username"
+    reported_job_title = serializers.CharField(
+        source="reported_job.title",
+        read_only=True
     )
 
-    reviewed_by = serializers.ReadOnlyField(
-        source="reviewed_by.username"
+    reported_by_name = serializers.CharField(
+        source="reported_by.username",
+        read_only=True
+    )
+
+    reviewed_by_name = serializers.CharField(
+        source="reviewed_by.username",
+        read_only=True
     )
 
     class Meta:
@@ -29,8 +24,11 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "reported_job",
+            "reported_job_title",
             "reported_by",
+            "reported_by_name",
             "reviewed_by",
+            "reviewed_by_name",
             "report_reason",
             "report_description",
             "status",
@@ -44,46 +42,8 @@ class ReportSerializer(serializers.ModelSerializer):
             "id",
             "reported_by",
             "reviewed_by",
-            "status",
             "reported_at",
             "reviewed_at",
             "created_at",
             "updated_at",
         ]
-
-    def validate(self, attrs):
-        request = self.context.get("request")
-
-        if not request or not request.user.is_authenticated:
-            return attrs
-
-        reported_job = attrs.get("reported_job")
-
-        if not reported_job:
-            return attrs
-
-        if self.instance is not None and reported_job == self.instance.reported_job:
-            return attrs
-
-        already_reported = Report.objects.filter(
-            reported_by=request.user,
-            reported_job=reported_job,
-            status__in=[
-                Report.Status.PENDING,
-                Report.Status.UNDER_REVIEW,
-            ],
-        ).exclude(
-            pk=self.instance.pk if self.instance else None
-        ).exists()
-
-        if already_reported:
-            raise serializers.ValidationError({
-                "reported_job": (
-                    "You have already reported this job "
-                    "and that report is still being reviewed."
-                )
-            })
-
-        return attrs
-
-

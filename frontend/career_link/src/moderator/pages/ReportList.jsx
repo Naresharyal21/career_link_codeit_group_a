@@ -9,6 +9,40 @@ import { useNavigate } from "react-router";
 import moderatorApi from "../../apis/moderatorApi";
 import ReportStatusBadge from "../components/ReportStatusBadge";
 
+
+
+
+function formatReportId(id) {
+    if (id === null || id === undefined) {
+        return "R00";
+    }
+
+    return `R00${id}`;
+}
+
+
+
+
+function formatDate(value) {
+    if (!value) {
+        return "N/A";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+
+
 export default function ReportList() {
     const navigate = useNavigate();
 
@@ -19,11 +53,8 @@ export default function ReportList() {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("All");
 
-    /*
-     * =========================================================
-     * LOAD REPORTS
-     * =========================================================
-     */
+
+
 
     const loadReports = async () => {
         try {
@@ -39,11 +70,6 @@ export default function ReportList() {
             } else if (Array.isArray(data?.results)) {
                 setReports(data.results);
             } else {
-                console.error(
-                    "Unexpected reports response:",
-                    data
-                );
-
                 setReports([]);
 
                 setError(
@@ -60,6 +86,7 @@ export default function ReportList() {
 
             setError(
                 err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
                     err?.message ||
                     "Unable to load reports."
             );
@@ -68,47 +95,117 @@ export default function ReportList() {
         }
     };
 
-    /*
-     * =========================================================
-     * INITIAL LOAD
-     * =========================================================
-     */
 
     useEffect(() => {
         loadReports();
     }, []);
 
-    /*
-     * =========================================================
-     * FILTER REPORTS
-     * =========================================================
-     */
+
+
+    const getReportStatus = (report) => {
+        return (
+            report?.status ||
+            report?.report_status ||
+            "Pending"
+        );
+    };
+
+
+    const getReportedJobId = (report) => {
+        return (
+            report?.reported_job ||
+            report?.job_id ||
+            report?.job?.id ||
+            null
+        );
+    };
+
+
+    const getReportedJobTitle = (report) => {
+        return (
+            report?.reported_job_title ||
+            report?.job?.title ||
+            null
+        );
+    };
+
+
+    const getReportedBy = (report) => {
+        return (
+            report?.reported_by_name ||
+            report?.reported_by ||
+            report?.reporter ||
+            "Unknown"
+        );
+    };
+
+
+    const getReportReason = (report) => {
+        return (
+            report?.report_reason ||
+            report?.reason ||
+            "No reason provided"
+        );
+    };
+
+
+    const getReportDescription = (report) => {
+        return (
+            report?.report_description ||
+            report?.description ||
+            "No description provided."
+        );
+    };
+
+
+    const getSubmittedDate = (report) => {
+        return (
+            report?.reported_at ||
+            report?.created_at ||
+            report?.created ||
+            null
+        );
+    };
+
+
+
 
     const filteredReports = useMemo(() => {
-        const query = search.trim().toLowerCase();
+        const query = search
+            .trim()
+            .toLowerCase();
 
         return reports.filter((report) => {
             const reportStatus =
-                report.status ||
-                report.report_status ||
-                "Pending";
+                getReportStatus(report);
 
             const matchesStatus =
                 status === "All" ||
-                reportStatus.toLowerCase() ===
+                String(reportStatus).toLowerCase() ===
                     status.toLowerCase();
 
             const searchableText = [
-                report.id,
-                report.reported_job,
-                report.job_id,
-                report.job?.id,
-                report.reported_by,
-                report.reviewed_by,
-                report.report_reason,
-                report.report_description,
-                report.status,
-                report.report_status,
+                report?.id,
+                formatReportId(report?.id),
+
+                report?.reported_job,
+                report?.reported_job_title,
+                report?.job_id,
+                report?.job?.id,
+                report?.job?.title,
+
+                report?.reported_by,
+                report?.reported_by_name,
+                report?.reporter,
+
+                report?.report_reason,
+                report?.reason,
+
+                report?.report_description,
+                report?.description,
+
+                report?.status,
+                report?.report_status,
             ]
                 .filter(
                     (value) =>
@@ -118,33 +215,60 @@ export default function ReportList() {
                 .join(" ")
                 .toLowerCase();
 
-            const matchesSearch =
-                !query ||
-                searchableText.includes(query);
-
             return (
                 matchesStatus &&
-                matchesSearch
+                (!query ||
+                    searchableText.includes(query))
             );
         });
-    }, [reports, search, status]);
+    }, [
+        reports,
+        search,
+        status,
+    ]);
 
-    /*
-     * =========================================================
-     * CLEAR FILTERS
-     * =========================================================
-     */
+
+
+    const totalReports = reports.length;
+
+    const pendingReports = reports.filter(
+        (report) =>
+            getReportStatus(report).toLowerCase() ===
+            "pending"
+    ).length;
+
+    const underReviewReports = reports.filter(
+        (report) => {
+            const value =
+                getReportStatus(report).toLowerCase();
+
+            return (
+                value === "under review" ||
+                value === "in review"
+            );
+        }
+    ).length;
+
+    const resolvedReports = reports.filter(
+        (report) =>
+            getReportStatus(report).toLowerCase() ===
+            "resolved"
+    ).length;
+
+    const rejectedReports = reports.filter(
+        (report) =>
+            getReportStatus(report).toLowerCase() ===
+            "rejected"
+    ).length;
+
+
+
 
     const clearFilters = () => {
         setSearch("");
         setStatus("All");
     };
 
-    /*
-     * =========================================================
-     * VIEW REPORT
-     * =========================================================
-     */
 
     const handleView = (reportId) => {
         navigate(
@@ -152,145 +276,150 @@ export default function ReportList() {
         );
     };
 
-    /*
-     * =========================================================
-     * PAGE
-     * =========================================================
-     */
+
 
     return (
-        <div className="min-h-screen bg-[#FAF9FF] text-[#172033]">
+        <div className="min-h-screen bg-[#F8F9FF] text-[#172033]">
+
             <div className="mx-auto max-w-[1440px] px-4 py-8 md:px-8 lg:px-12">
 
-                {/* =====================================================
-                    HEADER
-                ====================================================== */}
 
-                <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
 
-                    <div>
 
-                        {/* Back to Dashboard */}
-                        <button
-                            type="button"
-                            onClick={() =>
-                                navigate("/moderator")
-                            }
-                            className="mb-5 inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:shadow-md"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">
-                                arrow_back
-                            </span>
+                <div className="mb-8">
 
-                            Back to Dashboard
-                        </button>
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate("/moderator")
+                        }
+                        className="mb-6 inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
+                    >
+                        <span className="material-symbols-outlined text-[19px]">
+                            arrow_back
+                        </span>
 
-                        {/* Section Label */}
-                        <div className="mb-3 flex items-center gap-2">
+                        Dashboard
+                    </button>
 
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F3F0FF] text-[#6D4AFF]">
-                                <span className="material-symbols-outlined text-[20px]">
-                                    flag
+
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+
+                        <div>
+
+                            <div className="mb-3 flex items-center gap-2">
+
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEEAFE] text-[#6D4AFF]">
+
+                                    <span className="material-symbols-outlined">
+                                        flag
+                                    </span>
+
+                                </div>
+
+                                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#6D4AFF]">
+                                    Moderation
                                 </span>
+
                             </div>
 
-                            <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#6D4AFF]">
-                                Moderation
+
+                            <h1 className="font-['Montserrat'] text-3xl font-bold tracking-tight text-[#172033] md:text-4xl">
+                                Reports
+                            </h1>
+
+
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085] md:text-base">
+                                Review reports submitted by
+                                job seekers and employers,
+                                investigate reported content,
+                                and take appropriate action.
                             </p>
 
                         </div>
 
-                        {/* Title */}
-                        <h1 className="font-['Montserrat'] text-3xl font-bold tracking-tight text-[#172033] md:text-4xl">
-                            Reports
-                        </h1>
 
-                        <p className="mt-2 max-w-2xl text-base leading-6 text-[#667085]">
-                            Review reports submitted by
-                            users and take appropriate
-                            moderation action.
-                        </p>
+                        <button
+                            type="button"
+                            onClick={loadReports}
+                            disabled={loading}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-5 py-3 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+
+                            <span
+                                className={`material-symbols-outlined text-[20px] ${
+                                    loading
+                                        ? "animate-spin"
+                                        : ""
+                                }`}
+                            >
+                                refresh
+                            </span>
+
+                            {loading
+                                ? "Refreshing..."
+                                : "Refresh reports"}
+
+                        </button>
 
                     </div>
 
-                    {/* Refresh */}
-                    <button
-                        type="button"
-                        onClick={loadReports}
-                        disabled={loading}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-5 py-3 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                        <span
-                            className={`material-symbols-outlined text-[20px] ${
-                                loading
-                                    ? "animate-spin"
-                                    : ""
-                            }`}
-                        >
-                            refresh
-                        </span>
-
-                        {loading
-                            ? "Refreshing..."
-                            : "Refresh"}
-                    </button>
-
                 </div>
 
-                {/* =====================================================
-                    QUICK SUMMARY
-                ====================================================== */}
 
-                <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+                <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
                     <SummaryCard
                         icon="flag"
                         label="Total Reports"
-                        value={reports.length}
+                        value={totalReports}
                     />
 
                     <SummaryCard
                         icon="pending_actions"
                         label="Pending"
-                        value={
-                            reports.filter(
-                                (report) =>
-                                    (
-                                        report.status ||
-                                        report.report_status ||
-                                        "Pending"
-                                    ).toLowerCase() ===
-                                    "pending"
-                            ).length
-                        }
+                        value={pendingReports}
                     />
 
                     <SummaryCard
-                        icon="visibility"
-                        label="Showing"
-                        value={
-                            filteredReports.length
-                        }
+                        icon="rate_review"
+                        label="Under Review"
+                        value={underReviewReports}
+                    />
+
+                    <SummaryCard
+                        icon="check_circle"
+                        label="Resolved"
+                        value={resolvedReports}
+                    />
+
+                    <SummaryCard
+                        icon="cancel"
+                        label="Rejected"
+                        value={rejectedReports}
                     />
 
                 </div>
 
-                {/* =====================================================
-                    ERROR
-                ====================================================== */}
+
+
 
                 {error && (
-                    <div className="mb-6 rounded-xl border border-[#FFD6D6] bg-white p-4 shadow-sm">
+                    <div className="mb-6 rounded-2xl border border-[#FFD6D6] bg-white p-5 shadow-sm">
 
                         <div className="flex items-start gap-3">
 
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFF1F1] text-[#B7102A]">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FFF1F1] text-[#B7102A]">
+
                                 <span className="material-symbols-outlined">
                                     error
                                 </span>
+
                             </div>
 
-                            <div className="min-w-0">
+
+                            <div>
 
                                 <p className="font-bold text-[#93000A]">
                                     Unable to load reports
@@ -303,13 +432,9 @@ export default function ReportList() {
                                 <button
                                     type="button"
                                     onClick={loadReports}
-                                    className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-[#6D4AFF] transition hover:text-[#5636D9]"
+                                    className="mt-3 text-sm font-bold text-[#6D4AFF] hover:text-[#5636D9]"
                                 >
                                     Try again
-
-                                    <span className="material-symbols-outlined text-[17px]">
-                                        arrow_forward
-                                    </span>
                                 </button>
 
                             </div>
@@ -319,43 +444,44 @@ export default function ReportList() {
                     </div>
                 )}
 
-                {/* =====================================================
-                    FILTERS
-                ====================================================== */}
 
                 <div className="mb-5 rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm md:p-6">
 
-                    <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                         <div className="flex items-center gap-3">
 
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F3F0FF] text-[#6D4AFF]">
-                                <span className="material-symbols-outlined text-[20px]">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EEEAFE] text-[#6D4AFF]">
+
+                                <span className="material-symbols-outlined">
                                     tune
                                 </span>
+
                             </div>
+
 
                             <div>
 
-                                <h2 className="text-sm font-bold text-[#172033]">
+                                <h2 className="font-bold text-[#172033]">
                                     Search & Filters
                                 </h2>
 
                                 <p className="text-xs text-[#98A2B3]">
-                                    Find a specific moderation
-                                    report quickly.
+                                    Find reports by ID,
+                                    user, job or reason.
                                 </p>
 
                             </div>
 
                         </div>
 
+
                         {(search ||
                             status !== "All") && (
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="self-start rounded-lg px-3 py-2 text-sm font-bold text-[#B7102A] transition hover:bg-[#FFF1F1] sm:self-auto"
+                                className="text-sm font-bold text-[#B7102A] hover:text-[#93000A]"
                             >
                                 Clear filters
                             </button>
@@ -363,14 +489,15 @@ export default function ReportList() {
 
                     </div>
 
-                    <div className="flex flex-col gap-3 lg:flex-row">
 
-                        {/* Search */}
-                        <div className="relative flex-1">
+                    <div className="grid gap-3 lg:grid-cols-[1fr_240px]">
+
+                        <div className="relative">
 
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#98A2B3]">
                                 search
                             </span>
+
 
                             <input
                                 type="text"
@@ -380,18 +507,19 @@ export default function ReportList() {
                                         event.target.value
                                     )
                                 }
-                                placeholder="Search reports, users, jobs, reasons..."
-                                className="w-full rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] py-3.5 pl-12 pr-4 text-sm text-[#172033] outline-none transition duration-200 placeholder:text-[#98A2B3] focus:border-[#6D4AFF] focus:bg-white focus:ring-4 focus:ring-[#EEEAFE]"
+                                placeholder="Search report ID, user, job, reason..."
+                                className="w-full rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-[#6D4AFF] focus:bg-white focus:ring-4 focus:ring-[#EEEAFE]"
                             />
 
                         </div>
 
-                        {/* Status */}
-                        <div className="relative min-w-full lg:min-w-[230px]">
+
+                        <div className="relative">
 
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#98A2B3]">
                                 filter_list
                             </span>
+
 
                             <select
                                 value={status}
@@ -400,8 +528,9 @@ export default function ReportList() {
                                         event.target.value
                                     )
                                 }
-                                className="w-full appearance-none rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] py-3.5 pl-12 pr-10 text-sm font-semibold text-[#6D4AFF] outline-none transition duration-200 focus:border-[#6D4AFF] focus:bg-white focus:ring-4 focus:ring-[#EEEAFE]"
+                                className="w-full appearance-none rounded-xl border border-[#E7E3F2] bg-[#FAF9FF] py-3.5 pl-12 pr-10 text-sm font-semibold text-[#172033] outline-none focus:border-[#6D4AFF] focus:bg-white focus:ring-4 focus:ring-[#EEEAFE]"
                             >
+
                                 <option value="All">
                                     All statuses
                                 </option>
@@ -421,7 +550,9 @@ export default function ReportList() {
                                 <option value="Rejected">
                                     Rejected
                                 </option>
+
                             </select>
+
 
                             <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#98A2B3]">
                                 expand_more
@@ -433,121 +564,84 @@ export default function ReportList() {
 
                 </div>
 
-                {/* =====================================================
-                    RESULT SUMMARY
-                ====================================================== */}
+
 
                 <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
                     <p className="text-sm text-[#667085]">
+
                         Showing{" "}
+
                         <strong className="font-bold text-[#172033]">
                             {filteredReports.length}
-                        </strong>{" "}
-                        of{" "}
+                        </strong>
+
+                        {" "}of{" "}
+
                         <strong className="font-bold text-[#172033]">
                             {reports.length}
-                        </strong>{" "}
-                        reports
+                        </strong>
+
+                        {" "}reports
+
                     </p>
+
 
                     {(search ||
                         status !== "All") && (
-                        <div className="inline-flex w-fit items-center gap-2 rounded-full bg-[#F3F0FF] px-3 py-1.5 text-xs font-bold text-[#6D4AFF]">
+                        <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#EEEAFE] px-3 py-1.5 text-xs font-bold text-[#6D4AFF]">
 
                             <span className="h-1.5 w-1.5 rounded-full bg-[#6D4AFF]" />
 
                             Filters active
 
-                        </div>
+                        </span>
                     )}
 
                 </div>
 
-                {/* =====================================================
-                    LOADING
-                ====================================================== */}
+
+
 
                 {loading && (
-                    <div className="rounded-2xl border border-[#E7E3F2] bg-white p-16 text-center shadow-sm">
-
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F3F0FF] text-[#6D4AFF]">
-
-                            <span className="material-symbols-outlined animate-spin text-3xl">
-                                progress_activity
-                            </span>
-
-                        </div>
-
-                        <p className="mt-4 text-sm font-semibold text-[#667085]">
-                            Loading reports...
-                        </p>
-
-                    </div>
+                    <LoadingState />
                 )}
 
-                {/* =====================================================
-                    EMPTY
-                ====================================================== */}
+
+
 
                 {!loading &&
                     filteredReports.length === 0 && (
-                        <div className="rounded-2xl border border-[#E7E3F2] bg-white px-6 py-20 text-center shadow-sm">
-
-                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F3F0FF] text-[#6D4AFF]">
-
-                                <span className="material-symbols-outlined text-3xl">
-                                    flag
-                                </span>
-
-                            </div>
-
-                            <h2 className="mt-5 font-['Montserrat'] text-xl font-bold text-[#172033]">
-                                No reports found
-                            </h2>
-
-                            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#667085]">
-                                There are no reports
-                                matching your current
-                                filters.
-                            </p>
-
-                            {(search ||
-                                status !== "All") && (
-                                <button
-                                    type="button"
-                                    onClick={clearFilters}
-                                    className="mt-5 rounded-lg bg-[#6D4AFF] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#5636D9]"
-                                >
-                                    Clear filters
-                                </button>
-                            )}
-
-                        </div>
+                        <EmptyState
+                            hasFilters={
+                                !!search ||
+                                status !== "All"
+                            }
+                            onClear={clearFilters}
+                        />
                     )}
 
-                {/* =====================================================
-                    REPORTS
-                ====================================================== */}
+
 
                 {!loading &&
                     filteredReports.length > 0 && (
+
                         <div className="overflow-hidden rounded-2xl border border-[#E7E3F2] bg-white shadow-sm">
 
-                            {/* Desktop */}
                             <div className="hidden overflow-x-auto md:block">
 
                                 <table className="w-full">
 
                                     <thead>
-                                        <tr className="border-b border-[#E7E3F2] bg-[#F3F0FF]">
+
+                                        <tr className="border-b border-[#E7E3F2] bg-[#FAF9FF]">
 
                                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#667085]">
                                                 Report
                                             </th>
 
                                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#667085]">
-                                                Job
+                                                Report Information
                                             </th>
 
                                             <th className="px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.12em] text-[#667085]">
@@ -567,19 +661,17 @@ export default function ReportList() {
                                             </th>
 
                                         </tr>
+
                                     </thead>
+
 
                                     <tbody className="divide-y divide-[#F0EDF7]">
 
                                         {filteredReports.map(
                                             (report) => (
                                                 <ReportRow
-                                                    key={
-                                                        report.id
-                                                    }
-                                                    report={
-                                                        report
-                                                    }
+                                                    key={report.id}
+                                                    report={report}
                                                     onView={() =>
                                                         handleView(
                                                             report.id
@@ -595,18 +687,16 @@ export default function ReportList() {
 
                             </div>
 
-                            {/* Mobile */}
+
+                            {/* MOBILE */}
+
                             <div className="divide-y divide-[#F0EDF7] md:hidden">
 
                                 {filteredReports.map(
                                     (report) => (
                                         <ReportMobileCard
-                                            key={
-                                                report.id
-                                            }
-                                            report={
-                                                report
-                                            }
+                                            key={report.id}
+                                            report={report}
                                             onView={() =>
                                                 handleView(
                                                     report.id
@@ -622,15 +712,11 @@ export default function ReportList() {
                     )}
 
             </div>
+
         </div>
     );
 }
 
-/*
- * =========================================================
- * SUMMARY CARD
- * =========================================================
- */
 
 function SummaryCard({
     icon,
@@ -638,11 +724,11 @@ function SummaryCard({
     value,
 }) {
     return (
-        <div className="flex items-center justify-between rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="group flex items-center justify-between rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
 
             <div>
 
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#98A2B3]">
                     {label}
                 </p>
 
@@ -652,7 +738,8 @@ function SummaryCard({
 
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
+
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#EEEAFE] text-[#6D4AFF] transition group-hover:bg-[#E4DEFF]">
 
                 <span className="material-symbols-outlined">
                     {icon}
@@ -664,35 +751,57 @@ function SummaryCard({
     );
 }
 
-/*
- * =========================================================
- * DESKTOP REPORT ROW
- * =========================================================
- */
+
 
 function ReportRow({
     report,
     onView,
 }) {
     const reportStatus =
-        report.status ||
-        report.report_status ||
+        report?.status ||
+        report?.report_status ||
         "Pending";
 
-    const reportedJob =
-        report.reported_job ||
-        report.job_id ||
-        report.job?.id;
+    const reportedJobId =
+        report?.reported_job ||
+        report?.job_id ||
+        report?.job?.id ||
+        null;
+
+    const reportedJobTitle =
+        report?.reported_job_title ||
+        report?.job?.title ||
+        null;
+
+    const reportedBy =
+        report?.reported_by_name ||
+        report?.reported_by ||
+        report?.reporter ||
+        "Unknown";
+
+    const reason =
+        report?.report_reason ||
+        report?.reason ||
+        "No reason provided";
+
+    const submittedDate =
+        report?.reported_at ||
+        report?.created_at ||
+        report?.created ||
+        null;
+
 
     return (
-        <tr className="group transition duration-150 hover:bg-[#FCFBFF]">
+        <tr className="group transition hover:bg-[#FCFBFF]">
 
-            {/* Report */}
+
+            {/* REPORT */}
+
             <td className="px-6 py-5">
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
 
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF] transition group-hover:bg-[#EDE8FF]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EEEAFE] text-[#6D4AFF]">
 
                         <span className="material-symbols-outlined">
                             flag
@@ -700,15 +809,17 @@ function ReportRow({
 
                     </div>
 
-                    <div className="min-w-0">
+
+                    <div>
 
                         <p className="font-bold text-[#172033]">
-                            Report #{report.id}
+                            {formatReportId(
+                                report.id
+                            )}
                         </p>
 
-                        <p className="mt-1 max-w-xs truncate text-sm text-[#667085]">
-                            {report.report_reason ||
-                                "No reason provided"}
+                        <p className="mt-1 text-xs text-[#98A2B3]">
+                            Moderation report
                         </p>
 
                     </div>
@@ -717,23 +828,49 @@ function ReportRow({
 
             </td>
 
-            {/* Job */}
+
+            {/* REPORT INFORMATION */}
+
             <td className="px-6 py-5">
 
-                <span className="inline-flex rounded-lg bg-[#F8F6FF] px-3 py-1.5 text-sm font-bold text-[#6D4AFF]">
-                    {reportedJob
-                        ? `Job #${reportedJob}`
-                        : "Unknown"}
-                </span>
+                <div className="max-w-[260px]">
+
+                    <div className="mb-2 inline-flex items-center rounded-lg bg-[#F3F0FF] px-2.5 py-1 text-xs font-bold text-[#6D4AFF]">
+                        Report {formatReportId(
+                            report.id
+                        )}
+                    </div>
+
+
+                    <p className="truncate font-bold text-[#172033]">
+                        {reportedJobTitle ||
+                            "Reported Job"}
+                    </p>
+
+
+                    <p className="mt-1 truncate text-sm text-[#667085]">
+                        {reason}
+                    </p>
+
+
+                    {reportedJobId && (
+                        <p className="mt-1.5 text-xs text-[#98A2B3]">
+                            Job #{reportedJobId}
+                        </p>
+                    )}
+
+                </div>
 
             </td>
 
-            {/* Reported By */}
+
+            {/* REPORTED BY */}
+
             <td className="px-6 py-5">
 
                 <div className="flex items-center gap-2">
 
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F3F0FF] text-[#6D4AFF]">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#F3F0FF] text-[#6D4AFF]">
 
                         <span className="material-symbols-outlined text-[17px]">
                             person
@@ -741,16 +878,18 @@ function ReportRow({
 
                     </div>
 
-                    <span className="max-w-[180px] truncate font-medium text-[#42474F]">
-                        {report.reported_by ||
-                            "Unknown"}
+
+                    <span className="max-w-[160px] truncate font-medium text-[#42474F]">
+                        {reportedBy}
                     </span>
 
                 </div>
 
             </td>
 
-            {/* Status */}
+
+            {/* STATUS */}
+
             <td className="px-6 py-5">
 
                 <ReportStatusBadge
@@ -759,30 +898,31 @@ function ReportRow({
 
             </td>
 
-            {/* Date */}
+
+            {/* DATE */}
+
             <td className="whitespace-nowrap px-6 py-5 text-sm text-[#667085]">
 
-                {report.reported_at
-                    ? new Date(
-                          report.reported_at
-                      ).toLocaleDateString()
-                    : "N/A"}
+                {formatDate(submittedDate)}
 
             </td>
 
-            {/* Action */}
+
+            {/* ACTION */}
+
             <td className="px-6 py-5 text-right">
 
                 <button
                     type="button"
                     onClick={onView}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition duration-200 hover:border-[#6D4AFF] hover:bg-[#F3F0FF] hover:shadow-md"
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#E7E3F2] bg-white px-4 py-2.5 text-sm font-bold text-[#6D4AFF] shadow-sm transition hover:border-[#6D4AFF] hover:bg-[#F3F0FF]"
                 >
                     View
 
-                    <span className="material-symbols-outlined text-[18px] transition-transform group-hover:translate-x-0.5">
+                    <span className="material-symbols-outlined text-[18px]">
                         arrow_forward
                     </span>
+
                 </button>
 
             </td>
@@ -791,35 +931,62 @@ function ReportRow({
     );
 }
 
-/*
- * =========================================================
- * MOBILE REPORT CARD
- * =========================================================
- */
+
+
 
 function ReportMobileCard({
     report,
     onView,
 }) {
     const reportStatus =
-        report.status ||
-        report.report_status ||
+        report?.status ||
+        report?.report_status ||
         "Pending";
 
-    const reportedJob =
-        report.reported_job ||
-        report.job_id ||
-        report.job?.id;
+    const reportedJobId =
+        report?.reported_job ||
+        report?.job_id ||
+        report?.job?.id ||
+        null;
+
+    const reportedJobTitle =
+        report?.reported_job_title ||
+        report?.job?.title ||
+        null;
+
+    const reportedBy =
+        report?.reported_by_name ||
+        report?.reported_by ||
+        report?.reporter ||
+        "Unknown";
+
+    const reason =
+        report?.report_reason ||
+        report?.reason ||
+        "No reason provided";
+
+    const description =
+        report?.report_description ||
+        report?.description ||
+        "No description provided.";
+
+    const submittedDate =
+        report?.reported_at ||
+        report?.created_at ||
+        report?.created ||
+        null;
+
 
     return (
-        <div className="p-5 transition hover:bg-[#FCFBFF]">
+        <div className="p-5">
 
-            {/* Top */}
+            {/* HEADER */}
+
             <div className="flex items-start justify-between gap-3">
 
                 <div className="flex min-w-0 items-center gap-3">
 
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3F0FF] text-[#6D4AFF]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EEEAFE] text-[#6D4AFF]">
 
                         <span className="material-symbols-outlined">
                             flag
@@ -827,23 +994,25 @@ function ReportMobileCard({
 
                     </div>
 
+
                     <div className="min-w-0">
 
                         <p className="font-bold text-[#172033]">
-                            Report #{report.id}
+                            {formatReportId(
+                                report.id
+                            )}
                         </p>
 
                         <p className="mt-1 text-xs text-[#98A2B3]">
-                            {report.reported_at
-                                ? new Date(
-                                      report.reported_at
-                                  ).toLocaleDateString()
-                                : "N/A"}
+                            {formatDate(
+                                submittedDate
+                            )}
                         </p>
 
                     </div>
 
                 </div>
+
 
                 <ReportStatusBadge
                     status={reportStatus}
@@ -851,64 +1020,107 @@ function ReportMobileCard({
 
             </div>
 
-            {/* Reason */}
-            <div className="mt-5">
 
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#98A2B3]">
-                    Reason
-                </p>
+            {/* REPORT INFORMATION */}
 
-                <p className="mt-1.5 font-bold text-[#172033]">
-                    {report.report_reason ||
-                        "No reason provided"}
-                </p>
-
-                <p className="mt-2 text-sm leading-6 text-[#667085]">
-                    {report.report_description ||
-                        "No description provided."}
-                </p>
-
-            </div>
-
-            {/* Metadata */}
             <div className="mt-5 rounded-xl bg-[#FAF9FF] p-4">
 
-                <div className="flex items-center justify-between gap-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
 
-                    <span className="text-sm text-[#667085]">
-                        Job
+                    <span className="text-xs font-bold uppercase tracking-[0.1em] text-[#98A2B3]">
+                        Report ID
                     </span>
 
-                    <span className="font-bold text-[#6D4AFF]">
-                        {reportedJob
-                            ? `Job #${reportedJob}`
-                            : "Unknown"}
+                    <span className="rounded-lg bg-[#EEEAFE] px-2.5 py-1 text-xs font-bold text-[#6D4AFF]">
+                        {formatReportId(
+                            report.id
+                        )}
                     </span>
 
                 </div>
 
-                <div className="my-3 h-px bg-[#E7E3F2]" />
 
-                <div className="flex items-center justify-between gap-4">
+                <div className="h-px bg-[#E7E3F2]" />
 
-                    <span className="text-sm text-[#667085]">
+
+                <div className="mt-3">
+
+                    <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#98A2B3]">
+                        Reason
+                    </p>
+
+                    <p className="mt-1.5 font-bold text-[#172033]">
+                        {reason}
+                    </p>
+
+                </div>
+
+
+                <p className="mt-2 text-sm leading-6 text-[#667085]">
+                    {description}
+                </p>
+
+            </div>
+
+
+            {/* JOB */}
+
+            <div className="mt-4 rounded-xl border border-[#E7E3F2] bg-white p-4">
+
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#98A2B3]">
+                    Reported Job
+                </p>
+
+
+                <p className="mt-1.5 font-bold text-[#172033]">
+                    {reportedJobTitle ||
+                        "Unknown job"}
+                </p>
+
+
+                {reportedJobId && (
+                    <p className="mt-1 text-xs text-[#98A2B3]">
+                        Job #{reportedJobId}
+                    </p>
+                )}
+
+            </div>
+
+
+            {/* USER */}
+
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-[#E7E3F2] bg-white p-4">
+
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F3F0FF] text-[#6D4AFF]">
+
+                    <span className="material-symbols-outlined text-[18px]">
+                        person
+                    </span>
+
+                </div>
+
+
+                <div className="min-w-0">
+
+                    <p className="text-xs text-[#98A2B3]">
                         Reported by
-                    </span>
+                    </p>
 
-                    <span className="max-w-[180px] truncate font-bold text-[#172033]">
-                        {report.reported_by ||
-                            "Unknown"}
-                    </span>
+                    <p className="truncate font-bold text-[#172033]">
+                        {reportedBy}
+                    </p>
 
                 </div>
 
             </div>
 
-            {/* View */}
+
+            {/* ACTION */}
+
             <button
                 type="button"
                 onClick={onView}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D4AFF] px-4 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-[#5636D9] hover:shadow-md"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#6D4AFF] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#5636D9] hover:shadow-md"
             >
                 View Report
 
@@ -917,6 +1129,82 @@ function ReportMobileCard({
                 </span>
 
             </button>
+
+        </div>
+    );
+}
+
+
+
+function LoadingState() {
+    return (
+        <div className="rounded-2xl border border-[#E7E3F2] bg-white p-16 text-center shadow-sm">
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EEEAFE] text-[#6D4AFF]">
+
+                <span className="material-symbols-outlined animate-spin text-3xl">
+                    progress_activity
+                </span>
+
+            </div>
+
+
+            <p className="mt-4 font-semibold text-[#667085]">
+                Loading reports...
+            </p>
+
+            <p className="mt-1 text-sm text-[#98A2B3]">
+                Please wait while we retrieve
+                moderation reports.
+            </p>
+
+        </div>
+    );
+}
+
+
+
+function EmptyState({
+    hasFilters,
+    onClear,
+}) {
+    return (
+        <div className="rounded-2xl border border-[#E7E3F2] bg-white px-6 py-20 text-center shadow-sm">
+
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#EEEAFE] text-[#6D4AFF]">
+
+                <span className="material-symbols-outlined text-3xl">
+                    flag
+                </span>
+
+            </div>
+
+
+            <h2 className="mt-5 font-['Montserrat'] text-xl font-bold text-[#172033]">
+                {hasFilters
+                    ? "No matching reports"
+                    : "No reports yet"}
+            </h2>
+
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#667085]">
+
+                {hasFilters
+                    ? "Try adjusting your search or status filter to find the report you are looking for."
+                    : "There are currently no moderation reports available."}
+
+            </p>
+
+
+            {hasFilters && (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="mt-5 rounded-xl bg-[#6D4AFF] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#5636D9]"
+                >
+                    Clear filters
+                </button>
+            )}
 
         </div>
     );
