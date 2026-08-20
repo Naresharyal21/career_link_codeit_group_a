@@ -1,33 +1,30 @@
-import { Routes, Route } from "react-router-dom";
-import ModeratorDashboard from "../pages/moderator/ModeratorDashboard";
+import ModeratorDashboard from "../moderator/pages/ModeratorDashboard";
+import ReportList from "../moderator/pages/ReportList";
+import ReportDetail from "../moderator/pages/ReportDetail";
+import ReviewQueue from "../moderator/pages/ReviewQueue";
+import CreateReport from "../moderator/pages/CreateReport";
 
-const ModeratorRoutes = () => {
-    return (
-        <Routes>
-            <Route
-                path="/moderator"
-                element={<ModeratorDashboard />}
-            />
-            <Route
-                    path="moderator/reports"
-                    element={<ReportList />}
-            />
+const moderatorRoutes = [
+    {
+        path: "moderator",
+        element: <ModeratorDashboard />,
+    },
+    {
+        path: "moderator/reports",
+        element: <ReportList />,
+    },
+    {
+        path: "moderator/reports/:id",
+        element: <ReportDetail />,
+    },
+    {
+        path: "moderator/review-queue",
+        element: <ReviewQueue />,
+    },
+    {
+        path: "moderator/reports/create",
+        element: <CreateReport />,
+    },
+];
 
-            <Route
-                    path="moderator/reports/:id"
-                    element={<ReportDetail />}
-            />
-            <Route
-                    path="/moderator/review-queue"
-                    element={<ReviewQueue />}
-            />
-            <Route
-                    path="/moderator/reports/create"
-                    element={<CreateReport />}
-            />
-           
-        </Routes>
-    );
-};
-
-export default ModeratorRoutes;
+export default moderatorRoutes;

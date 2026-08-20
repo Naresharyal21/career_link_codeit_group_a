@@ -22,7 +22,6 @@ const Navbar = () => {
 
   const profileRef = useRef(null);
 
-  /* ================= FETCH CURRENT USER ================= */
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -40,7 +39,7 @@ const Navbar = () => {
     fetchUser();
   }, []);
 
-  /* ================= USER INITIALS ================= */
+
 
   const initials =
     user?.username
@@ -50,7 +49,7 @@ const Navbar = () => {
       .toUpperCase()
       .slice(0, 2) || "U";
 
-  /* ================= CLOSE PROFILE MENU ================= */
+
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -78,9 +77,6 @@ const Navbar = () => {
   return (
     <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
 
-      {/* =====================================================
-          LOGO
-      ===================================================== */}
 
       <div className="flex h-full items-center">
         <img
@@ -90,13 +86,11 @@ const Navbar = () => {
         />
       </div>
 
-      {/* =====================================================
-          RIGHT SIDE
-      ===================================================== */}
+
 
       <div className="flex items-center gap-2 sm:gap-4">
 
-        {/* ================= THEME BUTTON ================= */}
+
 
         <button
           type="button"
@@ -121,7 +115,7 @@ const Navbar = () => {
           )}
         </button>
 
-        {/* ================= NOTIFICATIONS ================= */}
+
 
         <button
           type="button"
@@ -141,7 +135,6 @@ const Navbar = () => {
         >
           <IoIosNotificationsOutline className="text-[25px]" />
 
-          {/* Notification indicator */}
           <span className="
             absolute right-[8px] top-[7px]
             h-2 w-2
@@ -151,7 +144,7 @@ const Navbar = () => {
           " />
         </button>
 
-        {/* ================= PROFILE ================= */}
+       
 
         <div
           ref={profileRef}
@@ -174,7 +167,7 @@ const Navbar = () => {
             "
           >
 
-            {/* Avatar */}
+
 
             <div
               className="
@@ -200,7 +193,7 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* User information */}
+
 
             <div className="hidden text-left sm:block">
               <p className="max-w-[130px] truncate text-sm font-semibold text-[#172337]">
@@ -212,7 +205,7 @@ const Navbar = () => {
               </p>
             </div>
 
-            {/* Chevron */}
+
 
             <FiChevronDown
               className={`
@@ -223,7 +216,6 @@ const Navbar = () => {
             />
           </button>
 
-          {/* Profile dropdown */}
 
           {showProfileMenu && (
             <div className="absolute right-0 top-14 z-[100]">

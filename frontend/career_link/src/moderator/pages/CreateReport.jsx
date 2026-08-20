@@ -3,7 +3,7 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Flag } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import moderatorApi from "../../apis/moderatorApi";
-import ModeratorSectionPage from "./ModeratorSectionPage";
+import ModeratorSectionPage from "../components/ModeratorSectionPage";
 
 const CreateReport = () => {
     const navigate = useNavigate();
