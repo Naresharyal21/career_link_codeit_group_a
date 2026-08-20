@@ -20,6 +20,9 @@ import BrowseJobsPage from '../pages/jobs/BrowseJobsPage'
 
 import MyProfilecart from '../pages/accounts/MyProfilecart'
 import ThemeContext from '../context/ThemeContext'
+import ProtectedRoute from '../context/ProtectedRoute'
+import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
+
 
 
 
@@ -35,27 +38,30 @@ const AppRoutes = () => {
        
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
+        <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
+
+        <Route element={<ProtectedRoute />}>
 
 
+          {/* DashboardLayout */}
 
-     
+          <Route element={<DashboardLayout />}>
+            <Route index element={<Home />} />
 
-        <Route element={<DashboardLayout />}>
-          <Route index element={<Home />} />
+            {/* accounts route */}
 
-          
-
-          <Route path="Profile/" element={<MyProfilecart />} />
-      
-
-
-      
-
-          <Route path="jobs" element={<BrowseJobsPage />} />
-          <Route path="jobs/:id" element={<JobDetailPage />} />
+            <Route path="Profile/" element={<MyProfilecart />} />
+            {/* /* accounts route ends  */}
 
 
-  
+            {/* /* Jobs routes */}
+
+            <Route path="jobs" element={<BrowseJobsPage />} />
+            <Route path="jobs/:id" element={<JobDetailPage />} />
+
+
+            {/* Jobs routes ends  */}
+          </Route>
         </Route>
 
 
