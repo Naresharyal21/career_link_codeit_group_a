@@ -50,6 +50,20 @@ const accountsApi = {
       }),
     });
   },
+
+  forgotpassword:async(email)=>{
+    return await apiClient("/account/forgot-password/",{
+      method:"POST",
+      Headers:{
+        "Content-Type":"application/json",
+        
+      },
+      body:JSON.stringify({
+        email,
+      }),
+    });
+  },
+
 };
 
 export default accountsApi;
