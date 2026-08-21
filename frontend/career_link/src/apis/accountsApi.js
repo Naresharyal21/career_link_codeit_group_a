@@ -52,14 +52,40 @@ const accountsApi = {
   },
 
   forgotpassword:async(email)=>{
-    return await apiClient("/account/forgot-password/",{
+    return await apiClient("/accounts/forgot/password/",{
       method:"POST",
-      Headers:{
+      headers:{
         "Content-Type":"application/json",
         
       },
       body:JSON.stringify({
         email,
+      }),
+    });
+  },
+  verifyOTP:async(email ,otp)=>{
+    return await apiClient("/accounts/verify/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        
+      },
+      body:JSON.stringify({
+        email,
+        otp,
+      }),
+    });
+  },
+  resetpassword:async(email ,newpassword)=>{
+    return await apiClient("/accounts/reset/password/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        
+      },
+      body:JSON.stringify({
+        email,
+        new_password:newpassword,
       }),
     });
   },
