@@ -15,8 +15,8 @@ from rest_framework.exceptions import ValidationError
 
 from jobs.models import JobPosting
 
-from .models import Application
-from .serializers import ApplicationSerializer
+from .models import Application, ApplicationNote
+from .serializers import ApplicationSerializer, ApplicationNoteSerializer
 from accounts.models import JobseekerProfile  # change if needed
 
 
@@ -264,3 +264,18 @@ class SavedJobViewSet(viewsets.ModelViewSet):
         )
 
     
+class ApplicationNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = ApplicationNoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "employer_profile"):
+            return ApplicationNote.objects.filter(application__job__employer=self.request.user.employer_profile)
+        return ApplicationNote.objects.none()
+
+    def perform_create(self, serializer):
+        application = serializer.validated_data.get("application")
+        if application.job.employer.user == self.request.user:
+            serializer.save(employer=self.request.user.employer_profile)
+        else:
+            raise permissions.PermissionDenied("You are not authorized to add notes to this application.")

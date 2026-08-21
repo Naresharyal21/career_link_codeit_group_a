@@ -38,6 +38,10 @@ class JobPostingDetailSerializer(serializers.ModelSerializer):
     skills = SkillSerializer(many=True, read_only=True)
     job_type_display = serializers.CharField(source="get_job_type_display", read_only=True)
     experience_level_display = serializers.CharField(source="get_experience_level_display", read_only=True)
+    applicant_count = serializers.SerializerMethodField()
+
+    def get_applicant_count(self, obj):
+        return obj.applications.count()
 
     class Meta:
         model = JobPosting
@@ -49,5 +53,5 @@ class JobPostingDetailSerializer(serializers.ModelSerializer):
             "experience_level", "experience_level_display",
             "category_name", "skills",
             "is_urgent", "is_featured", "is_active",
-            "deadline", "created_at",
+            "deadline", "created_at", "applicant_count"
         ]

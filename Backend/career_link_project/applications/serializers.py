@@ -2,7 +2,7 @@ import os
 
 from rest_framework import serializers
 
-from .models import Application, SavedJob
+from .models import Application, SavedJob, ApplicationNote
 from jobs.models import JobPosting
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -135,3 +135,9 @@ class SavedJobSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
+
+class ApplicationNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApplicationNote
+        fields = ["id", "application", "employer", "note", "created_at"]
+        read_only_fields = ["id", "employer", "created_at"]
