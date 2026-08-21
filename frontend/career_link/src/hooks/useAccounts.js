@@ -28,8 +28,8 @@ const useAccounts = () => {
     return await execute(()=> accountsApi.verifyOTP(email, otp));
   };
 
-  const resetPassword=async (email , otp)=>{
-    return await execute(()=> accountsApi.verifyOTP(email , otp));
+  const resetPassword=async (email , newpassword)=>{
+    return await execute(()=> accountsApi.resetpassword(email , newpassword));
   };
 
 

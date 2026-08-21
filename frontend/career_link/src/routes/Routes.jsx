@@ -22,6 +22,8 @@ import MyProfilecart from '../pages/accounts/MyProfilecart'
 import ThemeContext from '../context/ThemeContext'
 import ProtectedRoute from '../context/ProtectedRoute'
 import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
+import VerifyOTPpage from '../pages/accounts/VerifyOTPpage'
+import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
 
 
 
@@ -39,6 +41,8 @@ const AppRoutes = () => {
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
         <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
+        <Route path="verifyotp/" element={<VerifyOTPpage />} />
+        <Route path="resetpassword/" element={<ResetPasswordPage/>} />
 
         <Route element={<ProtectedRoute />}>
 
