@@ -28,7 +28,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "job_seeker",
-            "status",
             "created_at",
             "updated_at",
         ]
@@ -41,6 +40,19 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
         if self.instance:
             fields["job"].read_only = True
+
+        request = self.context.get("request")
+        if request and request.user and request.user.is_authenticated:
+            user = request.user
+            is_employer = (hasattr(user, "role") and user.role == "ep") or user.is_staff or user.is_superuser
+            if is_employer:
+                fields["status"].read_only = False
+                fields["cover_letter"].read_only = True
+                fields["resume"].read_only = True
+            else:
+                fields["status"].read_only = True
+        else:
+            fields["status"].read_only = True
 
         return fields
 
