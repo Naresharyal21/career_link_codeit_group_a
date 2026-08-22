@@ -120,11 +120,11 @@ const BrowseJobsPage = () => {
 
           <JobList jobs={filteredJobs} loading={loading} />
 
-          {!loading && totalPages > 1 && (
+          {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-6">
               <button
                 onClick={() => loadPage(currentPage - 1)}
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || loading}
                 className="w-9 h-9 flex items-center justify-center rounded border border-gray-300 text-[#0f2a52] hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 &lt;
@@ -146,7 +146,7 @@ const BrowseJobsPage = () => {
 
               <button
                 onClick={() => loadPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || loading}
                 className="w-9 h-9 flex items-center justify-center rounded border border-gray-300 text-[#0f2a52] hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 &gt;
