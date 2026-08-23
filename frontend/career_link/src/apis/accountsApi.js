@@ -63,7 +63,7 @@ const accountsApi = {
       }),
     });
   },
-  verifyOTP:async(email ,otp)=>{
+  verifyOTP:async(email ,otp , purpose)=>{
     return await apiClient("/accounts/verify/otp/",{
       method:"POST",
       headers:{
@@ -73,6 +73,7 @@ const accountsApi = {
       body:JSON.stringify({
         email,
         otp,
+        purpose
       }),
     });
   },

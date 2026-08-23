@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useFormik } from "formik";
 
 import { verifyOtpSchema } from "../../components/accounts/validationSchema";
@@ -8,6 +8,7 @@ import useAccounts from "../../hooks/useAccounts";
 const VerifyOTPPage = () => {
   const { verifyOTP } = useAccounts();
   const navigate = useNavigate();
+  const {purpose} = useParams();
 
   const formik = useFormik({
     initialValues: {
@@ -17,17 +18,37 @@ const VerifyOTPPage = () => {
     validationSchema: verifyOtpSchema,
 
    onSubmit: async (values) => {
+    console.log(values)
   try {
-    const email = localStorage.getItem("resetemail");
+    const storageKey=purpose==="prv"?"resetemail":purpose==="emv"?"signupemail":"deleteemail";
+    
+    const email = localStorage.getItem(storageKey);
+     console.log("Email:", email);
+        console.log("OTP:", values.otp);
+        console.log("Purpose:", purpose);
+
 
     const response = await verifyOTP(
       email,
-      values.otp
+      values.otp,
+      purpose
     );
+    console.log("OTP verified:", response);
+  localStorage.removeItem(storageKey);
 
-    console.log("Success:", response);
-
-    navigate("/resetpassword");
+if (purpose==="emv"){
+     localStorage.removeItem("signupemail");
+      navigate("/login");
+}
+if (purpose==="prv"){
+  localStorage.setItem("resetemail",email);
+  navigate("/resetpassword");
+}
+if (purpose==="dav"){
+  localStorage.setItem("deleteemail",email);
+  navigate("/deleteaccount");
+}
+   
 
   } catch (error) {
     console.log("OTP verification error:", error);
@@ -39,8 +60,8 @@ const VerifyOTPPage = () => {
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md p-6 rounded-2xl shadow shadow-blue-600">
 
-        <h1 className="text-2xl font-bold mb-2">
-          Verify OTP
+        <h1 className="text-2xl font-bold mb-2">{purpose==="emv"?"Verify Your Email":purpose==="prv"?"Verify OTP":"Verify Account Deletion"}
+          
         </h1>
 
         <p className="text-gray-500 mb-6">

@@ -41,8 +41,8 @@ const AppRoutes = () => {
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
         <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
-        <Route path="verifyotp/" element={<VerifyOTPpage />} />
         <Route path="resetpassword/" element={<ResetPasswordPage/>} />
+        <Route path="verifyotp/:purpose" element={<VerifyOTPpage />} />
 
         <Route element={<ProtectedRoute />}>
 
