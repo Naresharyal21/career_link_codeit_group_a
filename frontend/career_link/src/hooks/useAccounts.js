@@ -24,8 +24,8 @@ const useAccounts = () => {
   const forgotpassword= async(email)=>{
     return await execute(()=>accountsApi.forgotpassword(email));
   };
-  const verifyOTP = async (email , otp)=>{
-    return await execute(()=> accountsApi.verifyOTP(email, otp));
+  const verifyOTP = async (email , otp,purpose)=>{
+    return await execute(()=> accountsApi.verifyOTP(email, otp , purpose));
   };
 
   const resetPassword=async (email , newpassword)=>{

@@ -20,6 +20,7 @@ const ForgetPasswordPage = () => {
     validationSchema: forgotpasswordSchema,
 
     onSubmit: async (values) => {
+      console.log(values)
       try {
         const response = await forgotpassword(values.email);
         localStorage.setItem("resetemail",values.email)
@@ -31,7 +32,7 @@ const ForgetPasswordPage = () => {
         localStorage.setItem("forgotPasswordResendTime", resendTime);
         setCountdown(180)
 
-        navigate("/verifyotp")
+        navigate("/verifyotp/prv")
 
       } catch (error) {
        

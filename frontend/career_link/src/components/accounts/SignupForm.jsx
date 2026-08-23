@@ -43,14 +43,21 @@ const SignupForm = () => {
 
     validationSchema: signupValidationSchema,
 
-    onSubmit: async (values) => {
-      try {
-        await register(values);
-        navigate("/login");
-      } catch (err) {
-        console.error("Registration failed:", err);
-      }
-    },
+   onSubmit: async (values) => {
+  try {
+    // 1. Register user first
+    await register(values);
+
+    // 2. Save email only after successful registration
+    localStorage.setItem("signupemail", values.email);
+
+    // 3. Go to OTP verification
+    navigate("/verifyotp/emv");
+
+  } catch (err) {
+    console.error("Registration failed:", err);
+  }
+},
   });
 
   const [showPassword, setShowPassword] = useState(false);
