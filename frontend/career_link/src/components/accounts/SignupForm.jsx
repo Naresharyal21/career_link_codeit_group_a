@@ -15,7 +15,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import useAccounts from "../../hooks/useAccounts";
 import { signupValidationSchema } from "./validationSchema";
-import { nepalLocations } from "../../appstore/nepalLocations";
+import { nepallocation } from "../../appstore/nepallocation";
 
 
 const SignupForm = () => {
@@ -224,7 +224,7 @@ const SignupForm = () => {
               ? "Select your Company Location"
               : "Select your Location"}
           </option>
-          {nepalLocations.map((loc) => (
+          {nepallocation.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
             </option>
