@@ -11,16 +11,23 @@ const DashboardPage = () => {
 
       try {
         const config = { headers: { Authorization: 'Bearer ' + token } };
-        const [appRes, savedRes, profileRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/v1/applications/', config),
-          axios.get('http://localhost:8000/api/v1/applications/saved-jobs/', config),
-          axios.get('http://localhost:8000/api/v1/accounts/me/', config)
-        ]);
+        // Fetch profile first to know the role
+        const profileRes = await axios.get('http://localhost:8000/api/v1/accounts/me/', config);
+        const profile = profileRes.data;
+
+        const requests = [axios.get('http://localhost:8000/api/v1/applications/', config)];
+        
+        // Only fetch saved jobs for Job Seekers
+        if (profile.role === 'js') {
+            requests.push(axios.get('http://localhost:8000/api/v1/applications/saved-jobs/', config));
+        }
+
+        const responses = await Promise.all(requests);
         
         setData({ 
-            applications: appRes.data, 
-            savedJobs: savedRes.data,
-            profile: profileRes.data 
+            applications: responses[0].data, 
+            savedJobs: profile.role === 'js' ? responses[1].data : [],
+            profile: profile 
         });
       } catch (err) {
         console.error("Error fetching dashboard data", err);
@@ -34,6 +41,8 @@ const DashboardPage = () => {
     if (role === 'ep') return 'Employer';
     return role;
   };
+
+  const isEmployer = data.profile.role === 'ep';
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -50,9 +59,9 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
+        <div className={isEmployer ? "lg:col-span-3 space-y-6" : "lg:col-span-2 space-y-6"}>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-            <h3 className="font-bold text-lg mb-4">My Applications ({data.applications.length})</h3>
+            <h3 className="font-bold text-lg mb-4">{isEmployer ? "Received Applications" : "My Applications"} ({data.applications.length})</h3>
             {data.applications.map(app => (
               <div key={app.id} className="p-4 border border-gray-100 rounded-xl mb-3 flex justify-between items-center">
                 <h4 className="font-semibold">{app.job_title}</h4>
@@ -62,6 +71,7 @@ const DashboardPage = () => {
           </div>
         </div>
         
+        {!isEmployer && (
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-lg mb-4">Saved Jobs ({data.savedJobs.length})</h3>
@@ -72,6 +82,7 @@ const DashboardPage = () => {
                 ))}
             </div>
         </div>
+        )}
       </div>
     </div>
   );

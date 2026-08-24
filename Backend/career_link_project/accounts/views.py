@@ -1,13 +1,23 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+
+import secrets
+from datetime import timedelta
+from django.utils import timezone
+
 
 from .serializers import (
     RegistrationSerializer,
     JobseekerProfileSerializer,
     EmployerProfileSerializer,
 )
-from .models import JobseekerProfile, EmployerProfile, User
+from .models import (
+    JobseekerProfile,
+    EmployerProfile,
+    User,
+    EmailOTP,
+)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -29,10 +39,69 @@ class MeView(APIView):
         else:
             data = None
 
-        return Response({
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "profile": data,
-        })
+        return Response(
+            {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "profile": data,
+            }
+        )
+    def put(self, request):
+        user = request.user
+        
+        # Update User fields if provided
+        user_serializer = UserSerializer(user, data=request.data, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save()
+        else:
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update Profile fields
+        if user.role == User.Role.JOBSEEKERS:
+            profile = JobseekerProfile.objects.filter(user=user).first()
+            serializer = JobseekerProfileSerializer(profile, data=request.data, partial=True)
+        elif user.role == User.Role.EMPLOYEERS:
+            profile = EmployerProfile.objects.filter(user=user).first()
+            serializer = EmployerProfileSerializer(profile, data=request.data, partial=True)
+        else:
+            return Response({"error": "Role not supported"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"user": user_serializer.data, "profile": serializer.data})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    class ForgetPasswordView(APIView):
+        parser_classes = [permissions.AllowAny]
+
+        def post(self, request):
+            email = request.data.get("email")
+
+            if not email:
+                return Response({"error": "Email is required"})
+
+
+            try:
+                user=User.objects.get(email=email)
+
+            except User.DoesNotExist:
+                return Response(
+                    {"error":"User doesnot exist "}
+                )
+
+            otp=str(secrets.randbelow(900000)+100000)
+            expires_at=timezone.now()+timedelta(minutes=1)
+
+
+            EmailOTP.objects.create(
+                user=user,
+                otp=otp,
+                expires_at=expires_at,
+                purpose="password_reset"
+            )
+            return Response(
+                {"message":"OTP generated sucessfully"}
+            )

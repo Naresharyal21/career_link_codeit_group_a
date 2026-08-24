@@ -33,6 +33,8 @@ const DashboardLayout = () => {
     { name: 'My Applications', path: '/dashboard/applications', roles: ['js'] },
     { name: 'Saved Jobs', path: '/dashboard/saved-jobs', roles: ['js'] },
     { name: 'CV / Resume', path: '/dashboard/cv', roles: ['js'] },
+    { name: 'Manage Jobs', path: '/dashboard/manage-jobs', roles: ['ep'] },
+    { name: 'Profile Settings', path: '/dashboard/profile', roles: ['js', 'ep'] },
   ];
 
   return (

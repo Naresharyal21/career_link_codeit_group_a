@@ -100,3 +100,29 @@ class SavedJob(models.Model):
 
     def __str__(self):
         return f"{self.job_seeker} saved {self.job.title}"
+
+class ApplicationNote(TimeStampedModel):
+    """
+    Internal notes added by the employer for an application.
+    """
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        related_name="notes",
+    )
+    
+    employer = models.ForeignKey(
+        "accounts.EmployerProfile",
+        on_delete=models.CASCADE,
+        related_name="application_notes",
+    )
+    
+    note = models.TextField()
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Application Note"
+        verbose_name_plural = "Application Notes"
+
+    def __str__(self):
+        return f"Note for {self.application.job.title} - {self.application.job_seeker}"

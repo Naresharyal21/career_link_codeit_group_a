@@ -15,8 +15,8 @@ from rest_framework.exceptions import ValidationError
 
 from jobs.models import JobPosting
 
-from .models import Application
-from .serializers import ApplicationSerializer
+from .models import Application, ApplicationNote
+from .serializers import ApplicationSerializer, ApplicationNoteSerializer
 from accounts.models import JobseekerProfile  # change if needed
 
 
@@ -34,7 +34,7 @@ def get_jobseeker_profile_or_error(user):
 
 class ApplicationListCreateView(generics.ListCreateAPIView):
     """
-    GET: Get all applications of logged-in job seeker
+    GET: Get all applications of logged-in user (jobs applied to for seeker, received for employer)
     POST: Create new application for logged-in job seeker
     """
 
@@ -42,17 +42,35 @@ class ApplicationListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        jobseeker_profile = get_jobseeker_profile_or_error(
-            self.request.user
-        )
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Application.objects.none()
 
-        return Application.objects.filter(
-            job_seeker=jobseeker_profile
-        ).order_by("-created_at")
+        if hasattr(user, "role") and user.role == "ep":
+            try:
+                employer_profile = user.employer_profile
+                return Application.objects.filter(job__employer=employer_profile).order_by("-created_at")
+            except Exception:
+                return Application.objects.none()
+        elif user.is_staff or user.is_superuser:
+            return Application.objects.all().order_by("-created_at")
+        else:
+            jobseeker_profile = get_jobseeker_profile_or_error(user)
+            return Application.objects.filter(
+                job_seeker=jobseeker_profile
+            ).order_by("-created_at")
 
     def perform_create(self, serializer):
+        user = self.request.user
+        if hasattr(user, "role") and user.role != "js" and not user.is_superuser:
+            raise ValidationError(
+                {
+                    "detail": "Only job seekers can apply for jobs."
+                }
+            )
+
         jobseeker_profile = get_jobseeker_profile_or_error(
-            self.request.user
+            user
         )
 
         job = serializer.validated_data.get("job")
@@ -81,13 +99,23 @@ class ApplicationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        jobseeker_profile = get_jobseeker_profile_or_error(
-            self.request.user
-        )
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return Application.objects.none()
 
-        return Application.objects.filter(
-            job_seeker=jobseeker_profile
-        )
+        if hasattr(user, "role") and user.role == "ep":
+            try:
+                employer_profile = user.employer_profile
+                return Application.objects.filter(job__employer=employer_profile)
+            except Exception:
+                return Application.objects.none()
+        elif user.is_staff or user.is_superuser:
+            return Application.objects.all()
+        else:
+            jobseeker_profile = get_jobseeker_profile_or_error(user)
+            return Application.objects.filter(
+                job_seeker=jobseeker_profile
+            )
 
 class SavedJobViewSet(viewsets.ModelViewSet):
     permission_classes =[
@@ -236,3 +264,18 @@ class SavedJobViewSet(viewsets.ModelViewSet):
         )
 
     
+class ApplicationNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = ApplicationNoteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if hasattr(self.request.user, "employer_profile"):
+            return ApplicationNote.objects.filter(application__job__employer=self.request.user.employer_profile)
+        return ApplicationNote.objects.none()
+
+    def perform_create(self, serializer):
+        application = serializer.validated_data.get("application")
+        if application.job.employer.user == self.request.user:
+            serializer.save(employer=self.request.user.employer_profile)
+        else:
+            raise permissions.PermissionDenied("You are not authorized to add notes to this application.")

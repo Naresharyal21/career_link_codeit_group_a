@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import ApplicationsPage from './pages/ApplicationsPage';
+import ManageJobsPage from './pages/ManageJobsPage';
+import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import DashboardLayout from './layout/DashboardLayout';
 
 function App() {
@@ -20,6 +22,8 @@ function App() {
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="saved-jobs" element={<div className="bg-white p-6 rounded-lg shadow">Saved Jobs Page</div>} />
           <Route path="cv" element={<div className="bg-white p-6 rounded-lg shadow">CV / Resume Page</div>} />
+          <Route path="manage-jobs" element={<ManageJobsPage />} />
+          <Route path="profile" element={<ProfileSettingsPage />} />
         </Route>
       </Routes>
     </Router>
