@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
 
-from accounts.models import  User , JobseekerProfile , EmployerProfile
+from accounts.models import  User , JobseekerProfile , EmployerProfile ,EmailOTP
 
 
 class CustomUserAdmin(UserAdmin):
@@ -23,3 +23,4 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(JobseekerProfile)
 admin.site.register(EmployerProfile)
+admin.site.register(EmailOTP)
