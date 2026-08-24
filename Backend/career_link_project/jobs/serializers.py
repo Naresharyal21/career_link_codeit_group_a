@@ -51,3 +51,19 @@ class JobPostingDetailSerializer(serializers.ModelSerializer):
             "is_urgent", "is_featured", "is_active",
             "deadline", "created_at",
         ]
+
+
+class JobPostingWriteSerializer(serializers.ModelSerializer):
+    """Used for creating and updating job postings. Employer is set automatically
+    from the logged-in user, not accepted as input."""
+
+    class Meta:
+        model = JobPosting
+        fields = [
+            "id", "title", "description", "responsibilities",
+            "requirements", "benefits", "category", "skills",
+            "job_type", "experience_level", "location",
+            "salary_min", "salary_max", "is_urgent", "is_featured",
+            "is_active", "deadline",
+        ]
+        read_only_fields = ["id"]
