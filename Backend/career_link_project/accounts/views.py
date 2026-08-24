@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
-import secrets
-from datetime import timedelta
-from django.utils import timezone
+from .services import create_and_send_otp , verify_otp
+
+
 
 
 from .serializers import (
@@ -23,6 +23,14 @@ from .models import (
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegistrationSerializer
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self , serializer):
+        user=serializer.save()
+
+        create_and_send_otp(
+            user=user,
+            purpose="emv"
+        )
 
 
 class MeView(APIView):
@@ -49,8 +57,8 @@ class MeView(APIView):
             }
         )
 
-    class ForgetPasswordView(APIView):
-        parser_classes = [permissions.AllowAny]
+class ForgetPasswordView(APIView):
+        permission_classes = [permissions.AllowAny]
 
         def post(self, request):
             email = request.data.get("email")
@@ -58,25 +66,96 @@ class MeView(APIView):
             if not email:
                 return Response({"error": "Email is required"})
 
-
             try:
-                user=User.objects.get(email=email)
+                user = User.objects.get(email=email)
 
             except User.DoesNotExist:
-                return Response(
-                    {"error":"User doesnot exist "}
-                )
-
-            otp=str(secrets.randbelow(900000)+100000)
-            expires_at=timezone.now()+timedelta(minutes=1)
-
-
-            EmailOTP.objects.create(
+                return Response({"error": "User doesnot exist "})
+            create_and_send_otp(
                 user=user,
-                otp=otp,
-                expires_at=expires_at,
-                purpose="password_reset"
+                purpose="prv"
             )
+            return Response({
+            "message": "OTP sent successfully"
+        })
+
+          
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        purpose = request.data.get("purpose")
+
+        if not email or not otp or not purpose:
+            return Response({"error": "Email, OTP, and purpose  are required"})
+
+        try:
+         
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist"})
+
+        success , message =verify_otp(
+            user=user,
+            otp=otp,
+            purpose=purpose
+        )
+        if not success:
             return Response(
-                {"message":"OTP generated sucessfully"}
+                {"error":message},
+            
             )
+        if purpose=="emv":
+            user.email_verified=True
+            user.save(update_fields=["email_verified"])
+
+        return Response({
+            "message":message
+        })
+
+
+
+class ResetPasswordView(APIView):
+    permission_classes=[permissions.AllowAny]
+
+    def post(self, request):
+        email=request.data.get("email")
+        new_password=request.data.get("new_password")
+
+        if not email or not new_password:
+            return Response({
+                "error":"Email and password are required "
+            })
+
+        try:
+         user=User.objects.get(email=email)
+        except User.DoesNotExist:
+         return Response(
+           {"error":"user does not exist"}
+         )
+
+
+
+        try:
+         email_otp=EmailOTP.objects.filter(
+            user=user,
+            purpose="prv",
+            is_verified=True,
+        ).latest("created_at")
+        except EmailOTP.DoesNotExist:
+            return Response(
+                {"error":"OTP verification required"}
+            )
+        user.set_password(new_password)
+        user.save()
+
+        email_otp.is_verified=False
+        email_otp.save(update_fields=["is_verified"])
+
+        return Response(
+            {"message":"Password reset sucessfully"}
+        )

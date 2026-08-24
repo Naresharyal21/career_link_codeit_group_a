@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 
-from accounts.models import  User , JobseekerProfile , EmployerProfile
+from accounts.models import  User , JobseekerProfile , EmployerProfile ,EmailOTP
 
 
 # Register your models here.
@@ -9,3 +9,4 @@ from accounts.models import  User , JobseekerProfile , EmployerProfile
 admin.site.register(User)
 admin.site.register(JobseekerProfile)
 admin.site.register(EmployerProfile)
+admin.site.register(EmailOTP)
