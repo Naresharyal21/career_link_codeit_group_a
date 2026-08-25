@@ -1,13 +1,12 @@
-import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./Routes";
-import "./App.css";
+import ThemeContext from "./context/ThemeContext";
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
-}
+const App = () => {
+    return (
+        <ThemeContext>
+            <AppRoutes />
+        </ThemeContext>
+    );
+};
 
 export default App;

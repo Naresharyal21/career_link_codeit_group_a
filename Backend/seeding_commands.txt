@@ -1,0 +1,2 @@
+python manage.py seed_data --> first to run
+python manage.py seed_applications --> second to run
