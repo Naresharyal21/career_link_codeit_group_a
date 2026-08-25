@@ -18,4 +18,11 @@ urlpatterns = [
     path ("reset/password/",views.ResetPasswordView.as_view(),name="reset-password"),
 
     path("verify/otp/",views.VerifyOTPView.as_view(),name="verify-otp"),
+    path("delete/sendotp/",views.SendDeleteOTPView.as_view(),name="delete-otp"),
+
+    path(
+    "pr/verify/otp/",views.
+    DeleteAccountView.as_view(),
+),
+
 ]

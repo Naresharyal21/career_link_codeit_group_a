@@ -87,6 +87,7 @@ class EmailOTP(Timestamp):
         PURPOSE_CHOICES=[
                 ("emv","Email Verification"),
                 ("prv","Password Verification"),
+                ("cev", "Change Email Verification"),
                 ("dav","delete Verification"),
             ]
         user = models.ForeignKey(
