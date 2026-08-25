@@ -55,6 +55,8 @@ const AppRoutes = () => {
             {/* accounts route */}
 
             <Route path="Profile/" element={<MyProfilecart />} />
+
+            
             {/* /* accounts route ends  */}
 
 
@@ -66,6 +68,12 @@ const AppRoutes = () => {
 
             {/* Jobs routes ends  */}
           </Route>
+
+<Route>
+
+   <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
+</Route>
+
         </Route>
 
 
