@@ -1,7 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const request = async (endpoint, options = {}) => {
-    const token = localStorage.getItem("accessToken");
+const apiClient = async (endpoint, options = {}) => {
+  
+  const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
     const finalURL = `${BASE_URL}${endpoint}`;
 

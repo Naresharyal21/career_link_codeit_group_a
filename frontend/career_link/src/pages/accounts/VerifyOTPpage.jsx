@@ -4,11 +4,22 @@ import { useFormik } from "formik";
 
 import { verifyOtpSchema } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
+import Button from "../../components/commonuiPart/Button";
 
 const VerifyOTPPage = () => {
-  const { verifyOTP } = useAccounts();
+  const { verifyOTP, deleteAccount } = useAccounts();
+
   const navigate = useNavigate();
-  const {purpose} = useParams();
+
+  const { purpose } = useParams();
+
+
+
+
+
+
+  const isProtectedPurpose = purpose === "cev" || purpose === "dav";
+
 
   const formik = useFormik({
     initialValues: {
@@ -17,51 +28,66 @@ const VerifyOTPPage = () => {
 
     validationSchema: verifyOtpSchema,
 
-   onSubmit: async (values) => {
-    console.log(values)
-  try {
-    const storageKey=purpose==="prv"?"resetemail":purpose==="emv"?"signupemail":"deleteemail";
-    
-    const email = localStorage.getItem(storageKey);
-     console.log("Email:", email);
-        console.log("OTP:", values.otp);
-        console.log("Purpose:", purpose);
+    onSubmit: async (values) => {
+      console.log(values)
+      try {
+
+        if (isProtectedPurpose) {
+
+          if (purpose === "dav") {
+            const response = await deleteAccount(
+              values.otp,
+              purpose,
+            )
+            navigate("/login")
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+
+            ;
+          } else {
+
+          }
+
+        } else {
+
+          const storageKey = purpose === "prv" ? "resetemail" : purpose === "emv" ? "signupemail" : "deleteemail";
+
+          const email = localStorage.getItem(storageKey);
 
 
-    const response = await verifyOTP(
-      email,
-      values.otp,
-      purpose
-    );
-    console.log("OTP verified:", response);
-  localStorage.removeItem(storageKey);
 
-if (purpose==="emv"){
-     localStorage.removeItem("signupemail");
-      navigate("/login");
-}
-if (purpose==="prv"){
-  localStorage.setItem("resetemail",email);
-  navigate("/resetpassword");
-}
-if (purpose==="dav"){
-  localStorage.setItem("deleteemail",email);
-  navigate("/deleteaccount");
-}
-   
+          const response = await verifyOTP(
+            email,
+            values.otp,
+            purpose
+          );
+          console.log("OTP verified:", response);
+          localStorage.removeItem(storageKey);
 
-  } catch (error) {
-    console.log("OTP verification error:", error);
-  }
-},
+          if (purpose === "emv") {
+            localStorage.removeItem("signupemail");
+            navigate("/login");
+          }
+          if (purpose === "prv") {
+            localStorage.setItem("resetemail", email);
+            navigate("/resetpassword");
+          }
+        }
+
+
+
+      } catch (error) {
+        console.log("OTP verification error:", error);
+      }
+    },
   });
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md p-6 rounded-2xl shadow shadow-blue-600">
 
-        <h1 className="text-2xl font-bold mb-2">{purpose==="emv"?"Verify Your Email":purpose==="prv"?"Verify OTP":"Verify Account Deletion"}
-          
+        <h1 className="text-2xl font-bold mb-2">{purpose === "emv" ? "Verify Your Email" : purpose === "prv" ? "Verify OTP" : "Verify Account Deletion"}
+
         </h1>
 
         <p className="text-gray-500 mb-6">
@@ -96,24 +122,41 @@ if (purpose==="dav"){
             </p>
           )}
 
-          <button
+          <Button
             type="submit"
+            variant={purpose === "dav" ? "danger" : "primary"}
             disabled={formik.isSubmitting}
-            className="bg-green-600 text-white p-2 rounded-2xl w-full mt-5 disabled:bg-gray-400"
+            className="w-full mt-5"
           >
-            {formik.isSubmitting ? "Verifying..." : "Verify OTP"}
-          </button>
+            {formik.isSubmitting
+              ? "Deleting..."
+              : purpose === "dav"
+                ? "Delete My Account Permanently"
+                : "Verify OTP"}
+          </Button>
 
         </form>
+        {!isProtectedPurpose && (
+          <div className="flex items-center justify-center">
+            <Link
+              to="/forgetpassword"
+              className="text-blue-600 underline mt-4 hover:text-blue-800"
+            >
+              Change Email
+            </Link>
+          </div>
+        )}
+        {isProtectedPurpose && (
+          <div className="flex items-center justify-center">
+            <Link
+              to="/"
+              className="text-green-600 underline font-bold mt-4 hover:text-green-800"
+            >
+              Cancel Process
+            </Link>
+          </div>
+        )}
 
-        <div className="flex items-center justify-center">
-          <Link
-            to="/forgetpassword"
-            className="text-blue-600 underline mt-4 hover:text-blue-800"
-          >
-            Change Email
-          </Link>
-        </div>
 
       </div>
     </div>

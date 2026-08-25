@@ -17,6 +17,9 @@ const useAccounts = () => {
     return await execute(() => accountsApi.getMe());
   };
 
+
+  
+
   const refreshToken = async (refresh) => {
     return await execute(() => accountsApi.refreshToken(refresh));
   };
@@ -31,6 +34,13 @@ const useAccounts = () => {
   const resetPassword=async (email , newpassword)=>{
     return await execute(()=> accountsApi.resetpassword(email , newpassword));
   };
+  const deleteAccount = async ( otp,purpose)=>{
+    return await execute(()=> accountsApi.deleteAccount( otp , purpose));
+  };
+
+  const sendDeleteOTP = async () => {
+  return await execute(() => accountsApi.sendDeleteOTP());
+};
 
 
 
@@ -47,6 +57,8 @@ const useAccounts = () => {
     forgotpassword,
     verifyOTP,
     resetPassword,
+    sendDeleteOTP,
+    deleteAccount,
   };
 };
 

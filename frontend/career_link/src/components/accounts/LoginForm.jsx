@@ -1,5 +1,7 @@
 import { useFormik } from 'formik'
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
+
+
 
 
 import { FiEye } from "react-icons/fi";
@@ -7,6 +9,8 @@ import { FiEyeOff } from "react-icons/fi";
 import { loginValidationSchema } from './validationSchema';
 import { Link, useNavigate, } from 'react-router';
 import useAccounts from '../../hooks/useAccounts';
+import { AuthenticationContext } from '../../context/AuthContext';
+import Button from '../commonuiPart/Button';
 
 
 
@@ -17,6 +21,10 @@ const LoginForm = () => {
   const { login, loading } = useAccounts();
 
   const [showPassword, setShowPassword] = useState(false)
+
+
+  const { loginUser } = useContext(AuthenticationContext);
+
   const handletoggle = () => {
     setShowPassword(showPassword ? false : true)
   }
@@ -33,15 +41,19 @@ const LoginForm = () => {
 
       try {
         const response = await login(values)
-        localStorage.setItem("accessToken", response.access);
-        localStorage.setItem("refreshToken", response.refresh);
+
+        loginUser(
+          response.access,
+          response.refresh
+        );
+
 
 
         navigate("/")
 
 
       } catch (err) {
-       
+
 
       }
     }
@@ -112,7 +124,12 @@ const LoginForm = () => {
       </div>
 
 
-      <button className="bg-green-600 text-white p-2 rounded-2xl w-full mt-7" type="submit">Login</button>
+      <Button
+        type="submit"
+        className="w-full mt-7"
+      >
+        Login
+      </Button>
 
       <div className="flex flex-col items-center ">
 

@@ -184,3 +184,58 @@ class ResetPasswordView(APIView):
         return Response(
             {"message":"Password reset sucessfully"}
         )
+
+class SendDeleteOTPView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        create_and_send_otp(
+            user=user,
+            purpose="dav"
+        )
+
+        return Response({
+            "message": "Delete account OTP sent successfully"
+        })
+
+
+class DeleteAccountView(APIView):
+     permission_classes = [permissions.IsAuthenticated]
+
+     def post(self, request):
+        otp = request.data.get("otp")
+        purpose = request.data.get("purpose")
+
+        if not otp or not purpose:
+            return Response(
+                {"error": "OTP and purpose are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if purpose != "dav":
+            return Response(
+                {"error": "Invalid deletion purpose"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+
+        success, message = verify_otp(
+            user=user,
+            otp=otp,
+            purpose="dav"
+        )
+
+        if not success:
+            return Response(
+                {"error": message},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.delete()
+
+        return Response({
+            "message": "Account deleted permanently"
+        })

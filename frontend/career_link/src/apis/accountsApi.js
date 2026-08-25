@@ -91,6 +91,41 @@ const accountsApi = {
     });
   },
 
+  sendDeleteOTP:async(otp , purpose)=>{
+    return await apiClient("/accounts/delete/sendotp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+      },
+      body:JSON.stringify({
+       
+        
+        purpose:"dav",
+      }),
+    });
+  },
+
+
+  deleteAccount:async(otp , purpose)=>{
+    return await apiClient("/accounts/pr/verify/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+      },
+      body:JSON.stringify({
+    
+        otp,
+        purpose,
+      }),
+    });
+  },
+
+  
+
 };
 
 export default accountsApi;

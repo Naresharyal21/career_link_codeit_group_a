@@ -12,9 +12,10 @@ const AuthContext = ({ children }) => {
 
   const [accessToken, setAccessToken] = useState(persistedToken);
   const [user , setUser]=useState(null);
-  console.log(user)
 
-  const loginUser = (acessToken, refreshToken) => {
+
+  const loginUser = (accessToken, refreshToken) => {
+     
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
     setAccessToken(accessToken);
