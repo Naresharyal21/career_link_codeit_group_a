@@ -74,4 +74,4 @@ class JobPosting(TimeStamp):
         verbose_name_plural = "Job Postings"
 
     def __str__(self):
-        return f"{self.title} - {self.employer.company_name}"
+        return self.employer.company_name

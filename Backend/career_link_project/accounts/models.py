@@ -16,9 +16,10 @@ class User(AbstractUser, TimeStamp):
         JOBSEEKERS = "js", "Job Seeker"
         EMPLOYEERS = "ep", "Employer"
 
-    username=models.CharField(max_length=150,unique=False)
+    username = models.CharField(max_length=150, unique=False)
 
     email = models.EmailField(unique=True)
+    email_verified = models.BooleanField(default=False)
 
     role = models.CharField(choices=Role, max_length=2, default=Role.JOBSEEKERS)
 
@@ -57,7 +58,7 @@ class JobseekerProfile(TimeStamp):
             )
         ],
     )
-    location = models.CharField(max_length=50 )
+    location = models.CharField(max_length=50)
     profile_pictur = models.ImageField(upload_to="profile_pic/", blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
 
@@ -94,3 +95,17 @@ class EmployerProfile(TimeStamp):
 
     def __str__(self):
         return self.company_name
+
+class EmailOTP(TimeStamp):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="email_otps",
+    )
+    otp=models.CharField(max_length=6)
+    expires_at=models.DateTimeField()
+    is_verified=models.BooleanField(default=False)
+    purpose = models.CharField(max_length=30)
+
+    def __str__(self):
+        return f"{self.user.email}-{self.purpose}"

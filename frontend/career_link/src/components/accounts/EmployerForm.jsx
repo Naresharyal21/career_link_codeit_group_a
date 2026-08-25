@@ -4,9 +4,9 @@ const EmployerForm = ({ formik }) => {
   return (
     <div>
 
-      {/* =========================
+      {/* 
           COMPANY DESCRIPTION
-      ========================= */}
+       */}
 
       <div className="mb-2">
         <textarea
@@ -29,59 +29,62 @@ const EmployerForm = ({ formik }) => {
       </div>
 
 
-      {/* =========================
+      {/* 
           COMPANY WEBSITE
-      ========================= */}
+       */}
+      <div className="flex justify-between">
 
-      <div className="mb-2">
-        <input
-          id="website"
-          name="website"
-          type="url"
-          placeholder="Enter your company website"
-          value={formik.values.website}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="border rounded p-2 w-full"
-        />
 
-        {formik.touched.website &&
-          formik.errors.website && (
-            <p className="text-red-700">
-              {formik.errors.website}
-            </p>
-          )}
+        <div className="mb-2 w-65">
+          <input
+            id="website"
+            name="website"
+            type="url"
+            placeholder="Enter your company website"
+            value={formik.values.website}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="border rounded p-2 w-full"
+          />
+
+          {formik.touched.website &&
+            formik.errors.website && (
+              <p className="text-red-700">
+                {formik.errors.website}
+              </p>
+            )}
+        </div>
+
+
+         {/* COMPANY PHONE */}
+          
+
+
+        <div className="mb-2 w-65">
+          <input
+            id="phone"
+            name="phone"
+            type="text"
+            placeholder=" Company phone number"
+            value={formik.values.phone}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="border rounded p-2 w-full"
+          />
+
+          {formik.touched.phone &&
+            formik.errors.phone && (
+              <p className="text-red-700">
+                {formik.errors.phone}
+              </p>
+            )}
+        </div>
       </div>
 
 
-      {/* =========================
-          COMPANY PHONE
-      ========================= */}
-
-      <div className="mb-2">
-        <input
-          id="phone"
-          name="phone"
-          type="text"
-          placeholder="Enter your company phone number"
-          value={formik.values.phone}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="border rounded p-2 w-full"
-        />
-
-        {formik.touched.phone &&
-          formik.errors.phone && (
-            <p className="text-red-700">
-              {formik.errors.phone}
-            </p>
-          )}
-      </div>
-
-
-      {/* =========================
+      {/* 
           COMPANY LOGO
-      ========================= */}
+       */}
 
       <div className="mb-5 flex items-center justify-between border p-3 rounded-lg">
 

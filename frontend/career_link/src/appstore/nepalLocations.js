@@ -1,6 +1,6 @@
 import React from "react";
 
-export const nepalLocations = [
+export const nepallocation = [
   "Bhaktapur",
   "Biratnagar",
   "Birgunj",

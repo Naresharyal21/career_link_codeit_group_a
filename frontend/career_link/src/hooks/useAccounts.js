@@ -1,5 +1,6 @@
 import useApi from "./useApi";
 import accountsApi from "../apis/accountsApi";
+import apiClient from "../apis/apiClient";
 
 const useAccounts = () => {
   const { data, loading, error, execute } = useApi();
@@ -20,6 +21,21 @@ const useAccounts = () => {
     return await execute(() => accountsApi.refreshToken(refresh));
   };
 
+  const forgotpassword= async(email)=>{
+    return await execute(()=>accountsApi.forgotpassword(email));
+  };
+  const verifyOTP = async (email , otp,purpose)=>{
+    return await execute(()=> accountsApi.verifyOTP(email, otp , purpose));
+  };
+
+  const resetPassword=async (email , newpassword)=>{
+    return await execute(()=> accountsApi.resetpassword(email , newpassword));
+  };
+
+
+
+
+ 
   return {
     data,
     loading,
@@ -28,6 +44,9 @@ const useAccounts = () => {
     register,
     getMe,
     refreshToken,
+    forgotpassword,
+    verifyOTP,
+    resetPassword,
   };
 };
 

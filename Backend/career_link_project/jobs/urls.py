@@ -1,18 +1,20 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     JobPostingListView,
     JobPostingDetailView,
-    JobPostingCreateView,
-    JobPostingUpdateDeleteView,
     JobCategoryListView,
     SkillListView,
+    JobPostingViewSet,
 )
+
+router = DefaultRouter()
+router.register(r"manage", JobPostingViewSet, basename="job-manage")
 
 urlpatterns = [
     path("", JobPostingListView.as_view(), name="job-list"),
-    path("create/", JobPostingCreateView.as_view(), name="job-create"),
     path("<int:pk>/", JobPostingDetailView.as_view(), name="job-detail"),
-    path("<int:pk>/manage/", JobPostingUpdateDeleteView.as_view(), name="job-manage"),
     path("categories/", JobCategoryListView.as_view(), name="job-category-list"),
     path("skills/", SkillListView.as_view(), name="skill-list"),
+    path("", include(router.urls)),
 ]

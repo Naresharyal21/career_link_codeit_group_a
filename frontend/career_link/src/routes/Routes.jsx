@@ -18,45 +18,62 @@ import DashboardLayout from '../layout/DashboardLayout'
 import JobDetailPage from '../pages/jobs/JobDetailPage'
 import BrowseJobsPage from '../pages/jobs/BrowseJobsPage'
 
+import MyProfilecart from '../pages/accounts/MyProfilecart'
+import ThemeContext from '../context/ThemeContext'
+import ProtectedRoute from '../context/ProtectedRoute'
+import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
+import VerifyOTPpage from '../pages/accounts/VerifyOTPpage'
+import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
+
+
 
 
 
 
 const AppRoutes = () => {
   return (
-    <Routes>
-
-      {/* public pages */}
-      <Route path="login/" element={<Login />} />
-      <Route path="signup/" element={<Signup />} />
+    <ThemeContext>
 
 
+      <Routes>
 
-      {/* DashboardLayout */}
+       
+        <Route path="login/" element={<Login />} />
+        <Route path="signup/" element={<Signup />} />
+        <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
+        <Route path="resetpassword/" element={<ResetPasswordPage/>} />
+        <Route path="verifyotp/:purpose" element={<VerifyOTPpage />} />
 
-      <Route element={<DashboardLayout />}>
-        <Route index element={<Home />} />
-
-        {/* accounts route */}
-
-
-        {/* accounts route ends  */}
-
-
-        {/* Jobs routes */}
-        <Route path="jobs" element={<BrowseJobsPage />} />
-        <Route path="jobs/:id" element={<JobDetailPage />} />
+        <Route element={<ProtectedRoute />}>
 
 
-        {/* Jobs routes ends  */}
-      </Route>
+          {/* DashboardLayout */}
+
+          <Route element={<DashboardLayout />}>
+            <Route index element={<Home />} />
+
+            {/* accounts route */}
+
+            <Route path="Profile/" element={<MyProfilecart />} />
+            {/* /* accounts route ends  */}
+
+
+            {/* /* Jobs routes */}
+
+            <Route path="jobs" element={<BrowseJobsPage />} />
+            <Route path="jobs/:id" element={<JobDetailPage />} />
+
+
+            {/* Jobs routes ends  */}
+          </Route>
+        </Route>
 
 
 
 
 
-    </Routes>
-  )
+      </Routes>
+    </ThemeContext>)
 }
 
 export default AppRoutes

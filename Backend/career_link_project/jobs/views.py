@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from .models import JobPosting, JobCategory, Skill
 from .serializers import (
     JobPostingListSerializer,
@@ -37,29 +37,32 @@ class SkillListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class IsOwnerEmployer(permissions.BasePermission):
-    """Only the employer who owns this job posting can update or delete it."""
+class IsEmployerOrReadOnly(permissions.BasePermission):
+    """Anyone can read; only an authenticated employer can write, and only
+    to their own job postings."""
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.is_authenticated and hasattr(request.user, "employer_profile")
 
     def has_object_permission(self, request, view, obj):
-        return (
-            hasattr(request.user, "employer_profile")
-            and obj.employer_id == request.user.employer_profile.id
-        )
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.employer.user == request.user
 
 
-class JobPostingCreateView(generics.CreateAPIView):
-    """POST /api/v1/jobs/create/ - create a new job posting. Requires login
-    and an employer profile on the logged-in user."""
+class JobPostingViewSet(viewsets.ModelViewSet):
+    """/api/v1/jobs/manage/ - CRUD for the logged-in employer's own job
+    postings. Uses the writable serializer so category/skills/etc. are
+    accepted as input, not just displayed."""
     serializer_class = JobPostingWriteSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsEmployerOrReadOnly]
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated and hasattr(self.request.user, "employer_profile"):
+            return JobPosting.objects.filter(employer=self.request.user.employer_profile)
+        return JobPosting.objects.none()
 
     def perform_create(self, serializer):
         serializer.save(employer=self.request.user.employer_profile)
-
-
-class JobPostingUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
-    """GET/PUT/PATCH/DELETE /api/v1/jobs/<id>/manage/ - view, update, or delete
-    a job posting. Only the owning employer can update or delete it."""
-    queryset = JobPosting.objects.all()
-    serializer_class = JobPostingWriteSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerEmployer]
