@@ -2,30 +2,38 @@ import React from 'react'
 import Button from '../../components/commonuiPart/Button'
 import { useNavigate, useParams, } from 'react-router'
 import useAccounts from '../../hooks/useAccounts';
+import useOtpCooldown from "../../hooks/useOtpCooldown";
 
 const ManageAccountCart = ({ onClose }) => {
 
   const { sendDeleteOTP } = useAccounts();
 
-  const { purpose } = useParams();
+  
 
   const navigate = useNavigate();
-   
 
-const handleDeleteAccount = async () => {
-  try {
-  
-
-    const response = await sendDeleteOTP();
-
-  
-    navigate("/pr/verifyotp/dav");
+  const {
+    formattedTime,
+    isCooldown,
+    startCooldown,
+  } = useOtpCooldown("dav", 180);
 
 
-  } catch (error) {
-    console.log("Failed to send delete OTP:", error);
-  }
-};
+  const handleDeleteAccount = async () => {
+    try {
+
+
+      const response = await sendDeleteOTP();
+startCooldown();
+
+
+      navigate("/pr/verifyotp/dav");
+
+
+    } catch (error) {
+      console.log("Failed to send delete OTP:", error);
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center ">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
@@ -45,11 +53,14 @@ const handleDeleteAccount = async () => {
           </h3></Button>
         <Button className='w-full mt-6 rounded-xl border p-3'
           type='button'
+          disabled={isCooldown}
           onClick={handleDeleteAccount}
           variant='danger' > <h3 className="font-semibold text-gray-800  dark:text-white">
-            Delete My Account
+            {isCooldown
+              ? `Delete My Account
+ (${formattedTime})`
+              : "Delete My Account"}
           </h3></Button>
-
 
 
 

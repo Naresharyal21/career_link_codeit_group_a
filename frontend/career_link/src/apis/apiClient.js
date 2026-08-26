@@ -8,7 +8,12 @@ const apiClient = async (endpoint, options = {}) => {
     
 
   if (!response.ok) {
-    throw new Error(data.detail || "Something went wrong");
+    const message=
+    data.email?.[0]||
+    data.detail||
+    data.error||
+    "Something went wrong";
+    throw new Error(message);
   }
 
   return data;

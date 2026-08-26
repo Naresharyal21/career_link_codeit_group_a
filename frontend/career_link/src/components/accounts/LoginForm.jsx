@@ -11,6 +11,7 @@ import { Link, useNavigate, } from 'react-router';
 import useAccounts from '../../hooks/useAccounts';
 import { AuthenticationContext } from '../../context/AuthContext';
 import Button from '../commonuiPart/Button';
+import {toast} from "react-toastify"
 
 
 
@@ -46,14 +47,17 @@ const LoginForm = () => {
           response.access,
           response.refresh
         );
-
+toast.success("Login successful!")
 
 
         navigate("/")
 
 
       } catch (err) {
-
+toast.error(err.message || "Please verify your Credentials")
+if(err.message==="Please verify your email before logging in"){
+  navigate("/verifyotp/emv",{replace:true});
+}
 
       }
     }
