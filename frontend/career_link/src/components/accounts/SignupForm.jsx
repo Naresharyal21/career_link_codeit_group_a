@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 
 import { useFormik } from "formik";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 import EmployerForm from "./EmployerForm";
 import JobseekerForm from "./JobseekerForm";
@@ -15,7 +15,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import useAccounts from "../../hooks/useAccounts";
 import { signupValidationSchema } from "./validationSchema";
-import { nepallocation } from "../../appstore/nepallocation";
+import { nepallocation } from "../../appstore/nepalLocations";
 
 
 const SignupForm = () => {

@@ -3,7 +3,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const request = async (endpoint, options = {}) => {
     const token = localStorage.getItem("accessToken");
 
-    const finalURL = `${BASE_URL}${endpoint}`;
+    const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
 
     console.log("API REQUEST:", {
         BASE_URL,
@@ -60,11 +60,14 @@ const request = async (endpoint, options = {}) => {
             message = String(data);
         }
 
-        setError(
-            err?.response?.data?.detail ||
-                err?.message ||
-                "Unable to load reports."
-        );
+        const error = new Error(message);
+
+        error.response = {
+            data,
+            status: response.status,
+        };
+
+        throw error;
     }
     return data;
 };
@@ -92,6 +95,13 @@ const apiClient = {
         request(endpoint, {
             ...options,
             method: "PUT",
+            body: JSON.stringify(body),
+        }),
+
+    patch: (endpoint, body, options = {}) =>
+        request(endpoint, {
+            ...options,
+            method: "PATCH",
             body: JSON.stringify(body),
         }),
 

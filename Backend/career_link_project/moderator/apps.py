@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class ModeratorConfig(AppConfig):
-    name = 'moderator'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "moderator"
+
+    def ready(self):
+        import moderator.signals

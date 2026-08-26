@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useFormik } from "formik";
 
 import { verifyOtpSchema } from "../../components/accounts/validationSchema";
