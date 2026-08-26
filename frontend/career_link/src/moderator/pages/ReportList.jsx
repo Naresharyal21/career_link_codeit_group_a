@@ -104,7 +104,7 @@ function getJobTitle(report) {
     ) {
         return (
             report.reported_job.title ||
-            `Job #${report.reported_job.id}`
+            `Job ${report.reported_job.id}`
         );
     }
 
@@ -112,7 +112,7 @@ function getJobTitle(report) {
         report?.reported_job_title ||
         report?.job?.title ||
         (getJobId(report)
-            ? `Job #${getJobId(report)}`
+            ? `Job ${getJobId(report)}`
             : "Unknown job")
     );
 }
@@ -1040,7 +1040,7 @@ function ReportRow({
 
                     {getJobId(report) && (
                         <p className="mt-1 text-xs text-[#98A2B3]">
-                            Job #
+                            Job 
                             {getJobId(
                                 report
                             )}
@@ -1187,7 +1187,7 @@ function MobileReportCard({
                     </h3>
 
                     <p className="mt-1 text-xs text-[#98A2B3]">
-                        Job #
+                        Job 
                         {getJobId(
                             report
                         ) || "N/A"}

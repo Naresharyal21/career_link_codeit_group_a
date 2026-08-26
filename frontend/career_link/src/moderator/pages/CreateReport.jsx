@@ -7,7 +7,10 @@ import {
     Flag,
     Search,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import {
+    useNavigate,
+    useParams,
+} from "react-router-dom";
 
 import moderatorApi from "../../apis/moderatorApi";
 import { getJobs } from "../../apis/jobsApi";
@@ -37,7 +40,8 @@ const CreateReport = () => {
 
     const jobFieldRef = useRef(null);
 
-
+    const { id } = useParams();
+    const isEditMode = Boolean(id);
 
     useEffect(() => {
         let cancelled = false;
@@ -77,26 +81,51 @@ const CreateReport = () => {
     }, []);
 
     useEffect(() => {
-        const handleOutsideClick = (event) => {
-            if (
-                jobFieldRef.current &&
-                !jobFieldRef.current.contains(event.target)
-            ) {
-                setIsJobOpen(false);
+        if (!id) {
+            return;
+        }
+
+        const loadReport = async () => {
+            try {
+                setLoading(true);
+
+                const data =
+                    await moderatorApi.getReport(id);
+
+                setForm({
+                    reported_job:
+                        String(
+                            typeof data.reported_job ===
+                            "object"
+                                ? data.reported_job.id
+                                : data.reported_job || ""
+                        ),
+
+                    report_reason:
+                        data.report_reason || "",
+
+                    report_description:
+                        data.report_description || "",
+                });
+
+                setJobQuery(
+                    typeof data.reported_job ===
+                    "object"
+                        ? data.reported_job.title || ""
+                        : data.reported_job_title || ""
+                );
+            } catch (err) {
+                setError(
+                    err?.message ||
+                        "Unable to load report."
+                );
+            } finally {
+                setLoading(false);
             }
         };
 
-        document.addEventListener(
-            "mousedown",
-            handleOutsideClick
-        );
-
-        return () =>
-            document.removeEventListener(
-                "mousedown",
-                handleOutsideClick
-            );
-    }, []);
+        loadReport();
+    }, [id]);
 
     const filteredJobs = useMemo(() => {
         const query = jobQuery.trim().toLowerCase();
@@ -217,59 +246,44 @@ const CreateReport = () => {
                     form.report_description.trim(),
             };
 
+            if (isEditMode) {
+                await moderatorApi.updateReport(
+                    id,
+                    payload
+                );
 
-            const createdReport =
-                await moderatorApi.createReport(payload);
-
-            setSuccess(
-                `Report ${formatReportId(createdReport.id)} created successfully.`
-            );
-
-
-            setForm({
-                reported_job: "",
-                report_reason: "",
-                report_description: "",
-            });
-
-            setSelectedJob(null);
-            setJobQuery("");
-        } catch (err) {
-            console.error(
-                "Failed to create report:",
-                err
-            );
-
-            const apiError =
-                err?.response?.data;
-
-            if (typeof apiError === "string") {
-                setError(apiError);
-            } else if (apiError?.detail) {
-                setError(apiError.detail);
-            } else if (apiError) {
-                const messages = Object.entries(
-                    apiError
-                )
-                    .flatMap(([field, value]) => {
-                        const text = Array.isArray(value)
-                            ? value.join(", ")
-                            : String(value);
-
-                        return `${field}: ${text}`;
-                    })
-                    .join(" ");
-
-                setError(
-                    messages ||
-                        "Unable to create the report."
+                setSuccess(
+                    `Report ${formatReportId(
+                        id
+                    )} updated successfully.`
                 );
             } else {
-                setError(
-                    err?.message ||
-                        "Unable to create the report."
+                const createdReport =
+                    await moderatorApi.createReport(
+                        payload
+                    );
+
+                setSuccess(
+                    `Report ${formatReportId(
+                        createdReport.id
+                    )} created successfully.`
                 );
+
+                setForm({
+                    reported_job: "",
+                    report_reason: "",
+                    report_description: "",
+                });
+
+                setSelectedJob(null);
+                setJobQuery("");
             }
+        } catch (err) {
+            setError(
+                err?.response?.data?.detail ||
+                    err?.message ||
+                    "Unable to save report."
+            );
         } finally {
             setLoading(false);
         }
@@ -281,8 +295,16 @@ const CreateReport = () => {
 
     return (
             <ModeratorSectionPage
-                title="Create Report"
-                description="Create a moderation report for a job posting that requires moderator attention."
+                title={
+                    isEditMode
+                        ? `Update Report ${formatReportId(id)}`
+                        : "Create Report"
+                }
+                description={
+                    isEditMode
+                        ? "Update the moderation report information."
+                        : "Create a moderation report for a job posting."
+                }
                 backLabel="Reports"
                 backTo="/reports/"
             >
@@ -583,7 +605,11 @@ const CreateReport = () => {
                             <Flag className="h-4 w-4" />
 
                             {loading
-                                ? "Creating..."
+                                ? isEditMode
+                                    ? "Updating..."
+                                    : "Creating..."
+                                : isEditMode
+                                ? "Update Report"
                                 : "Create Report"}
                         </button>
                     </div>

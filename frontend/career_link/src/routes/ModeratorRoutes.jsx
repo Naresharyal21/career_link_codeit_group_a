@@ -28,6 +28,11 @@ const ModeratorRoutes = () => {
                 element={<CreateReport />}
             />
 
+            <Route
+                path=":id/edit"
+                element={<CreateReport />}
+            />
+
             {/* /reports/review-queue/ */}
             <Route
                 path="review-queue"
