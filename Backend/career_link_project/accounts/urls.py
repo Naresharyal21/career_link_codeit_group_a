@@ -12,7 +12,7 @@ from accounts  import views
 
 urlpatterns = [
     path("register/", views.RegisterView.as_view(), name="register"),
-    path("login/", TokenObtainPairView.as_view(), name="login"),
+    path("login/", views.LoginView.as_view(), name="login"),
     path("login/refresh/", TokenRefreshView.as_view(), name="login-refresh"),
     path("me/", views.MeView.as_view(), name="me"),
 
@@ -26,6 +26,10 @@ urlpatterns = [
     path(
     "pr/verify/otp/",views.
     DeleteAccountView.as_view(),
+),
+    path(
+    "verify/resend/otp/",views.
+    ResendVerificationOTPView.as_view(),
 ),
 
 ]

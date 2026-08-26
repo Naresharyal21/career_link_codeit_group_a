@@ -6,15 +6,14 @@ const apiClient = async (endpoint, options = {}) => {
 
     const finalURL = `${BASE_URL}${endpoint}`;
 
-    console.log("API REQUEST:", {
-        BASE_URL,
-        endpoint,
-        finalURL,
-        hasToken: !!token,
-        tokenPreview: token
-            ? `${token.substring(0, 20)}...`
-            : null,
-    });
+  if (!response.ok) {
+    const message=
+    data.email?.[0]||
+    data.detail||
+    data.error||
+    "Something went wrong";
+    throw new Error(message);
+  }
 
     const response = await fetch(finalURL, {
         ...options,

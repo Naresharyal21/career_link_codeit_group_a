@@ -10,9 +10,14 @@ from .models import EmailOTP
 def create_and_send_otp(user, purpose, expiry_minutes=3):
     otp = str(secrets.randbelow(900000) + 100000)
 
-    expires_at = timezone.now() + timedelta(expiry_minutes)
+    expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
 
-    EmailOTP.objects.filter(user=user, purpose=purpose, is_verified=False).update(
+    # Invalidate previous unused OTPs
+    EmailOTP.objects.filter(
+        user=user,
+        purpose=purpose,
+        is_verified=False
+    ).update(
         is_verified=True
     )
 
@@ -23,14 +28,17 @@ def create_and_send_otp(user, purpose, expiry_minutes=3):
         expires_at=expires_at,
         purpose=purpose,
     )
+    print("NEW OTP CREATED:", otp)
+    print("OTP ID:", email_otp.id)
+    print("EMAIL:", user.email)
 
-    # send the otp
     send_mail(
         f"Your Verification OTP for {purpose}",
-        f"Your OTP is {otp}. It will expires in {expiry_minutes} minutes.",
-        settings.DEFAULT_FROM_EMAIL,  # career email
-        [user.email],  # user email to send email
+        f"Your OTP is {otp}. It will expire in {expiry_minutes} minutes.",
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
     )
+
     return email_otp
 
 

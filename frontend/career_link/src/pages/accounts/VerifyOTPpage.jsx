@@ -1,17 +1,25 @@
 import React from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useFormik } from "formik";
-
+import { toast } from "react-toastify";
 import { verifyOtpSchema } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
 import Button from "../../components/commonuiPart/Button";
+import useOtpCooldown from "../../hooks/useOtpCooldown";
 
 const VerifyOTPPage = () => {
-  const { verifyOTP, deleteAccount } = useAccounts();
+  const { verifyOTP, deleteAccount, resendVerificationOTP, sendDeleteOTP } = useAccounts();
+  const { purpose } = useParams();
+
+  const {
+    formattedTime,
+    isCooldown,
+    startCooldown,
+  } = useOtpCooldown(purpose, 180);
+
 
   const navigate = useNavigate();
 
-  const { purpose } = useParams();
 
 
 
@@ -19,6 +27,35 @@ const VerifyOTPPage = () => {
 
 
   const isProtectedPurpose = purpose === "cev" || purpose === "dav";
+
+
+  const handleResendOTP = async () => {
+    if (isCooldown) return;
+    try {
+      if (purpose === "emv") {
+        const email = localStorage.getItem("signupemail");
+
+        if (!email) {
+          toast.error("Email not found");
+          return;
+        }
+
+        await resendVerificationOTP(email, purpose);
+
+      }
+
+      if (purpose === "dav") {
+        await sendDeleteOTP(purpose);
+      }
+      startCooldown();
+      toast.success("OTP sent successfully");
+
+    } catch (error) {
+      console.log("Resend OTP error:", error);
+      toast.error(error.message || "Failed to resend OTP");
+    }
+  };
+
 
 
   const formik = useFormik({
@@ -29,7 +66,7 @@ const VerifyOTPPage = () => {
     validationSchema: verifyOtpSchema,
 
     onSubmit: async (values) => {
-      console.log(values)
+
       try {
 
         if (isProtectedPurpose) {
@@ -44,7 +81,7 @@ const VerifyOTPPage = () => {
             localStorage.removeItem("refreshToken");
 
             ;
-          } else {
+
 
           }
 
@@ -124,10 +161,12 @@ const VerifyOTPPage = () => {
 
           <Button
             type="submit"
+            
             variant={purpose === "dav" ? "danger" : "primary"}
             disabled={formik.isSubmitting}
             className="w-full mt-5"
           >
+            
             {formik.isSubmitting
               ? "Deleting..."
               : purpose === "dav"
@@ -136,6 +175,22 @@ const VerifyOTPPage = () => {
           </Button>
 
         </form>
+
+        {(purpose == "emv" || purpose === "dav") && (
+          <div className="flex items-center justify-center">
+            <Button
+              type="button"
+              disabled={isCooldown}
+              variant="gray"
+              onClick={handleResendOTP}
+              className=" mt-4 "
+            >
+             {isCooldown
+              ? `Resend OTP (${formattedTime})`
+              : "Resend OTP"}
+            </Button>
+          </div>
+        )}
         {!isProtectedPurpose && (
           <div className="flex items-center justify-center">
             <Link
@@ -150,12 +205,23 @@ const VerifyOTPPage = () => {
           <div className="flex items-center justify-center">
             <Link
               to="/"
-              className="text-green-600 underline font-bold mt-4 hover:text-green-800"
+              className="text-green-600  font-bold mt-4 hover:text-green-800"
             >
               Cancel Process
             </Link>
           </div>
         )}
+        {purpose === "prv" && (
+          <div className="flex items-center justify-center">
+            <Link
+              to="/forgetpassword"
+              className="text-blue-600 underline mt-4 hover:text-blue-800"
+            >
+              Change Email
+            </Link>
+          </div>
+        )}
+
 
 
       </div>
