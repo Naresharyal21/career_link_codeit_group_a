@@ -1,9 +1,24 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
 
 from .models import JobseekerProfile, EmployerProfile
 
 User = get_user_model()
+
+class LoginSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+     data=super().validate(attrs)
+     if not self.user.email_verified:
+         raise serializers.ValidationError({
+             "email":"Please verify your email before logging in"
+         })
+     return data
+
+
+
 
 
 class UserSerializer(serializers.ModelSerializer):
