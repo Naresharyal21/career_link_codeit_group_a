@@ -1,7 +1,7 @@
 import React from 'react'
 
 
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router'
 
 
 import Home from '../pages/Home'
@@ -37,7 +37,7 @@ const AppRoutes = () => {
 
       <Routes>
 
-        {/* public pages */}
+       
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
         <Route path="forgetpassword/" element={<ForgetPasswordPage />} />

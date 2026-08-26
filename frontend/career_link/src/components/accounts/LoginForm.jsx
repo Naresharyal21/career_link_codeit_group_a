@@ -101,9 +101,6 @@ if(err.message==="Please verify your email before logging in"){
 
 
 
-      {/* =========================
-          PASSWORD
-      ========================= */}
 
       <div className="mb-4">
 
