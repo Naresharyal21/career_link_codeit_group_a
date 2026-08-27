@@ -8,7 +8,7 @@ import Button from "../../components/commonuiPart/Button";
 import useOtpCooldown from "../../hooks/useOtpCooldown";
 
 const VerifyOTPPage = () => {
-  const { verifyOTP, deleteAccount, resendVerificationOTP, sendDeleteOTP } = useAccounts();
+  const { verifyOTP, deleteAccount, resendVerificationOTP, sendDeleteOTP, updateEmail } = useAccounts();
   const { purpose } = useParams();
 
   const {
@@ -66,65 +66,100 @@ const VerifyOTPPage = () => {
     validationSchema: verifyOtpSchema,
 
     onSubmit: async (values) => {
-
       try {
+        // Account deletion
+        if (purpose === "dav") {
+          await deleteAccount(values.otp, purpose);
 
-        if (isProtectedPurpose) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
 
-          if (purpose === "dav") {
-            const response = await deleteAccount(
-              values.otp,
-              purpose,
-            )
-            navigate("/login")
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
+          toast.success("Account deleted successfully");
+          navigate("/login");
+          return;
+        }
 
-            ;
+        // Protected change-email verification
+        if (purpose === "cev") {
+          const email = localStorage.getItem("updateemail");
 
-
+          if (!email) {
+            toast.error("Email not found");
+            return;
           }
 
-        } else {
-
-          const storageKey = purpose === "prv" ? "resetemail" : purpose === "emv" ? "signupemail" : "deleteemail";
-
-          const email = localStorage.getItem(storageKey);
-
-
-
-          const response = await verifyOTP(
+          await verifyOTP(
             email,
             values.otp,
             purpose
           );
-          console.log("OTP verified:", response);
-          localStorage.removeItem(storageKey);
 
-          if (purpose === "emv") {
-            localStorage.removeItem("signupemail");
-            navigate("/login");
+
+
+
+          const response=await updateEmail(
+            email,
+
+          );
+          localStorage.removeItem("updateemail");
+          toast.success("Email changed successfully");
+          if (response.email_verified) {
+            navigate("/");
+          } else {
+            navigate("/verifyemail");
           }
-          if (purpose === "prv") {
-            localStorage.setItem("resetemail", email);
-            navigate("/resetpassword");
-          }
+          return;
         }
 
+        // Normal OTP flows
+        const storageKey =
+          purpose === "prv"
+            ? "resetemail"
+            : "signupemail";
 
+        const email = localStorage.getItem(storageKey);
+
+        if (!email) {
+          toast.error("Email not found");
+          return;
+        }
+
+        await verifyOTP(
+          email,
+          values.otp,
+          purpose
+        );
+
+        if (purpose === "emv") {
+          localStorage.removeItem("signupemail");
+          navigate("/login");
+          return;
+        }
+
+        if (purpose === "prv") {
+          navigate("/resetpassword");
+          return;
+        }
 
       } catch (error) {
         console.log("OTP verification error:", error);
+        toast.error(error.message || "OTP verification failed");
       }
-    },
+    }
   });
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-md p-6 rounded-2xl shadow shadow-blue-600">
 
-        <h1 className="text-2xl font-bold mb-2">{purpose === "emv" ? "Verify Your Email" : purpose === "prv" ? "Verify OTP" : "Verify Account Deletion"}
-
+        <h1 className="text-2xl font-bold mb-2">
+          {purpose === "emv"
+            ? "Verify Your Email"
+            : purpose === "prv"
+              ? "Verify OTP"
+              : purpose === "cev"
+                ? "Verify New Email"
+                : "Verify Account Deletion"}
         </h1>
 
         <p className="text-gray-500 mb-6">
@@ -161,12 +196,12 @@ const VerifyOTPPage = () => {
 
           <Button
             type="submit"
-            
+
             variant={purpose === "dav" ? "danger" : "primary"}
             disabled={formik.isSubmitting}
             className="w-full mt-5"
           >
-            
+
             {formik.isSubmitting
               ? "Deleting..."
               : purpose === "dav"
@@ -176,7 +211,7 @@ const VerifyOTPPage = () => {
 
         </form>
 
-        {(purpose == "emv" || purpose === "dav") && (
+        {(purpose == "emv" || purpose === "dav" || purpose === "cev") && (
           <div className="flex items-center justify-center">
             <Button
               type="button"
@@ -185,9 +220,9 @@ const VerifyOTPPage = () => {
               onClick={handleResendOTP}
               className=" mt-4 "
             >
-             {isCooldown
-              ? `Resend OTP (${formattedTime})`
-              : "Resend OTP"}
+              {isCooldown
+                ? `Resend OTP (${formattedTime})`
+                : "Resend OTP"}
             </Button>
           </div>
         )}

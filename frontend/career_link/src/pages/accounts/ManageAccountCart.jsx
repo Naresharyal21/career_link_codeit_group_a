@@ -1,14 +1,15 @@
 import React from 'react'
 import Button from '../../components/commonuiPart/Button'
-import { useNavigate, useParams, } from 'react-router'
+import { Link, useNavigate, useParams, } from 'react-router'
 import useAccounts from '../../hooks/useAccounts';
 import useOtpCooldown from "../../hooks/useOtpCooldown";
+import EmailConformPasswordPage from './EmailConformPasswordPage';
 
 const ManageAccountCart = ({ onClose }) => {
 
-  const { sendDeleteOTP } = useAccounts();
+  const { sendDeleteOTP  ,resendVerificationOTP} = useAccounts();
 
-  
+
 
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ const ManageAccountCart = ({ onClose }) => {
 
 
       const response = await sendDeleteOTP();
-startCooldown();
+      startCooldown();
 
 
       navigate("/pr/verifyotp/dav");
@@ -32,6 +33,14 @@ startCooldown();
 
     } catch (error) {
       console.log("Failed to send delete OTP:", error);
+    }
+  };
+
+  const handleUpdateEmail=async(email , purpose )=>{
+    try{
+      const response= await resendVerificationOTP()
+    }catch(error){
+      {error:"failed to send the otp"}
     }
   };
   return (
@@ -48,8 +57,14 @@ startCooldown();
         </h4>
         <Button className='w-full rounded-xl border p-3   '
           type='button'
+          disabled={isCooldown}
+         
+          
           variant='gray'> <h3 className="font-semibold text-gray-800  dark:text-white">
-            Change Current  Email
+            
+            <Link to="conformpassword">
+  Change Email
+</Link>
           </h3></Button>
         <Button className='w-full mt-6 rounded-xl border p-3'
           type='button'

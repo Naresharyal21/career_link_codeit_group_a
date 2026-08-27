@@ -45,6 +45,18 @@ const useAccounts = () => {
     
   return await execute(() => accountsApi.resendVerificationOTP(email , purpose));
 };
+  const confirmPassword = async (password) => {
+    
+  return await execute(() => accountsApi.confirmPassword(password));
+};
+  const sendnewemailotp = async (email) => {
+    
+  return await execute(() => accountsApi.sendnewemailotp(email));
+};
+  const updateEmail = async (email) => {
+    
+  return await execute(() => accountsApi.updateEmail(email));
+};
 
 
 
@@ -64,6 +76,9 @@ const useAccounts = () => {
     sendDeleteOTP,
     deleteAccount,
     resendVerificationOTP,
+    confirmPassword,
+    sendnewemailotp,
+    updateEmail,
   };
 };
 

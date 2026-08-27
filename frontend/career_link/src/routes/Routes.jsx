@@ -24,6 +24,8 @@ import ProtectedRoute from '../context/ProtectedRoute'
 import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
 import VerifyOTPpage from '../pages/accounts/VerifyOTPpage'
 import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
+import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
+import EmailChangePage from '../pages/accounts/EmailChangePage'
 
 
 
@@ -55,6 +57,7 @@ const AppRoutes = () => {
             {/* accounts route */}
 
             <Route path="Profile/" element={<MyProfilecart />} />
+          
 
             
             {/* /* accounts route ends  */}
@@ -73,6 +76,8 @@ const AppRoutes = () => {
 
    <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
 </Route>
+  <Route path = "conformpassword" element={<EmailConformPasswordPage/>}/>
+  <Route path = "get/new/email" element={<EmailChangePage/>}/>
 
         </Route>
 
