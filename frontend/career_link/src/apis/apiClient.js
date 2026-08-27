@@ -1,19 +1,19 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const request = async (endpoint, options = {}) => {
-    const token = localStorage.getItem("accessToken");
+const apiClient = async (endpoint, options = {}) => {
+  
+  const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
     const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
 
-    console.log("API REQUEST:", {
-        BASE_URL,
-        endpoint,
-        finalURL,
-        hasToken: !!token,
-        tokenPreview: token
-            ? `${token.substring(0, 20)}...`
-            : null,
-    });
+  if (!response.ok) {
+    const message=
+    data.email?.[0]||
+    data.detail||
+    data.error||
+    "Something went wrong";
+    throw new Error(message);
+  }
 
     const response = await fetch(finalURL, {
         ...options,

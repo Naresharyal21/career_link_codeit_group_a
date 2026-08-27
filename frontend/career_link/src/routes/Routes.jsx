@@ -43,8 +43,10 @@ const AppRoutes = () => {
 
           
 
-          <Route path="Profile/" element={<MyProfilecart />} />
-      
+            <Route path="Profile/" element={<MyProfilecart />} />
+
+            
+            {/* /* accounts route ends  */}
 
 
       
@@ -53,7 +55,14 @@ const AppRoutes = () => {
           <Route path="jobs/:id" element={<JobDetailPage />} />
 
 
-  
+            {/* Jobs routes ends  */}
+          </Route>
+
+<Route>
+
+   <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
+</Route>
+
         </Route>
 
 

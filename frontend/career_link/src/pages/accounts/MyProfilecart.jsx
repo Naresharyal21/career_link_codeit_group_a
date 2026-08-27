@@ -1,9 +1,24 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { useContext } from 'react';
 
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router'
+import { AuthenticationContext } from '../../context/AuthContext';
+import Button from '../../components/commonuiPart/Button';
+import ManageAccountCart from './ManageAccountCart';
+
 
 const MyProfilecart = () => {
   const navigate = useNavigate();
+  const [showManageAccount , setShowManageAccount]=useState();
+
+  const { user } = useContext(AuthenticationContext);
+  const initials = user?.username
+    ?.split(" ")
+    .map((name) => name[0])
+    .join("")
+    .toUpperCase();
+
+
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken")
@@ -12,22 +27,37 @@ const MyProfilecart = () => {
   }
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4  w-65 -ml-45 position absolute rounded-b-2xl  h-fit">
+    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
+      <ul className="pl-4 -mt-5 font-bold" >Settings</ul>
       <ul>
-        <li>
+        <h2 className="pl-4  mt-3 mb-5 font-medium">Account</h2>
+        <li className="pl-4 flex">
+          <div className="  flex rounded-full h-9 w-9 text-white justify-center items-center p-2 bg-gray-600">
 
+
+            {initials}
+          </div>
+          <div className="ml-1 -mt-2">
+            <div className="">  {user?.username}</div>
+            <div className="-mt-1"> {user?.email}</div>
+
+          </div>
         </li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
-        <li>a</li>
+
+<li>
+       
+          <Button className='pl-4 ml-4 mt-5  font-medium' onClick={()=>setShowManageAccount(true)} variant='gray' > Manage My Account</Button>
+        </li>
+        {showManageAccount &&(
+          <ManageAccountCart onClose={()=>setShowManageAccount(false)}/>
+        )}
+
+
         <hr className='m-2'></hr>
-        <li> <button onClick={handleLogout} className=" w-full  p-2  hover:text-purple hover:bg-purple-900 cursor-pointer">Logout</button></li>
+        <li>
+          <Button onClick={handleLogout}
+            variant='logout'>Logout</Button>
+        </li>
       </ul>
     </div>
   )

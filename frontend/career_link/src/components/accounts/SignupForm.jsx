@@ -15,7 +15,8 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import useAccounts from "../../hooks/useAccounts";
 import { signupValidationSchema } from "./validationSchema";
-import { nepallocation } from "../../appstore/nepalLocations";
+import { nepalLocations } from "../../appstore/nepalLocations";
+import Button from "../commonuiPart/Button";
 
 
 const SignupForm = () => {
@@ -43,21 +44,21 @@ const SignupForm = () => {
 
     validationSchema: signupValidationSchema,
 
-   onSubmit: async (values) => {
-  try {
-    // 1. Register user first
-    await register(values);
+    onSubmit: async (values) => {
+      try {
+        // 1. Register user first
+        await register(values);
 
-    // 2. Save email only after successful registration
-    localStorage.setItem("signupemail", values.email);
+        // 2. Save email only after successful registration
+        localStorage.setItem("signupemail", values.email);
 
-    // 3. Go to OTP verification
-    navigate("/verifyotp/emv");
+        // 3. Go to OTP verification
+        navigate("/verifyotp/emv");
 
-  } catch (err) {
-    console.error("Registration failed:", err);
-  }
-},
+      } catch (err) {
+        console.error("Registration failed:", err);
+      }
+    },
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -94,26 +95,26 @@ const SignupForm = () => {
       {/* ROLE TOGGLE BUTTONS */}
       <div className="flex justify-center mb-8">
         <div className="flex gap-4">
-          <button
+          <Button
             type="button"
             onClick={() => handleRoleChange("js")}
-            className={`px-6 py-3 rounded-xl transition ${formik.values.role === "js"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-700"
-              }`}
+            variant={
+              formik.values.role == "js" ? "secondary" : "gray"
+            }
+            className="px-6 py-3 rounded-xl transition"
           >
             Jobseeker
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => handleRoleChange("ep")}
-            className={`px-6 py-3 rounded-xl transition ${formik.values.role === "ep"
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 text-gray-700"
-              }`}
+            variant={
+              formik.values.role == "ep" ? "secondary" : "gray"
+            }
+            className="px-6 py-3 rounded-xl transition"
           >
             Employer
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -241,13 +242,13 @@ const SignupForm = () => {
 
       {/* SUBMIT */}
       <div className="flex flex-col">
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="bg-green-600 text-white px-6 py-3 rounded-3xl hover:-translate-y-1 transition disabled:opacity-50"
+          className=" px-6 py-3 rounded-3xl hover:-translate-y-1 transition disabled:opacity-50"
         >
           {loading ? "Creating account..." : "Register"}
-        </button>
+        </Button>
         <Link
           className="ml-90 mt-2 text-x text-blue-600 underline hover:text-purple-800"
           to="/login"
