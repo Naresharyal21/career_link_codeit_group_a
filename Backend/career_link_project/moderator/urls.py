@@ -7,10 +7,11 @@ from .views import (
     StartReviewAPIView,
     ResolveReportAPIView,
     RejectReportAPIView,
+    JobApprovalListAPIView,
+    JobApprovalApproveAPIView,
+    JobApprovalRejectAPIView,
 )
 
-
-app_name = "moderator"
 
 
 urlpatterns = [
@@ -21,32 +22,50 @@ urlpatterns = [
     ),
 
     path(
-        "reports/",
+        "",
         ReportListCreateAPIView.as_view(),
         name="report-list-create",
     ),
 
     path(
-        "reports/<int:id>/",
+        "<int:id>/",
         ReportDetailAPIView.as_view(),
         name="report-detail",
     ),
 
     path(
-        "reports/<int:id>/review/",
+        "<int:id>/review/",
         StartReviewAPIView.as_view(),
         name="report-start-review",
     ),
 
     path(
-        "reports/<int:id>/resolve/",
+        "<int:id>/resolve/",
         ResolveReportAPIView.as_view(),
         name="report-resolve",
     ),
 
     path(
-        "reports/<int:id>/reject/",
+        "<int:id>/reject/",
         RejectReportAPIView.as_view(),
         name="report-reject",
+    ),
+    
+    path(
+    "job-approvals/",
+    JobApprovalListAPIView.as_view(),
+    name="job-approval-list",
+    ),
+
+    path(
+        "job-approvals/<int:pk>/approve/",
+        JobApprovalApproveAPIView.as_view(),
+        name="job-approval-approve",
+    ),
+
+    path(
+        "job-approvals/<int:pk>/reject/",
+        JobApprovalRejectAPIView.as_view(),
+        name="job-approval-reject",
     ),
 ]

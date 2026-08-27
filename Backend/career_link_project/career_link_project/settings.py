@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "accounts",
     "applications",
     "jobs",
-    "moderator",
+    "moderator.apps.ModeratorConfig",
     "notifications",
 ]
 

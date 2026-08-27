@@ -40,7 +40,7 @@ class ModeratorDashboardAPITests(APITestCase):
             description="Test job for dashboard metrics.",
             location="Kathmandu",
         )
-        self.url = "/api/moderator/dashboard/"
+        self.url = "/api/v1/reports/dashboard/"
 
     def test_dashboard_requires_moderator(self):
         self.client.force_authenticate(user=self.reporter)

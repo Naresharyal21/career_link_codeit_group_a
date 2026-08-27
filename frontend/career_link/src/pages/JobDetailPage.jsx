@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate } from 'react-router-dom'
 import { getJobById, getSimilarJobs, JOB_TYPE_LABELS } from '../apis/jobsApi'
 
 const JobDetailPage = () => {

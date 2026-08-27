@@ -20,7 +20,7 @@ class ReportAPITests(APITestCase):
             is_staff=True,
         )
 
-        self.report_url = "/api/moderator/reports/"
+        self.report_url = "/api/v1/reports/"
 
     def test_unauthenticated_user_cannot_create_report(self):
         response = self.client.post(
