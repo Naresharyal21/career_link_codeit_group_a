@@ -7,7 +7,7 @@ from django.conf import settings
 from .models import EmailOTP
 
 
-def create_and_send_otp(user, purpose, expiry_minutes=3):
+def create_and_send_otp(user, purpose, email=None,expiry_minutes=3):
     otp = str(secrets.randbelow(900000) + 100000)
 
     expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
@@ -28,15 +28,14 @@ def create_and_send_otp(user, purpose, expiry_minutes=3):
         expires_at=expires_at,
         purpose=purpose,
     )
-    print("NEW OTP CREATED:", otp)
-    print("OTP ID:", email_otp.id)
-    print("EMAIL:", user.email)
 
+
+    recipient_email = email or user.email
     send_mail(
         f"Your Verification OTP for {purpose}",
         f"Your OTP is {otp}. It will expire in {expiry_minutes} minutes.",
         settings.DEFAULT_FROM_EMAIL,
-        [user.email],
+        [recipient_email],
     )
 
     return email_otp

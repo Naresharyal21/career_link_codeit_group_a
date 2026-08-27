@@ -31,5 +31,17 @@ urlpatterns = [
     "verify/resend/otp/",views.
     ResendVerificationOTPView.as_view(),
 ),
+    path(
+    "verify/emailchange/password/",views.confirmPasswordView
+    .as_view(),
+),
+    path(
+    "send/emailchange/otp/",views.SendNewEmailOTPView
+    .as_view(),
+),
+    path(
+    "update/email/",views.ChangeEmail
+    .as_view(),
+),
 
 ]

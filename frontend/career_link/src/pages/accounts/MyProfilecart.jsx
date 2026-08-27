@@ -23,6 +23,7 @@ const MyProfilecart = () => {
   const handleLogout = () => {
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
+    localStorage.removeItem("user")
     navigate("/login")
   }
 
@@ -46,7 +47,15 @@ const MyProfilecart = () => {
 
 <li>
        
-          <Button className='pl-4 ml-4 mt-5  font-medium' onClick={()=>setShowManageAccount(true)} variant='gray' > Manage My Account</Button>
+          <Button className='m-1 mt-5  ' onClick={()=>setShowManageAccount(true)} variant='logout' > Manage My Account</Button>
+        </li>
+<li>
+       
+          <Button className=' m-1' variant='logout' > Edit Profile Picture</Button>
+        </li>
+<li>
+       
+          <Button className='m-1  'variant='logout' > Add Resume</Button>
         </li>
         {showManageAccount &&(
           <ManageAccountCart onClose={()=>setShowManageAccount(false)}/>

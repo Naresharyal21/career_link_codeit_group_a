@@ -210,9 +210,8 @@ class ResendVerificationOTPView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        print("🔥 RESEND VIEW CALLED")
+
         email = request.data.get("email")
-        print("EMAIL RECEIVED:", email)
 
         if not email:
             return Response({"error": "Email is required"})
@@ -227,3 +226,93 @@ class ResendVerificationOTPView(APIView):
         create_and_send_otp(user=user, purpose="emv")
 
         return Response({"message": "Verification OTP sent successfully"})
+
+
+class confirmPasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+
+        password = request.data.get("password")
+       
+
+
+        if not password:
+            return Response({"error": "Password is required"},
+                status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
+      
+
+        if not user.check_password(password):
+            return Response({"error": "Password does not match"},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        
+        return Response({"message": "Password confirmed sucess"},
+            status=status.HTTP_200_OK)
+
+    
+class SendNewEmailOTPView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+
+        new_email = request.data.get("email")
+
+        if not new_email:
+            return Response({"error": "Email is required"})
+
+
+        if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
+              return Response(
+                {"error": "This email is already in use"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user =request.user
+
+
+        
+
+        create_and_send_otp(user=user, purpose="cev",
+        email=new_email)
+
+        return Response({"message": "Verification OTP sent successfully"})
+    
+class ChangeEmail(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def put(self, request):
+        new_email = request.data.get("email")
+
+        if not new_email:
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        new_email = new_email.strip().lower()
+
+        if User.objects.filter(email=new_email).exclude(
+            id=request.user.id
+        ).exists():
+            return Response(
+                {"error": "This email is already in use"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        request.user.email = new_email
+        request.user.email_verified = True
+
+        request.user.save(
+            update_fields=["email", "email_verified"]
+        )
+
+        return Response(
+            {
+                "message": "Email changed successfully",
+                "email": request.user.email,
+                "email_verified": request.user.email_verified,
+            },
+            status=status.HTTP_200_OK
+        )
+

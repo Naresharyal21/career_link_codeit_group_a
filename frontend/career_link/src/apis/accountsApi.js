@@ -112,6 +112,54 @@ const accountsApi = {
       }),
     });
   },
+  confirmPassword:async( password)=>{
+    return await apiClient("/accounts/verify/emailchange/password/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        password,
+      }),
+    });
+  },
+  sendnewemailotp:async( email)=>{
+    return await apiClient("/accounts/send/emailchange/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        email,
+      }),
+    });
+  },
+  updateEmail:async( email)=>{
+    return await apiClient("/accounts/update/email/",{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        email,
+      }),
+    });
+  },
 
   
 
