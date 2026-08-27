@@ -26,6 +26,7 @@ const MyProfilecart = () => {
     localStorage.removeItem("user")
     navigate("/login")
   }
+
   return (
     <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
       <ul className="pl-4 -mt-5 font-bold" >Settings</ul>

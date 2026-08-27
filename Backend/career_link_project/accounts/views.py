@@ -58,6 +58,31 @@ class MeView(APIView):
                 "profile": data,
             }
         )
+    def put(self, request):
+        user = request.user
+        
+        # Update User fields if provided
+        user_serializer = UserSerializer(user, data=request.data, partial=True)
+        if user_serializer.is_valid():
+            user_serializer.save()
+        else:
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update Profile fields
+        if user.role == User.Role.JOBSEEKERS:
+            profile = JobseekerProfile.objects.filter(user=user).first()
+            serializer = JobseekerProfileSerializer(profile, data=request.data, partial=True)
+        elif user.role == User.Role.EMPLOYEERS:
+            profile = EmployerProfile.objects.filter(user=user).first()
+            serializer = EmployerProfileSerializer(profile, data=request.data, partial=True)
+        else:
+            return Response({"error": "Role not supported"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"user": user_serializer.data, "profile": serializer.data})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ForgetPasswordView(APIView):

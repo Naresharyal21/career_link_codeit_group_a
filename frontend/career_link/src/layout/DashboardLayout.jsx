@@ -1,32 +1,37 @@
-import React from 'react'
-import Navbar from './Navbar'
-import Sidebar from './Sidebar'
-import { Outlet } from 'react-router-dom'
+import React from "react";
+import { Outlet } from "react-router-dom";
+
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
 
 const DashboardLayout = () => {
   return (
-    <div className="wrapper h-screen flex flex-col bg-white dark:bg-gray-600 overflow-hidden">
-      
-      
-      <div className="w-full bg-gray-70 dark:bg-gray-400 dark:text-white shadow-lg shadow-black/12 z-50">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#F7F8FC] text-[#172337]">
+
+
+      <header className="relative z-50 h-20 shrink-0 border-b border-[#E5E7EB] bg-white shadow-sm">
         <Navbar />
-      </div>
+      </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        
-        {/* Sidebar */}
-        <div className="w-60 bg-gray-50 dark:bg-gray-800 dark:text-white ">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+
+
+        <aside className="hidden w-64 shrink-0 bg-[#172337] text-white md:block">
           <Sidebar />
-        </div>
+        </aside>
 
-     
-        <div className="content flex-1  p-6 overflow-y-auto z-0">
-          <Outlet />
-        </div>
+
+        <main className="min-w-0 flex-1 overflow-y-auto bg-[#F7F8FC]">
+
+          <div className="min-h-full p-4 sm:p-6 lg:p-8">
+            <Outlet />
+          </div>
+
+        </main>
 
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardLayout
+export default DashboardLayout;

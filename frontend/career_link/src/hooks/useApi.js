@@ -17,7 +17,7 @@ const useApi = () => {
       return result;
     } catch (err) {
       setError(err.message);
-     
+
       throw err;
     } finally {
       setLoading(false);
