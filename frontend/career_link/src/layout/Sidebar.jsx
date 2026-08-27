@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 
 import { MdOutlineDashboard } from "react-icons/md";
 import { IoBagOutline, IoBriefcaseOutline } from "react-icons/io5";
@@ -36,7 +36,7 @@ const navigationLinks = [
   },
   {
     name: "Reports",
-    path: "/moderator/reports",
+    path: "reports",
     icon: MdReport,
   },
 ];

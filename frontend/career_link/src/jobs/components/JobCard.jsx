@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import { JOB_TYPE_LABELS } from '../../apis/jobsApi'
 
 const JobCard = ({ job }) => {

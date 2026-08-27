@@ -1,9 +1,22 @@
-import React, { useState } from "react";
-import { AlertCircle, ArrowLeft, CheckCircle2, Flag } from "lucide-react";
-import { useNavigate } from "react-router";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+    AlertCircle,
+    ArrowLeft,
+    CheckCircle2,
+    ChevronDown,
+    Flag,
+    Search,
+} from "lucide-react";
+import {
+    useNavigate,
+    useParams,
+} from "react-router-dom";
 
 import moderatorApi from "../../apis/moderatorApi";
+import { getJobs } from "../../apis/jobsApi";
 import ModeratorSectionPage from "../components/ModeratorSectionPage";
+import { formatReportId } from "../utils/report";
+
 
 const CreateReport = () => {
     const navigate = useNavigate();
@@ -17,6 +30,166 @@ const CreateReport = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+
+    const [jobs, setJobs] = useState([]);
+    const [jobsLoading, setJobsLoading] = useState(true);
+    const [jobsError, setJobsError] = useState("");
+    const [jobQuery, setJobQuery] = useState("");
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [isJobOpen, setIsJobOpen] = useState(false);
+
+    const jobFieldRef = useRef(null);
+
+    const { id } = useParams();
+    const isEditMode = Boolean(id);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadJobs = async () => {
+            try {
+                setJobsLoading(true);
+                setJobsError("");
+
+                const response = await getJobs();
+
+                const data = Array.isArray(response)
+                    ? response
+                    : response?.results || [];
+
+                if (!cancelled) {
+                    setJobs(data);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setJobsError(
+                        "Couldn't load job postings. You can still search again."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setJobsLoading(false);
+                }
+            }
+        };
+
+        loadJobs();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!id) {
+            return;
+        }
+
+        const loadReport = async () => {
+            try {
+                setLoading(true);
+
+                const data =
+                    await moderatorApi.getReport(id);
+
+                setForm({
+                    reported_job:
+                        String(
+                            typeof data.reported_job ===
+                            "object"
+                                ? data.reported_job.id
+                                : data.reported_job || ""
+                        ),
+
+                    report_reason:
+                        data.report_reason || "",
+
+                    report_description:
+                        data.report_description || "",
+                });
+
+                setJobQuery(
+                    typeof data.reported_job ===
+                    "object"
+                        ? data.reported_job.title || ""
+                        : data.reported_job_title || ""
+                );
+            } catch (err) {
+                setError(
+                    err?.message ||
+                        "Unable to load report."
+                );
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadReport();
+    }, [id]);
+
+    const filteredJobs = useMemo(() => {
+        const query = jobQuery.trim().toLowerCase();
+
+        if (!query) {
+            return jobs.slice(0, 20);
+        }
+
+        return jobs
+            .filter((job) => {
+                const searchable = [
+                    job.id,
+                    job.title,
+                    job.employer_name,
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+
+                return searchable.includes(query);
+            })
+            .slice(0, 20);
+    }, [jobs, jobQuery]);
+
+    const handleJobQueryChange = (event) => {
+        setJobQuery(event.target.value);
+        setIsJobOpen(true);
+
+        if (selectedJob) {
+            setSelectedJob(null);
+
+            setForm((current) => ({
+                ...current,
+                reported_job: "",
+            }));
+        }
+
+        if (error) {
+            setError("");
+        }
+
+        if (success) {
+            setSuccess("");
+        }
+    };
+
+    const handleSelectJob = (job) => {
+        setSelectedJob(job);
+        setJobQuery(job.title);
+        setIsJobOpen(false);
+
+        setForm((current) => ({
+            ...current,
+            reported_job: String(job.id),
+        }));
+
+        if (error) {
+            setError("");
+        }
+
+        if (success) {
+            setSuccess("");
+        }
+    };
 
     const handleChange = (event) => {
         const { name, value } = event.target;
@@ -37,7 +210,7 @@ const CreateReport = () => {
 
     const validateForm = () => {
         if (!form.reported_job.trim()) {
-            return "Please enter the reported job ID.";
+            return "Please select the reported job from the list.";
         }
 
         if (!form.report_reason.trim()) {
@@ -73,72 +246,72 @@ const CreateReport = () => {
                     form.report_description.trim(),
             };
 
-            await moderatorApi.createReport(payload);
+            if (isEditMode) {
+                await moderatorApi.updateReport(
+                    id,
+                    payload
+                );
 
-            setSuccess(
-                "Report created successfully."
-            );
-
-            setForm({
-                reported_job: "",
-                report_reason: "",
-                report_description: "",
-            });
-        } catch (err) {
-            console.error(
-                "Failed to create report:",
-                err
-            );
-
-            const apiError =
-                err?.response?.data;
-
-            if (typeof apiError === "string") {
-                setError(apiError);
-            } else if (apiError?.detail) {
-                setError(apiError.detail);
-            } else if (apiError) {
-                const messages = Object.entries(
-                    apiError
-                )
-                    .flatMap(([field, value]) => {
-                        const text = Array.isArray(value)
-                            ? value.join(", ")
-                            : String(value);
-
-                        return `${field}: ${text}`;
-                    })
-                    .join(" ");
-
-                setError(
-                    messages ||
-                        "Unable to create the report."
+                setSuccess(
+                    `Report ${formatReportId(
+                        id
+                    )} updated successfully.`
                 );
             } else {
-                setError(
-                    err?.message ||
-                        "Unable to create the report."
+                const createdReport =
+                    await moderatorApi.createReport(
+                        payload
+                    );
+
+                setSuccess(
+                    `Report ${formatReportId(
+                        createdReport.id
+                    )} created successfully.`
                 );
+
+                setForm({
+                    reported_job: "",
+                    report_reason: "",
+                    report_description: "",
+                });
+
+                setSelectedJob(null);
+                setJobQuery("");
             }
+        } catch (err) {
+            setError(
+                err?.response?.data?.detail ||
+                    err?.message ||
+                    "Unable to save report."
+            );
         } finally {
             setLoading(false);
         }
     };
 
     const handleCancel = () => {
-        navigate("/moderator/reports");
+        navigate("/reports/");
     };
 
     return (
-        <ModeratorSectionPage
-            title="Create Report"
-            description="Create a moderation report for a job posting that requires moderator attention."
-            backLabel="Reports"
-            backTo="/moderator/reports"
-        >
+            <ModeratorSectionPage
+                title={
+                    isEditMode
+                        ? `Update Report ${formatReportId(id)}`
+                        : "Create Report"
+                }
+                description={
+                    isEditMode
+                        ? "Update the moderation report information."
+                        : "Create a moderation report for a job posting."
+                }
+                backLabel="Reports"
+                backTo="/reports/"
+            >
+            
             <div className="mx-auto max-w-3xl">
                 {/* Intro */}
-                <div className="rounded-2xl border border-[#bae6fd] bg-[#f0fdff] p-5">
+                {/* <div className="rounded-2xl border border-[#bae6fd] bg-[#f0fdff] p-5">
                     <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#00a6c7] shadow-sm">
                             <Flag className="h-5 w-5" />
@@ -156,7 +329,7 @@ const CreateReport = () => {
                             </p>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* Success */}
                 {success && (
@@ -172,7 +345,7 @@ const CreateReport = () => {
                                 type="button"
                                 onClick={() =>
                                     navigate(
-                                        "/moderator/reports"
+                                        "/reports/list/"
                                     )
                                 }
                                 className="mt-1 text-xs font-bold text-emerald-700 underline"
@@ -211,30 +384,109 @@ const CreateReport = () => {
                     </div>
 
                     <div className="space-y-6 p-6">
-                        {/* Job ID */}
-                        <div>
+                        {/* Job */}
+                        <div ref={jobFieldRef} className="relative">
                             <label
-                                htmlFor="reported_job"
+                                htmlFor="reported_job_search"
                                 className="block text-sm font-bold text-[#334155]"
                             >
-                                Reported Job ID
+                                Reported Job
                             </label>
 
                             <p className="mt-1 text-xs text-[#94a3b8]">
-                                Enter the ID of the job posting being
-                                reported.
+                                Search by job title or employer and
+                                select the posting being reported.
                             </p>
 
-                            <input
-                                id="reported_job"
-                                name="reported_job"
-                                type="number"
-                                min="1"
-                                value={form.reported_job}
-                                onChange={handleChange}
-                                placeholder="e.g. 25"
-                                className="mt-3 w-full rounded-lg border border-[#e2e8f0] bg-white px-4 py-3 text-sm text-[#334155] outline-none transition placeholder:text-[#94a3b8] focus:border-[#00b4d8] focus:ring-2 focus:ring-[#00b4d8]/10"
-                            />
+                            <div className="relative mt-3">
+                                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
+
+                                <input
+                                    id="reported_job_search"
+                                    name="reported_job_search"
+                                    type="text"
+                                    autoComplete="off"
+                                    value={jobQuery}
+                                    onChange={handleJobQueryChange}
+                                    onFocus={() =>
+                                        setIsJobOpen(true)
+                                    }
+                                    placeholder={
+                                        jobsLoading
+                                            ? "Loading job postings..."
+                                            : "Search job title or employer..."
+                                    }
+                                    className="w-full rounded-lg border border-[#e2e8f0] bg-white py-3 pl-11 pr-9 text-sm text-[#334155] outline-none transition placeholder:text-[#94a3b8] focus:border-[#00b4d8] focus:ring-2 focus:ring-[#00b4d8]/10"
+                                />
+
+                                <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94a3b8]" />
+
+                                {isJobOpen && (
+                                    <div className="absolute z-10 mt-2 max-h-64 w-full overflow-y-auto rounded-lg border border-[#e2e8f0] bg-white shadow-lg">
+                                        {jobsLoading && (
+                                            <p className="px-4 py-3 text-sm text-[#94a3b8]">
+                                                Loading job postings...
+                                            </p>
+                                        )}
+
+                                        {!jobsLoading &&
+                                            jobsError && (
+                                                <p className="px-4 py-3 text-sm text-red-600">
+                                                    {jobsError}
+                                                </p>
+                                            )}
+
+                                        {!jobsLoading &&
+                                            !jobsError &&
+                                            filteredJobs.length ===
+                                                0 && (
+                                                <p className="px-4 py-3 text-sm text-[#94a3b8]">
+                                                    No matching job
+                                                    postings.
+                                                </p>
+                                            )}
+
+                                        {!jobsLoading &&
+                                            !jobsError &&
+                                            filteredJobs.map(
+                                                (job) => (
+                                                    <button
+                                                        key={
+                                                            job.id
+                                                        }
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleSelectJob(
+                                                                job
+                                                            )
+                                                        }
+                                                        className="flex w-full flex-col items-start gap-0.5 px-4 py-2.5 text-left text-sm transition hover:bg-[#f0fdff]"
+                                                    >
+                                                        <span className="font-bold text-[#1e293b]">
+                                                            {
+                                                                job.title
+                                                            }
+                                                        </span>
+
+                                                        <span className="text-xs text-[#94a3b8]">
+                                                            {job.employer_name ||
+                                                                "Unknown employer"}{" "}
+                                                            &middot; #
+                                                            {job.id}
+                                                        </span>
+                                                    </button>
+                                                )
+                                            )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {selectedJob && (
+                                <p className="mt-2 text-xs font-semibold text-[#00a6c7]">
+                                    Selected: {selectedJob.title}{" "}
+                                    (#{selectedJob.id})
+                                </p>
+                            )}
                         </div>
 
                         {/* Reason */}
@@ -261,27 +513,35 @@ const CreateReport = () => {
                                     Select a reason
                                 </option>
 
-                                <option value="spam">
+                                <option value="Spam">
                                     Spam
                                 </option>
 
-                                <option value="fraud">
-                                    Fraud / Scam
+                                <option value="Fake Job">
+                                    Fake Job
                                 </option>
 
-                                <option value="misleading">
+                                <option value="Scam">
+                                    Scam
+                                </option>
+
+                                <option value="Misleading Information">
                                     Misleading Information
                                 </option>
 
-                                <option value="duplicate">
+                                <option value="Duplicate">
                                     Duplicate Listing
                                 </option>
 
-                                <option value="inappropriate">
-                                    Inappropriate Content
+                                <option value="Offensive Content">
+                                    Offensive Content
                                 </option>
 
-                                <option value="other">
+                                <option value="Expired Job">
+                                    Expired Job
+                                </option>
+
+                                <option value="Other">
                                     Other
                                 </option>
                             </select>
@@ -345,7 +605,11 @@ const CreateReport = () => {
                             <Flag className="h-4 w-4" />
 
                             {loading
-                                ? "Creating..."
+                                ? isEditMode
+                                    ? "Updating..."
+                                    : "Creating..."
+                                : isEditMode
+                                ? "Update Report"
                                 : "Create Report"}
                         </button>
                     </div>

@@ -96,16 +96,26 @@ class EmployerProfile(TimeStamp):
     def __str__(self):
         return self.company_name
 
-class EmailOTP(TimeStamp):
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="email_otps",
-    )
-    otp=models.CharField(max_length=6)
-    expires_at=models.DateTimeField()
-    is_verified=models.BooleanField(default=False)
-    purpose = models.CharField(max_length=30)
 
-    def __str__(self):
-        return f"{self.user.email}-{self.purpose}"
+    
+
+class EmailOTP(Timestamp):
+
+        PURPOSE_CHOICES=[
+                ("emv","Email Verification"),
+                ("prv","Password Verification"),
+                ("cev", "Change Email Verification"),
+                ("dav","delete Verification"),
+            ]
+        user = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name="email_otps",
+        )
+        otp=models.CharField(max_length=6)
+        expires_at=models.DateTimeField()
+        is_verified=models.BooleanField(default=False)
+        purpose = models.CharField(max_length=3,choices=PURPOSE_CHOICES)
+
+        def __str__(self):
+            return f"{self.user.email}-{self.purpose}"

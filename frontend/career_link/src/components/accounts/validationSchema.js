@@ -64,3 +64,15 @@ export const signupValidationSchema = Yup.object({
 
   company_description: Yup.string().max(450, "Must be within 450 characters"),
 });
+
+export const forgotpasswordSchema = Yup.object({
+  email:emailRule,
+});
+
+export const otpRule = Yup.string()
+  .matches(/^[0-9]{6}$/, "OTP must be 6 digits")
+  .required("OTP is required");
+
+export const verifyOtpSchema = Yup.object({
+  otp: otpRule,
+});

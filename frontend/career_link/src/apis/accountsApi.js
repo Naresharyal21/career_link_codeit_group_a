@@ -1,68 +1,119 @@
 import apiClient from "./apiClient";
 
 const accountsApi = {
+
+
+
+
   register: async (userData) => {
     const formData = new FormData();
-   
 
     Object.keys(userData).forEach((key) => {
       const value = userData[key];
 
-      if (value !== null && value !== "") {
+      if (value !== null && value !== undefined && value !== "") {
         formData.append(key, value);
       }
     });
 
-    return await apiClient("/accounts/register/", {
-      method: "POST",
-      body: formData,
-      
+    return await apiClient.post("/accounts/register/", formData, {
+      headers: {
+     
+        "Content-Type": undefined,
+      },
     });
   },
 
   login: async (credentials) => {
-    return await apiClient("/accounts/login/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(credentials),
-    });
+    return await apiClient.post("/accounts/login/", credentials);
   },
 
   getMe: async () => {
-    return await apiClient("/accounts/me/", {
-      method: "GET",
-      headers:{
-        Authorization:`Bearer ${localStorage.getItem("accessToken")}`
-      },
-    });
+    return await apiClient.get("/accounts/me/");
   },
 
   refreshToken: async (refresh) => {
-    return await apiClient("/accounts/token/refresh/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+      return await apiClient("/accounts/login/refresh/", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+              refresh,
+          }),
+      });
+  },
+
+  forgotpassword: async (email) => {
+    return await apiClient.post("/accounts/forgot/password/", {
+      email,
+    });
+  },
+
+  verifyOTP: async (email, otp, purpose) => {
+    return await apiClient.post("/accounts/verify/otp/", {
+      email,
+      otp,
+      purpose,
+    });
+  },
+
+  resetpassword: async (email, newpassword) => {
+    return await apiClient.post("/accounts/reset/password/", {
+      email,
+      new_password: newpassword,
+    });
+  },
+
+  sendDeleteOTP:async(otp , purpose)=>{
+    return await apiClient("/accounts/delete/sendotp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
       },
-      body: JSON.stringify({
-        refresh,
+      body:JSON.stringify({
+       
+        
+        purpose:"dav",
       }),
     });
   },
 
-  forgotpassword:async(email)=>{
-    return await apiClient("/account/forgot-password/",{
+
+  deleteAccount:async(otp , purpose)=>{
+    return await apiClient("/accounts/pr/verify/otp/",{
       method:"POST",
-      Headers:{
+      headers:{
         "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
         
       },
       body:JSON.stringify({
-        email,
+    
+        otp,
+        purpose,
       }),
     });
   },
+  resendVerificationOTP:async(email, purpose)=>{
+    return await apiClient("/accounts/verify/resend/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        
+        
+      },
+      body:JSON.stringify({
+    
+        email,
+        purpose,
+      }),
+    });
+  },
+
+  
 
 };
 
