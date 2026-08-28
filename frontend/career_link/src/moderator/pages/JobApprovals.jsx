@@ -48,13 +48,13 @@ function getJobTitle(approval) {
     ) {
         return (
             approval.job.title ||
-            `Job #${approval.job.id}`
+            `Job ${approval.job.id}`
         );
     }
 
     return (
         approval?.title ||
-        `Job #${getJobId(approval) || "N/A"}`
+        `Job ${getJobId(approval) || "N/A"}`
     );
 }
 
@@ -667,7 +667,7 @@ function ApprovalRow({
 
                             {jobId && (
                                 <span>
-                                    Job #{jobId}
+                                    Job {jobId}
                                 </span>
                             )}
 

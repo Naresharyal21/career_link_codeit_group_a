@@ -309,11 +309,11 @@ export default function ReportDetail() {
         typeof report?.reported_job === "object" &&
         report?.reported_job !== null
             ? report.reported_job.title ||
-              `Job #${report.reported_job.id}`
+              `Job report.reported_job.id}`
             : report?.reported_job_title ||
               report?.job?.title ||
               (reportedJobId
-                  ? `Job #${reportedJobId}`
+                  ? `Job ${reportedJobId}`
                   : "Unknown job");
 
 
