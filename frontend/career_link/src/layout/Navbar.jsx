@@ -6,17 +6,17 @@ import React, { use, useContext, useEffect, useRef, useState } from 'react'
 import { IoIosNotificationsOutline } from "react-icons/io";
 
 import { CiLight, CiDark } from "react-icons/ci";
+import { FiChevronDown } from "react-icons/fi";
 
 import logo from "../assets/logo.png";
-import MyProfilecart from '../pages/accounts/MyProfilecart';
-import { useTheme } from '../context/ThemeContext';
-import accountsApi from '../apis/accountsApi';
-import { AuthenticationContext } from '../context/AuthContext';
+import MyProfilecart from "../pages/accounts/MyProfilecart";
 
-
+import { useTheme } from "../context/ThemeContext";
+import accountsApi from "../apis/accountsApi";
 
 const Navbar = () => {
-
+  const [user, setUser] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const { theme, toggleModes } = useTheme();
 
@@ -29,21 +29,20 @@ const Navbar = () => {
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
 
+
   useEffect(() => {
-
-    const fetchuser = async () => {
-
+    const fetchUser = async () => {
       try {
         const data = await accountsApi.getMe();
         console.log(data)
 
         setUser(data);
       } catch (err) {
-        console.error("error")
+        console.error("Error fetching user:", err);
       }
-
     };
-    fetchuser();
+
+    fetchUser();
   }, []);
 
 
@@ -54,33 +53,40 @@ const Navbar = () => {
     .toUpperCase();
 
 
-  useEffect(() => {
 
-    const handleoutsideClick = (event) => {
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
       if (
-        profileRef.current && !profileRef.current.contains(event.target)
+        profileRef.current &&
+        !profileRef.current.contains(event.target)
       ) {
         setShowProfileMenu(false);
       }
     };
-    document.addEventListener("mousedown", handleoutsideClick);
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleoutsideClick)
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
     };
-
   }, []);
+
   return (
-    <div className="flex h-20  justify-between items-center ">
+    <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
 
 
-      <div className="position relative ">
+      <div className="flex h-full items-center">
         <img
           src={logo}
-          alt="Logo"
-          className="w-50 -ml-9 h-20"
+          alt="CareerLink"
+          className="h-16 w-auto object-contain"
         />
-
       </div>
 
 
@@ -99,6 +105,7 @@ const Navbar = () => {
 
           <div className="h-14 w-14 p-1 rounded flex  justify-center hover:bg-purple-900 ">
 
+       
 
             <button
               className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
@@ -113,19 +120,41 @@ const Navbar = () => {
               ) : (
                 initials
               )}
+            </div>
 
-              <span className={`absolute top-full mt-2 whitespace-nowrap bg-gray-800 text-white text-sm px-3 py-1 rounded ${showProfileMenu ? "hidden" : "hidden group-hover:block"
-                }`}>
-                {user?.username}
-              </span>
-            </button>
 
-            {showProfileMenu && <MyProfilecart />}
-          </div>
+
+            <div className="hidden text-left sm:block">
+              <p className="max-w-[130px] truncate text-sm font-semibold text-[#172337]">
+                {user?.username || "User"}
+              </p>
+
+              <p className="text-xs text-[#64748B]">
+                {user?.role || "Account"}
+              </p>
+            </div>
+
+
+
+            <FiChevronDown
+              className={`
+                hidden text-[#64748B] transition-transform
+                duration-200 sm:block
+                ${showProfileMenu ? "rotate-180" : ""}
+              `}
+            />
+          </button>
+
+
+          {showProfileMenu && (
+            <div className="absolute right-0 top-14 z-[100]">
+              <MyProfilecart />
+            </div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default Navbar;

@@ -7,7 +7,7 @@ import React, { useState, useContext } from 'react'
 import { FiEye } from "react-icons/fi";
 import { FiEyeOff } from "react-icons/fi";
 import { loginValidationSchema } from './validationSchema';
-import { Link, useNavigate, } from 'react-router';
+import { Link, useNavigate, } from 'react-router-dom';
 import useAccounts from '../../hooks/useAccounts';
 import { AuthenticationContext } from '../../context/AuthContext';
 import Button from '../commonuiPart/Button';
@@ -102,9 +102,6 @@ if(message==="Please verify your email before logging in"){
 
 
 
-      {/* =========================
-          PASSWORD
-      ========================= */}
 
       <div className="mb-4">
 

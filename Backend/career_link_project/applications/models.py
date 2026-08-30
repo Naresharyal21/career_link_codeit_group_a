@@ -1,15 +1,10 @@
-
 from django.db import models
-
-# Create your models here.
-
-from accounts.models import JobseekerProfile as JobSeekerProfile
 from jobs.models import JobPosting
-# Create your models here.
+from accounts.models import JobseekerProfile as JobSeekerProfile
 
 class TimeStampedModel(models.Model):
     """
-    Abstract base model to track created and updated timestamps.
+    Abstract base model to track created and updated TimeStamps.
     """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -95,6 +90,39 @@ class SavedJob(models.Model):
         ordering = ["-saved_at"]
         verbose_name = "Saved Job"
         verbose_name_plural = "Saved Jobs"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["job_seeker", "job"],
+                name="unique_saved_job_per_job_seeker",
+            )
+        ]
+
 
     def __str__(self):
         return f"{self.job_seeker} saved {self.job.title}"
+
+class ApplicationNote(TimeStampedModel):
+    """
+    Internal notes added by the employer for an application.
+    """
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        related_name="notes",
+    )
+    
+    employer = models.ForeignKey(
+        "accounts.EmployerProfile",
+        on_delete=models.CASCADE,
+        related_name="application_notes",
+    )
+    
+    note = models.TextField()
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Application Note"
+        verbose_name_plural = "Application Notes"
+
+    def __str__(self):
+        return f"Note for {self.application.job.title} - {self.application.job_seeker}"
