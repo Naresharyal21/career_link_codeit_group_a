@@ -17,14 +17,14 @@ import DashboardLayout from '../layout/DashboardLayout'
 import JobDetailPage from '../pages/jobs/JobDetailPage'
 import BrowseJobsPage from '../pages/jobs/BrowseJobsPage'
 
-import MyProfilecart from '../pages/accounts/MyProfilecart'
 import ThemeContext from '../context/ThemeContext'
 import ProtectedRoute from '../context/ProtectedRoute'
-import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
 import VerifyOTPpage from '../pages/accounts/VerifyOTPpage'
-import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
-import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
+import MyProfilecart from '../pages/accounts/MyProfilecart'
 import EmailChangePage from '../pages/accounts/EmailChangePage'
+import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
+import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
+import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
 
 
 
@@ -41,6 +41,9 @@ const AppRoutes = () => {
        
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
+        <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
+        <Route path="resetpassword/" element={<ResetPasswordPage />} />
+        <Route path="verifyotp/:purpose" element={<VerifyOTPpage />} />
 
 
 
@@ -52,9 +55,9 @@ const AppRoutes = () => {
           
 
             <Route path="Profile/" element={<MyProfilecart />} />
-          
 
-            
+
+
             {/* /* accounts route ends  */}
 
 
@@ -67,12 +70,12 @@ const AppRoutes = () => {
             {/* Jobs routes ends  */}
           </Route>
 
-<Route>
+          <Route>
 
-   <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
-</Route>
-  <Route path = "conformpassword" element={<EmailConformPasswordPage/>}/>
-  <Route path = "get/new/email" element={<EmailChangePage/>}/>
+            <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
+          </Route>
+          <Route path="conformpassword" element={<EmailConformPasswordPage />} />
+          <Route path="get/new/email" element={<EmailChangePage />} />
 
         </Route>
 

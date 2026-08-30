@@ -20,9 +20,9 @@ const ForgetPasswordPage = () => {
     validationSchema: forgotpasswordSchema,
 
     onSubmit: async (values) => {
-      console.log(values)
+   
       try {
-        const response = await forgotpassword(values.email);
+       await forgotpassword(values.email);
         localStorage.setItem("resetemail",values.email)
 
          

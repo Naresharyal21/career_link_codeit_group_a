@@ -1,24 +1,28 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+from rest_framework.exceptions import AuthenticationFailed
 
 
 from .models import JobseekerProfile, EmployerProfile
 
 User = get_user_model()
 
+
 class LoginSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-     data=super().validate(attrs)
-     if not self.user.email_verified:
-         raise serializers.ValidationError({
-             "email":"Please verify your email before logging in"
-         })
-     return data
+        try:
 
+            data = super().validate(attrs)
 
+        except AuthenticationFailed:
+            raise serializers.ValidationError({"detail": "Invalid email or password."})
+        if not self.user.email_verified:
+            raise serializers.ValidationError(
+                {"email": "Please verify your email before logging in"}
+            )
 
+        return data
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -54,7 +58,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # Employer fields
     # -------------------------
 
-    company_name = serializers.CharField(required=False, allow_blank=True)
+  
 
     company_description = serializers.CharField(required=False, allow_blank=True)
 
@@ -78,7 +82,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "profile_pictur",
             "date_of_birth",
             # Employer
-            "company_name",
+           
             "company_description",
             "website",
             "logo",
@@ -107,9 +111,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         elif role == User.Role.EMPLOYEERS:
 
-            if not attrs.get("company_name"):
+            if not attrs.get("username"):
                 raise serializers.ValidationError(
-                    {"company_name": "Company name is required for employers."}
+                    {"username": "Company name is required for employers."}
                 )
 
         return attrs
@@ -136,7 +140,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         # Get role
         role = validated_data.get("role")
-        company_name = validated_data.pop("company_name", "")
+     
         company_description = validated_data.pop("company_description", "")
         website = validated_data.pop("website", "")
         logo = validated_data.pop("logo", None)
@@ -156,7 +160,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 resume_file=resume_file,
                 location=location,
                 profile_pictur=profile_pictur,
-                # location=location,
                 date_of_birth=date_of_birth,
             )
 
@@ -166,10 +169,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             EmployerProfile.objects.create(
                 user=user,
-                company_name=company_name,
+                
                 company_description=company_description,
                 website=website,
-                # location=location,
+                location=location,
                 phone=phone,
                 logo=logo,
             )
@@ -207,7 +210,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
-            "company_name",
+          
             "company_description",
             "website",
             "location",

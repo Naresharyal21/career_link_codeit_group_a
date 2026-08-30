@@ -26,6 +26,7 @@ const SignupForm = () => {
   const formik = useFormik({
     initialValues: {
       username: "",
+      company_name: "",
       email: "",
       password: "",
       confirmpassword: "",
@@ -47,7 +48,8 @@ const SignupForm = () => {
     onSubmit: async (values) => {
       try {
         // 1. Register user first
-        await register(values);
+        const response = await register(values);
+        console.log(response)
 
         // 2. Save email only after successful registration
         localStorage.setItem("signupemail", values.email);
@@ -135,9 +137,18 @@ const SignupForm = () => {
             onBlur={formik.handleBlur}
             className="border rounded p-2 w-full"
           />
-          {formik.touched.username && formik.errors.username && (
-            <p className="text-red-700">{formik.errors.username}</p>
-          )}
+          {formik.touched[
+            formik.values.role === "ep" ? "company_name" : "username"
+          ] &&
+            formik.errors[
+            formik.values.role === "ep" ? "company_name" : "username"
+            ] && (
+              <p className="text-red-700">
+                {formik.errors[
+                  formik.values.role === "ep" ? "company_name" : "username"
+                ]}
+              </p>
+            )}
         </div>
 
         <div className="mb-4 w-65">

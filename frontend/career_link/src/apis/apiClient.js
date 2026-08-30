@@ -4,16 +4,30 @@ const apiClient = async (endpoint, options = {}) => {
   
   const response = await fetch(`${BASE_URL}${endpoint}`, options);
 
-    const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
+  const data = await response.json();
 
-  if (!response.ok) {
-    const message=
-    data.email?.[0]||
-    data.detail||
-    data.error||
+
+  // const message =
+  //   data.email?.[0] ||
+  //   data.detail ||
+  //   data.error ||
+  //   data.location?.[0] ||
+  //   data.company_name?.[0] ||
+  //   data.profile_pictur?.[0] ||
+  //   data.resume_file?.[0] ||
+  //   data.logo?.[0] ||
+  //   "Something went wrong";
+ if (!response.ok) {
+  console.log("Backend error:", data);
+
+  const message =
+    Object.values(data)
+      .flat()
+      .find((value) => typeof value === "string") ||
     "Something went wrong";
-    throw new Error(message);
-  }
+
+  throw new Error(message);
+}
 
     const response = await fetch(finalURL, {
         ...options,

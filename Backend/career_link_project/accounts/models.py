@@ -80,8 +80,7 @@ class EmployerProfile(TimeStamp):
         on_delete=models.CASCADE,
         related_name="employer_profile",
     )
-
-    company_name = models.CharField(max_length=100)
+   
     company_description = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=50)
     website = models.URLField(blank=True)
@@ -94,7 +93,7 @@ class EmployerProfile(TimeStamp):
         verbose_name_plural = "Employer Profiles"
 
     def __str__(self):
-        return self.company_name
+        return self.user.username
 
 
     
