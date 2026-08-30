@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import LoginSerializer
 
@@ -37,6 +37,7 @@ class LoginView(TokenObtainPairView):
 
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request):
         user = request.user
@@ -58,6 +59,37 @@ class MeView(APIView):
                 "profile": data,
             }
         )
+    def put(self, request):
+        user = request.user
+
+        if user.role == User.Role.JOBSEEKERS:
+            profile = JobseekerProfile.objects.filter(user=user).first()
+
+            if not profile:
+                return Response(
+                    {"error": "Jobseeker profile not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            serializer = JobseekerProfileSerializer(
+                profile,
+                data=request.data,
+                partial=True,
+            )
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"error": "Profile picture upload is only available for jobseekers"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
 
 
 class ForgetPasswordView(APIView):
