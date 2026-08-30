@@ -54,8 +54,9 @@ toast.success("Login successful!")
 
 
       } catch (err) {
-toast.error(err.message || "Please verify your Credentials")
-if(err.message==="Please verify your email before logging in"){
+        const message=err.message;
+toast.error(message || "Please verify your Credentials")
+if(message==="Please verify your email before logging in"){
   navigate("/verifyotp/emv",{replace:true});
 }
 

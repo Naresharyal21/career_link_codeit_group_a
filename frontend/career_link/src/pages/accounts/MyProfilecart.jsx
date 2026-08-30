@@ -27,8 +27,8 @@ const MyProfilecart = () => {
     navigate("/login")
   }
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-15 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
-      <ul className="pl-4 -mt-5 font-bold" >Settings</ul>
+    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-16 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
+      <ul className="pl-4  font-bold" >Settings</ul>
       <ul>
         <h2 className="pl-4  mt-3 mb-5 font-medium">Account</h2>
         <li className="pl-4 flex">

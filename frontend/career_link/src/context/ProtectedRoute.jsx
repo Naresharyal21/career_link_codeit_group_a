@@ -6,7 +6,7 @@ import { AuthenticationContext } from "./AuthContext";
 
 const ProtectedRoute = () => {
 
-  const { isAuthenticated , accessToken } = useContext(AuthenticationContext);
+  const { isAuthenticated  } = useContext(AuthenticationContext);
 
 
   if (!isAuthenticated) {

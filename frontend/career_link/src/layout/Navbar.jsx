@@ -1,10 +1,10 @@
 import React, { use, useContext, useEffect, useRef, useState } from 'react'
 
-import { useNavigate } from "react-router";
+
+
 
 import { IoIosNotificationsOutline } from "react-icons/io";
-import { MdDarkMode } from "react-icons/md";
-import { MdOutlineLightMode, MdOutlineNightlight } from "react-icons/md";
+
 import { CiLight, CiDark } from "react-icons/ci";
 
 import logo from "../assets/logo.png";
@@ -20,12 +20,13 @@ const Navbar = () => {
 
   const { theme, toggleModes } = useTheme();
 
- const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
- const {user,setUser} =useContext(AuthenticationContext);
+  const { user, setUser } = useContext(AuthenticationContext);
 
-  const navigate = useNavigate();
 
+
+  const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
 
   useEffect(() => {
@@ -34,7 +35,8 @@ const Navbar = () => {
 
       try {
         const data = await accountsApi.getMe();
-       
+        console.log(data)
+
         setUser(data);
       } catch (err) {
         console.error("error")
@@ -45,7 +47,7 @@ const Navbar = () => {
   }, []);
 
 
-   const initials = user?.username
+  const initials = user?.username
     ?.split(" ")
     .map((name) => name[0])
     .join("")
@@ -95,16 +97,16 @@ const Navbar = () => {
         <div ref={profileRef} className=" flex gap-2">
 
 
-          <div className="h-12 w-12 p-1 rounded flex  justify-center hover:bg-purple-900 ">
+          <div className="h-14 w-14 p-1 rounded flex  justify-center hover:bg-purple-900 ">
 
 
             <button
-              className="relative group flex rounded-full h-10 w-10 text-white justify-center items-center p-2 bg-gray-600 hover:cursor-pointer"
+              className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
-              {user?.profile_pictur ? (
+              {user?.profile?.profile_pictur ? (
                 <img
-                  src={user.profile_pictur}
+                  src={`${MEDIA_BASE_URL}${user.profile.profile_pictur}`}
                   alt="profile"
                   className="w-full h-full rounded-full object-cover"
                 />
