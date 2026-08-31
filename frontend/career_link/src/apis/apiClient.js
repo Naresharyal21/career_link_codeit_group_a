@@ -60,11 +60,7 @@ const request = async (endpoint, options = {}) => {
             message = String(data);
         }
 
-        setError(
-            err?.response?.data?.detail ||
-                err?.message ||
-                "Unable to load reports."
-        );
+        throw new Error(message);
     }
     return data;
 };

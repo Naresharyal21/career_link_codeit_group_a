@@ -9,12 +9,13 @@ import BrowseJobsPage from "./pages/BrowseJobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
 import ApplicationPage from "./applications/ApplicationForm";
 
-import moderatorRoutes from "./routes/moderatorRoutes";
+import moderatorRoutes from "./routes/ModeratorRoutes";
+import employerRoutes from "./routes/EmployerRoutes";
 
 const AppRoutes = () => {
     return (
         <Routes>
-   
+
             <Route
                 path="/login"
                 element={<Loginform />}
@@ -42,6 +43,14 @@ const AppRoutes = () => {
                 />
 
                 {moderatorRoutes.map((route) => (
+                    <Route
+                        key={route.path}
+                        path={route.path}
+                        element={route.element}
+                    />
+                ))}
+
+                {employerRoutes.map((route) => (
                     <Route
                         key={route.path}
                         path={route.path}

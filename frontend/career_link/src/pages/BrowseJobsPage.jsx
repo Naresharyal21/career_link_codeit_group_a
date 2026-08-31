@@ -10,6 +10,8 @@ const BrowseJobsPage = () => {
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({ jobType: '', location: '', experience: '' })
+  const jobsPerPage = 6
+  const [currentPage, setCurrentPage] = useState(1)
 
   const loadJobs = () => {
     setLoading(true)
@@ -55,6 +57,21 @@ const BrowseJobsPage = () => {
       }
       return 0
     })
+
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage)
+  const paginatedJobs = filteredJobs.slice(
+    (currentPage - 1) * jobsPerPage,
+    currentPage * jobsPerPage
+  )
+
+  const loadPage = (page) => {
+    if (page < 1 || page > totalPages) return
+    setCurrentPage(page)
+  }
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, sortBy, filters])
 
   if (error) {
     return (
@@ -107,7 +124,7 @@ const BrowseJobsPage = () => {
               </select>
             </div>
           </div>
-          <JobList jobs={filteredJobs} loading={loading} />
+          <JobList jobs={paginatedJobs} loading={loading} />
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-6">

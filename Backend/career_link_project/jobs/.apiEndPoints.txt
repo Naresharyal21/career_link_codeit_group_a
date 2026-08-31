@@ -2,3 +2,9 @@ GET    /api/v1/jobs/
 GET    /api/v1/jobs/<id>/
 GET    /api/v1/jobs/categories/
 GET    /api/v1/jobs/skills/
+
+GET    /api/v1/jobs/manage/          (employer only)
+POST   /api/v1/jobs/manage/          (employer only)
+GET    /api/v1/jobs/manage/<id>/     (employer only)
+PUT    /api/v1/jobs/manage/<id>/     (employer only)
+DELETE /api/v1/jobs/manage/<id>/     (employer only)
