@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+import accountsApi from "../apis/accountsApi";
 
 
 export const AuthenticationContext = createContext(null);
@@ -7,31 +8,69 @@ export const AuthenticationContext = createContext(null);
 
 const AuthContext = ({ children }) => {
 
+
+
+
   const persistedToken = localStorage.getItem("accessToken");
   // const initialUser = persistedUser ? JSON.parse(persistedUser) : {};
 
   const [accessToken, setAccessToken] = useState(persistedToken);
-  const [user , setUser]=useState(null);
-  console.log(user)
+  const [user, setUser] = useState(null);
+   const [loading, setLoading] = useState(true);
 
-  const loginUser = (acessToken, refreshToken) => {
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const token = localStorage.getItem("accessToken");
+
+      if (!token) {
+        setLoading(false)
+        return;
+      }
+
+      try {
+        const backendresponse = await accountsApi.getMe();
+        setUser(backendresponse);
+        setAccessToken(token);
+        localStorage.setItem("user", JSON.stringify(backendresponse));
+
+      } catch (error) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+          setAccessToken(null);
+        setUser(null);
+      } finally{
+        setLoading(false)
+      }
+    };
+    checkAuthentication();
+  },[])
+
+
+  const loginUser = (accessToken, refreshToken, userData = null) => {
+
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
     setAccessToken(accessToken);
-    localStorage.setItem("user", JSON.stringify(user));
+    setUser(userData);
+    if (userData) {
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
 
-  }
+  };
 
   const logoutUser = () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
 
-      setAccessToken(null);
-      setUser(null);
-    };
+    setAccessToken(null);
+    setUser(null);
+  };
 
+  
 
-    const isAuthenticated = !!accessToken;
+  const isAuthenticated = !!accessToken;
 
 
 
@@ -45,6 +84,7 @@ const AuthContext = ({ children }) => {
         setUser,
         loginUser,
         logoutUser,
+        loading,
       }}>
       {children}
 

@@ -17,6 +17,9 @@ const useAccounts = () => {
     return await execute(() => accountsApi.getMe());
   };
 
+
+  
+
   const refreshToken = async (refresh) => {
     return await execute(() => accountsApi.refreshToken(refresh));
   };
@@ -31,6 +34,29 @@ const useAccounts = () => {
   const resetPassword=async (email , newpassword)=>{
     return await execute(()=> accountsApi.resetpassword(email , newpassword));
   };
+  const deleteAccount = async ( otp,purpose)=>{
+    return await execute(()=> accountsApi.deleteAccount( otp , purpose));
+  };
+
+  const sendDeleteOTP = async () => {
+  return await execute(() => accountsApi.sendDeleteOTP());
+};
+  const resendVerificationOTP = async (email , purpose) => {
+    
+  return await execute(() => accountsApi.resendVerificationOTP(email , purpose));
+};
+  const confirmPassword = async (password) => {
+    
+  return await execute(() => accountsApi.confirmPassword(password));
+};
+  const sendnewemailotp = async (email) => {
+    
+  return await execute(() => accountsApi.sendnewemailotp(email));
+};
+  const updateEmail = async (email) => {
+    
+  return await execute(() => accountsApi.updateEmail(email));
+};
 
 
 
@@ -47,6 +73,12 @@ const useAccounts = () => {
     forgotpassword,
     verifyOTP,
     resetPassword,
+    sendDeleteOTP,
+    deleteAccount,
+    resendVerificationOTP,
+    confirmPassword,
+    sendnewemailotp,
+    updateEmail,
   };
 };
 

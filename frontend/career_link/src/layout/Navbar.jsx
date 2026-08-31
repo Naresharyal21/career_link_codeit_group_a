@@ -1,10 +1,10 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { use, useContext, useEffect, useRef, useState } from 'react'
+
+
+
 
 import { IoIosNotificationsOutline } from "react-icons/io";
+
 import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
 
@@ -20,6 +20,13 @@ const Navbar = () => {
 
   const { theme, toggleModes } = useTheme();
 
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const { user, setUser } = useContext(AuthenticationContext);
+
+
+
+  const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
 
 
@@ -27,8 +34,7 @@ const Navbar = () => {
     const fetchUser = async () => {
       try {
         const data = await accountsApi.getMe();
-
-        console.log("Current user:", data);
+        console.log(data)
 
         setUser(data);
       } catch (err) {
@@ -40,14 +46,11 @@ const Navbar = () => {
   }, []);
 
 
-
-  const initials =
-    user?.username
-      ?.split(" ")
-      .map((name) => name[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "U";
+  const initials = user?.username
+    ?.split(" ")
+    .map((name) => name[0])
+    .join("")
+    .toUpperCase();
 
 
 
@@ -88,105 +91,31 @@ const Navbar = () => {
 
 
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex  gap-2 justify-between items-center w-70 pr-[3%]">
+
+        <button onClick={toggleModes} className="  p-1 rounded-xl ml-20 hover:cursor-pointer hover:bg-purple-100  " >  {theme === "light" ? <CiDark className="text-2xl" />
+          : <CiLight className="text-2xl text-black" />}</button>
+        <div className="">
+          <button className="text-2xl text-black mt-1"><IoIosNotificationsOutline />
+          </button>
+        </div>
+
+        <div ref={profileRef} className=" flex gap-2">
 
 
-
-        <button
-          type="button"
-          onClick={toggleModes}
-          aria-label="Toggle theme"
-          className="
-            flex h-10 w-10 items-center justify-center
-            rounded-xl
-            text-[#64748B]
-            transition-all duration-200
-            hover:bg-[#F0ECFF]
-            hover:text-[#6C4DFF]
-            focus:outline-none
-            focus:ring-4
-            focus:ring-violet-500/10
-          "
-        >
-          {theme === "light" ? (
-            <CiDark className="text-[24px]" />
-          ) : (
-            <CiLight className="text-[24px]" />
-          )}
-        </button>
-
-
-
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="
-            relative
-            flex h-10 w-10 items-center justify-center
-            rounded-xl
-            text-[#64748B]
-            transition-all duration-200
-            hover:bg-[#F0ECFF]
-            hover:text-[#6C4DFF]
-            focus:outline-none
-            focus:ring-4
-            focus:ring-violet-500/10
-          "
-        >
-          <IoIosNotificationsOutline className="text-[25px]" />
-
-          <span className="
-            absolute right-[8px] top-[7px]
-            h-2 w-2
-            rounded-full
-            bg-[#6C4DFF]
-            ring-2 ring-white
-          " />
-        </button>
+          <div className="h-14 w-14 p-1 rounded flex  justify-center hover:bg-purple-900 ">
 
        
 
-        <div
-          ref={profileRef}
-          className="relative ml-1"
-        >
-          <button
-            type="button"
-            onClick={() =>
-              setShowProfileMenu((prev) => !prev)
-            }
-            className="
-              flex items-center gap-2
-              rounded-full
-              p-1
-              transition-all duration-200
-              hover:bg-[#F0ECFF]
-              focus:outline-none
-              focus:ring-4
-              focus:ring-violet-500/10
-            "
-          >
-
-
-
-            <div
-              className="
-                flex h-10 w-10
-                items-center justify-center
-                overflow-hidden
-                rounded-full
-                bg-[#64748B]
-                text-sm font-semibold
-                text-white
-                transition-all duration-200
-                hover:bg-[#6C4DFF]
-              "
+            <button
+              className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
-              {user?.profile_pictur ? (
+              {user?.profile?.profile_pictur ? (
                 <img
-                  src={user.profile_pictur}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
+                  src={`${MEDIA_BASE_URL}${user.profile.profile_pictur}`}
+                  alt="profile"
+                  className="w-full h-full rounded-full object-cover"
                 />
               ) : (
                 initials

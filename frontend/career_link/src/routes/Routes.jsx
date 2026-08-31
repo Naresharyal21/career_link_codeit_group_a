@@ -17,7 +17,15 @@ import DashboardLayout from '../layout/DashboardLayout'
 import JobDetailPage from '../pages/jobs/JobDetailPage'
 import BrowseJobsPage from '../pages/jobs/BrowseJobsPage'
 
+import ThemeContext from '../context/ThemeContext'
+import ProtectedRoute from '../context/ProtectedRoute'
+import VerifyOTPpage from '../pages/accounts/VerifyOTPpage'
 import MyProfilecart from '../pages/accounts/MyProfilecart'
+import EmailChangePage from '../pages/accounts/EmailChangePage'
+import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
+import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
+import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
+
 
 
 
@@ -33,6 +41,9 @@ const AppRoutes = () => {
        
         <Route path="login/" element={<Login />} />
         <Route path="signup/" element={<Signup />} />
+        <Route path="forgetpassword/" element={<ForgetPasswordPage />} />
+        <Route path="resetpassword/" element={<ResetPasswordPage />} />
+        <Route path="verifyotp/:purpose" element={<VerifyOTPpage />} />
 
 
 
@@ -43,8 +54,11 @@ const AppRoutes = () => {
 
           
 
-          <Route path="Profile/" element={<MyProfilecart />} />
-      
+            <Route path="Profile/" element={<MyProfilecart />} />
+
+
+
+            {/* /* accounts route ends  */}
 
 
       
@@ -53,7 +67,16 @@ const AppRoutes = () => {
           <Route path="jobs/:id" element={<JobDetailPage />} />
 
 
-  
+            {/* Jobs routes ends  */}
+          </Route>
+
+          <Route>
+
+            <Route path="pr/verifyotp/:purpose" element={<VerifyOTPpage />} />
+          </Route>
+          <Route path="conformpassword" element={<EmailConformPasswordPage />} />
+          <Route path="get/new/email" element={<EmailChangePage />} />
+
         </Route>
 
 

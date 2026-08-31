@@ -1,6 +1,10 @@
 import apiClient from "./apiClient";
 
 const accountsApi = {
+
+
+
+
   register: async (userData) => {
     const formData = new FormData();
 
@@ -60,6 +64,105 @@ const accountsApi = {
       new_password: newpassword,
     });
   },
+
+  sendDeleteOTP:async(otp , purpose)=>{
+    return await apiClient("/accounts/delete/sendotp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+      },
+      body:JSON.stringify({
+       
+        
+        purpose:"dav",
+      }),
+    });
+  },
+
+
+  deleteAccount:async(otp , purpose)=>{
+    return await apiClient("/accounts/pr/verify/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+      },
+      body:JSON.stringify({
+    
+        otp,
+        purpose,
+      }),
+    });
+  },
+  resendVerificationOTP:async(email, purpose)=>{
+    return await apiClient("/accounts/verify/resend/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        
+        
+      },
+      body:JSON.stringify({
+    
+        email,
+        purpose,
+      }),
+    });
+  },
+  confirmPassword:async( password)=>{
+    return await apiClient("/accounts/verify/emailchange/password/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        password,
+      }),
+    });
+  },
+  sendnewemailotp:async( email)=>{
+    return await apiClient("/accounts/send/emailchange/otp/",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        email,
+      }),
+    });
+  },
+  updateEmail:async( email)=>{
+    return await apiClient("/accounts/update/email/",{
+      method:"PUT",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        
+        
+      },
+      body:JSON.stringify({
+    
+        
+        email,
+      }),
+    });
+  },
+
+  
+
 };
 
 export default accountsApi;

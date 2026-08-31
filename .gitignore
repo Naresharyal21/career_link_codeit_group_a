@@ -3,9 +3,9 @@ __pycache__/
 *.py[cod]
 *.pyo
 
-
+Backend/career_link_project/applications/API_DOCUMENTATION.docx
 .venv/
-venv/
+Backend/venv/
 env/
 .features-application
 

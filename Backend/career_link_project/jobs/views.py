@@ -20,6 +20,7 @@ class JobPostingDetailView(generics.RetrieveAPIView):
     queryset = JobPosting.objects.filter(is_active=True)
     serializer_class = JobPostingDetailSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = "id" 
 
 
 class JobCategoryListView(generics.ListAPIView):

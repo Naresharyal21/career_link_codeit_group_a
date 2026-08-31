@@ -1,48 +1,42 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
 const request = async (endpoint, options = {}) => {
     const token = localStorage.getItem("accessToken");
 
-    // Strip any trailing slash off BASE_URL and any leading slash
-    // off endpoint before joining with exactly one "/" — avoids
-    // double slashes (e.g. BASE_URL="…/api/v1/" + endpoint="/accounts/login/")
-    // regardless of whether either side happens to already have one.
-    const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(
-        /^\/+/,
-        ""
-    )}`;
+    const cleanBase = BASE_URL.replace(/\/+$/, "");
+    const cleanEndpoint = endpoint.replace(/^\/+/, "");
+    const finalURL = `${cleanBase}/${cleanEndpoint}`;
 
-    console.log("API REQUEST:", {
-        BASE_URL,
-        endpoint,
-        finalURL,
-        hasToken: !!token,
-    });
+    const isFormData =
+        options.body instanceof FormData;
+
+    const headers = {
+        ...(isFormData
+            ? {}
+            : { "Content-Type": "application/json" }),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+    };
+
+    // If Content-Type was explicitly set to undefined (e.g. for FormData upload), remove it so the browser sets the boundary
+    if (headers["Content-Type"] === undefined) {
+        delete headers["Content-Type"];
+    }
 
     const response = await fetch(finalURL, {
         ...options,
-        headers: {
-            ...(options.body instanceof FormData
-                ? {}
-                : { "Content-Type": "application/json" }),
-
-            ...(token
-                ? {
-                      Authorization: `Bearer ${token}`,
-                  }
-                : {}),
-
-            ...options.headers,
-        },
+        headers,
     });
 
     const contentType = response.headers.get("content-type");
-
     const data = contentType?.includes("application/json")
         ? await response.json()
         : await response.text();
 
     if (!response.ok) {
+        console.log("Backend error:", data);
+
         let message = "Something went wrong.";
 
         if (typeof data === "object" && data !== null) {
@@ -50,28 +44,39 @@ const request = async (endpoint, options = {}) => {
                 message = data.detail;
             } else if (data.message) {
                 message = data.message;
+            } else if (data.error) {
+                message = data.error;
             } else {
-                message = Object.entries(data)
-                    .map(([field, errors]) => {
-                        const errorText = Array.isArray(errors)
-                            ? errors.join(", ")
-                            : String(errors);
+                const firstError = Object.values(data)
+                    .flat()
+                    .find((value) => typeof value === "string");
 
-                        return `${field}: ${errorText}`;
-                    })
-                    .join(" | ");
+                if (firstError) {
+                    message = firstError;
+                } else {
+                    message = Object.entries(data)
+                        .map(([field, errors]) => {
+                            const errorText = Array.isArray(errors)
+                                ? errors.join(", ")
+                                : String(errors);
+                            return `${field}: ${errorText}`;
+                        })
+                        .join(" | ");
+                }
             }
         } else if (data) {
             message = String(data);
         }
 
-        throw new Error(message);
+        const error = new Error(message);
+        error.response = { data, status: response.status };
+        throw error;
     }
 
     return data;
 };
 
-// Callable function
+// Callable function: apiClient(endpoint, options)
 const apiClient = (endpoint, options = {}) => {
     return request(endpoint, options);
 };
@@ -83,38 +88,38 @@ apiClient.get = (endpoint, options = {}) =>
         method: "GET",
     });
 
-apiClient.post = (endpoint, body, options = {}) =>
-    request(endpoint, {
+apiClient.post = (endpoint, body, options = {}) => {
+    const isFormData = body instanceof FormData;
+    return request(endpoint, {
         ...options,
         method: "POST",
-        ...(body !== undefined
-            ? {
-                  body: JSON.stringify(body),
-              }
-            : {}),
+        body: isFormData || typeof body === "string" || body === undefined
+            ? body
+            : JSON.stringify(body),
     });
+};
 
-apiClient.put = (endpoint, body, options = {}) =>
-    request(endpoint, {
+apiClient.put = (endpoint, body, options = {}) => {
+    const isFormData = body instanceof FormData;
+    return request(endpoint, {
         ...options,
         method: "PUT",
-        ...(body !== undefined
-            ? {
-                  body: JSON.stringify(body),
-              }
-            : {}),
+        body: isFormData || typeof body === "string" || body === undefined
+            ? body
+            : JSON.stringify(body),
     });
+};
 
-apiClient.patch = (endpoint, body, options = {}) =>
-    request(endpoint, {
+apiClient.patch = (endpoint, body, options = {}) => {
+    const isFormData = body instanceof FormData;
+    return request(endpoint, {
         ...options,
         method: "PATCH",
-        ...(body !== undefined
-            ? {
-                  body: JSON.stringify(body),
-              }
-            : {}),
+        body: isFormData || typeof body === "string" || body === undefined
+            ? body
+            : JSON.stringify(body),
     });
+};
 
 apiClient.delete = (endpoint, options = {}) =>
     request(endpoint, {

@@ -34,6 +34,7 @@ const DashboardLayout = () => {
     { name: 'Saved Jobs', path: '/dashboard/saved-jobs', roles: ['js'] },
     { name: 'CV / Resume', path: '/dashboard/cv', roles: ['js'] },
     { name: 'Manage Jobs', path: '/dashboard/manage-jobs', roles: ['ep'] },
+    { name: 'Post a Job', path: '/dashboard/post-job', roles: ['ep'] },
     { name: 'Profile Settings', path: '/dashboard/profile', roles: ['js', 'ep'] },
   ];
 
