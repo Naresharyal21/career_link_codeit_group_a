@@ -131,7 +131,7 @@ const ModerationTablePage = ({
         }
 
         if (row.id) {
-            navigate(`reports/${row.id}`);
+            navigate(`/reports/${row.id}/`);
         }
     };
 

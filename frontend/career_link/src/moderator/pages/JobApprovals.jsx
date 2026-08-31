@@ -182,33 +182,56 @@ export default function JobApprovals() {
     const [rejectionReason, setRejectionReason] =
         useState("");
 
+    const [page, setPage] = useState(1);
+
+    const pageSize = 10;
+
+    // Server-reported pagination info for the currently loaded page.
+    // totalCount === null means the backend didn't paginate (plain
+    // array response) — in that case we fall back to treating
+    // `approvals` as the full dataset.
+    const [totalCount, setTotalCount] = useState(null);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
 
 
 
-    const loadApprovals = async () => {
+
+    const loadApprovals = async (pageNumber = 1) => {
         try {
             setLoading(true);
             setError("");
 
             const response =
-                await moderatorApi.getJobApprovals();
+                await moderatorApi.getJobApprovals({
+                    page: pageNumber,
+                    page_size: pageSize,
+                });
 
             console.log(
                 "JOB APPROVALS RESPONSE:",
                 response
             );
 
-            const data = Array.isArray(
-                response
-            )
-                ? response
-                : Array.isArray(
-                      response?.results
-                  )
-                ? response.results
-                : [];
-
-            setApprovals(data);
+            if (Array.isArray(response)) {
+                setApprovals(response);
+                setTotalCount(null);
+                setHasNext(false);
+                setHasPrevious(false);
+            } else {
+                setApprovals(
+                    Array.isArray(response?.results)
+                        ? response.results
+                        : []
+                );
+                setTotalCount(
+                    typeof response?.count === "number"
+                        ? response.count
+                        : null
+                );
+                setHasNext(Boolean(response?.next));
+                setHasPrevious(Boolean(response?.previous));
+            }
         } catch (err) {
             console.error(
                 "Failed to load job approvals:",
@@ -216,6 +239,9 @@ export default function JobApprovals() {
             );
 
             setApprovals([]);
+            setTotalCount(null);
+            setHasNext(false);
+            setHasPrevious(false);
 
             setError(
                 err?.response?.data?.detail ||
@@ -229,9 +255,21 @@ export default function JobApprovals() {
     };
 
 
+    const refresh = () => loadApprovals(page);
+
+
     useEffect(() => {
-        loadApprovals();
-    }, []);
+        loadApprovals(page);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
+
+
+    const totalPages =
+        totalCount !== null
+            ? Math.max(1, Math.ceil(totalCount / pageSize))
+            : 1;
+
+    const currentPage = Math.min(page, totalPages);
 
 
 
@@ -279,7 +317,7 @@ export default function JobApprovals() {
                 approvalId
             );
 
-            await loadApprovals();
+            await loadApprovals(page);
         } catch (err) {
             console.error(
                 "Failed to approve job:",
@@ -338,7 +376,7 @@ export default function JobApprovals() {
             setSelectedApproval(null);
             setRejectionReason("");
 
-            await loadApprovals();
+            await loadApprovals(page);
         } catch (err) {
             console.error(
                 "Failed to reject job:",
@@ -372,19 +410,48 @@ export default function JobApprovals() {
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                     <div>
-                        <p className="text-sm font-semibold text-[#475467]">
-                            {filteredApprovals.length}{" "}
-                            pending approval
-                            {filteredApprovals.length !==
-                            1
-                                ? "s"
-                                : ""}
-                        </p>
+                        {search.trim() !== "" ? (
+                            <>
+                                <p className="text-sm font-semibold text-[#475467]">
+                                    {filteredApprovals.length}{" "}
+                                    match
+                                    {filteredApprovals.length !==
+                                    1
+                                        ? "es"
+                                        : ""}{" "}
+                                    on this page
+                                </p>
 
-                        <p className="mt-1 text-xs text-[#98A2B3]">
-                            Review each submitted job before
-                            it becomes approved.
-                        </p>
+                                <p className="mt-1 text-xs text-[#98A2B3]">
+                                    Search only looks within the
+                                    currently loaded page (
+                                    {approvals.length} pending
+                                    approval
+                                    {approvals.length !== 1
+                                        ? "s"
+                                        : ""}
+                                    ). Use the page controls
+                                    below to check other pages.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p className="text-sm font-semibold text-[#475467]">
+                                    {totalCount ??
+                                        approvals.length}{" "}
+                                    pending approval
+                                    {(totalCount ??
+                                        approvals.length) !== 1
+                                        ? "s"
+                                        : ""}
+                                </p>
+
+                                <p className="mt-1 text-xs text-[#98A2B3]">
+                                    Review each submitted job before
+                                    it becomes approved.
+                                </p>
+                            </>
+                        )}
                     </div>
 
 
@@ -405,9 +472,7 @@ export default function JobApprovals() {
 
                         <button
                             type="button"
-                            onClick={
-                                loadApprovals
-                            }
+                            onClick={refresh}
                             disabled={
                                 loading ||
                                 actionLoading
@@ -449,9 +514,7 @@ export default function JobApprovals() {
 
                                 <button
                                     type="button"
-                                    onClick={
-                                        loadApprovals
-                                    }
+                                    onClick={refresh}
                                     className="mt-3 text-xs font-bold text-red-700 underline"
                                 >
                                     Try again
@@ -548,11 +611,12 @@ export default function JobApprovals() {
                                         actionLoading={
                                             actionLoading
                                         }
-                                        onReview={() =>
-                                            navigate(
-                                                `/reports/job-approvals/${approval.id}/`
-                                            )
-                                        }
+                                        onReview={() => {
+                                            const jobId = getJobId(approval);
+                                            if (jobId) {
+                                                navigate(`/jobs/${jobId}`);
+                                            }
+                                        }}
                                         onApprove={() =>
                                             handleApprove(
                                                 approval.id
@@ -570,6 +634,88 @@ export default function JobApprovals() {
                         </div>
                     )}
                 </section>
+
+
+                {!loading &&
+                    (approvals.length > 0 ||
+                        totalPages > 1) && (
+                        <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                            <p className="text-xs font-semibold text-[#98A2B3]">
+                                Page {currentPage} of{" "}
+                                {totalPages}
+                            </p>
+
+                            <div className="flex items-center gap-2">
+
+                                <button
+                                    type="button"
+                                    disabled={
+                                        !hasPrevious &&
+                                        currentPage === 1
+                                    }
+                                    onClick={() =>
+                                        setPage((current) =>
+                                            Math.max(
+                                                1,
+                                                current - 1
+                                            )
+                                        )
+                                    }
+                                    className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF] disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Previous
+                                </button>
+
+                                <div className="flex items-center gap-1">
+
+                                    {Array.from(
+                                        { length: totalPages },
+                                        (_, index) => index + 1
+                                    )
+                                        .slice(0, 7)
+                                        .map((number) => (
+                                            <button
+                                                key={number}
+                                                type="button"
+                                                onClick={() =>
+                                                    setPage(number)
+                                                }
+                                                className={`h-10 w-10 rounded-xl text-sm font-extrabold transition ${
+                                                    currentPage ===
+                                                    number
+                                                        ? "bg-[#6D4AFF] text-white"
+                                                        : "border border-[#E2E8F0] bg-white text-[#475467] hover:border-[#6D4AFF] hover:text-[#6D4AFF]"
+                                                }`}
+                                            >
+                                                {number}
+                                            </button>
+                                        ))}
+
+                                </div>
+
+                                <button
+                                    type="button"
+                                    disabled={
+                                        !hasNext &&
+                                        currentPage === totalPages
+                                    }
+                                    onClick={() =>
+                                        setPage((current) =>
+                                            Math.min(
+                                                totalPages,
+                                                current + 1
+                                            )
+                                        )
+                                    }
+                                    className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF] disabled:cursor-not-allowed disabled:opacity-40"
+                                >
+                                    Next
+                                </button>
+
+                            </div>
+                        </div>
+                    )}
 
             </ModeratorSectionPage>
 

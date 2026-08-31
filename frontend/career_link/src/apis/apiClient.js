@@ -3,23 +3,28 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const request = async (endpoint, options = {}) => {
     const token = localStorage.getItem("accessToken");
 
-    const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`;
+    // Strip any trailing slash off BASE_URL and any leading slash
+    // off endpoint before joining with exactly one "/" — avoids
+    // double slashes (e.g. BASE_URL="…/api/v1/" + endpoint="/accounts/login/")
+    // regardless of whether either side happens to already have one.
+    const finalURL = `${BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(
+        /^\/+/,
+        ""
+    )}`;
 
     console.log("API REQUEST:", {
         BASE_URL,
         endpoint,
         finalURL,
         hasToken: !!token,
-        tokenPreview: token
-            ? `${token.substring(0, 20)}...`
-            : null,
     });
 
     const response = await fetch(finalURL, {
         ...options,
-
         headers: {
-            "Content-Type": "application/json",
+            ...(options.body instanceof FormData
+                ? {}
+                : { "Content-Type": "application/json" }),
 
             ...(token
                 ? {
@@ -60,56 +65,61 @@ const request = async (endpoint, options = {}) => {
             message = String(data);
         }
 
-        const error = new Error(message);
-
-        error.response = {
-            data,
-            status: response.status,
-        };
-
-        throw error;
+        throw new Error(message);
     }
+
     return data;
 };
 
-const apiClient = {
-    get: (endpoint, options = {}) =>
-        request(endpoint, {
-            ...options,
-            method: "GET",
-        }),
-
-    post: (endpoint, body, options = {}) =>
-        request(endpoint, {
-            ...options,
-            method: "POST",
-
-            ...(body !== undefined
-                ? {
-                      body: JSON.stringify(body),
-                  }
-                : {}),
-        }),
-
-    put: (endpoint, body, options = {}) =>
-        request(endpoint, {
-            ...options,
-            method: "PUT",
-            body: JSON.stringify(body),
-        }),
-
-    patch: (endpoint, body, options = {}) =>
-        request(endpoint, {
-            ...options,
-            method: "PATCH",
-            body: JSON.stringify(body),
-        }),
-
-    delete: (endpoint, options = {}) =>
-        request(endpoint, {
-            ...options,
-            method: "DELETE",
-        }),
+// Callable function
+const apiClient = (endpoint, options = {}) => {
+    return request(endpoint, options);
 };
+
+// Convenience methods
+apiClient.get = (endpoint, options = {}) =>
+    request(endpoint, {
+        ...options,
+        method: "GET",
+    });
+
+apiClient.post = (endpoint, body, options = {}) =>
+    request(endpoint, {
+        ...options,
+        method: "POST",
+        ...(body !== undefined
+            ? {
+                  body: JSON.stringify(body),
+              }
+            : {}),
+    });
+
+apiClient.put = (endpoint, body, options = {}) =>
+    request(endpoint, {
+        ...options,
+        method: "PUT",
+        ...(body !== undefined
+            ? {
+                  body: JSON.stringify(body),
+              }
+            : {}),
+    });
+
+apiClient.patch = (endpoint, body, options = {}) =>
+    request(endpoint, {
+        ...options,
+        method: "PATCH",
+        ...(body !== undefined
+            ? {
+                  body: JSON.stringify(body),
+              }
+            : {}),
+    });
+
+apiClient.delete = (endpoint, options = {}) =>
+    request(endpoint, {
+        ...options,
+        method: "DELETE",
+    });
 
 export default apiClient;

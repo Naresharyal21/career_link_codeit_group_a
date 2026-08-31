@@ -8,7 +8,7 @@ const ModeratorSectionPage = ({
   eyebrow = "Moderation",
   children,
   backLabel = "Back",
-  backTo = "/report",
+  backTo = "/reports",
   action = null,
   className = "",
 }) => {

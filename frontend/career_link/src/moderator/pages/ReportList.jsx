@@ -221,34 +221,71 @@ export default function ReportList() {
     const [page, setPage] =
         useState(1);
 
-    const pageSize = 8;
+    const pageSize = 10;
+
+    // Server-reported pagination info for the currently loaded page.
+    // totalCount === null means the backend didn't paginate (plain
+    // array response) — in that case we fall back to treating
+    // `reports` as the full dataset.
+    const [totalCount, setTotalCount] =
+        useState(null);
+
+    const [hasNext, setHasNext] =
+        useState(false);
+
+    const [hasPrevious, setHasPrevious] =
+        useState(false);
+
+    // Aggregate stats come from the dashboard endpoint, which counts
+    // across ALL reports the user can see — not just the current
+    // page — so these stay accurate regardless of pagination.
+    const [stats, setStats] = useState({
+        total: 0,
+        pending: 0,
+        underReview: 0,
+        resolved: 0,
+        rejected: 0,
+    });
 
 
 
 
-    const loadReports = async () => {
+    const loadReports = async (pageNumber = 1) => {
         try {
             setLoading(true);
             setError("");
 
             const response =
-                await moderatorApi.getReports();
+                await moderatorApi.getReports({
+                    page: pageNumber,
+                    page_size: pageSize,
+                });
 
             console.log(
                 "REPORT LIST RESPONSE:",
                 response
             );
 
-            const data = Array.isArray(response)
-                ? response
-                : Array.isArray(
-                      response?.results
-                  )
-                ? response.results
-                : [];
-
-            setReports(data);
-            setPage(1);
+            if (Array.isArray(response)) {
+                // Backend returned an unpaginated array.
+                setReports(response);
+                setTotalCount(null);
+                setHasNext(false);
+                setHasPrevious(false);
+            } else {
+                setReports(
+                    Array.isArray(response?.results)
+                        ? response.results
+                        : []
+                );
+                setTotalCount(
+                    typeof response?.count === "number"
+                        ? response.count
+                        : null
+                );
+                setHasNext(Boolean(response?.next));
+                setHasPrevious(Boolean(response?.previous));
+            }
         } catch (err) {
             console.error(
                 "Failed to load reports:",
@@ -256,6 +293,9 @@ export default function ReportList() {
             );
 
             setReports([]);
+            setTotalCount(null);
+            setHasNext(false);
+            setHasPrevious(false);
 
             setError(
                 err?.response?.data?.detail ||
@@ -269,8 +309,51 @@ export default function ReportList() {
     };
 
 
+    const loadStats = async () => {
+        try {
+            const dashboard =
+                await moderatorApi.getDashboard();
+
+            setStats({
+                total: Number(
+                    dashboard?.total_reports ?? 0
+                ),
+                pending: Number(
+                    dashboard?.pending_reports ?? 0
+                ),
+                underReview: Number(
+                    dashboard?.under_review_reports ?? 0
+                ),
+                resolved: Number(
+                    dashboard?.resolved_reports ?? 0
+                ),
+                rejected: Number(
+                    dashboard?.rejected_reports ?? 0
+                ),
+            });
+        } catch (err) {
+            console.error(
+                "Failed to load report stats:",
+                err
+            );
+        }
+    };
+
+
+    const refresh = () => {
+        loadReports(page);
+        loadStats();
+    };
+
+
     useEffect(() => {
-        loadReports();
+        loadReports(page);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
+
+
+    useEffect(() => {
+        loadStats();
     }, []);
 
 
@@ -366,69 +449,18 @@ export default function ReportList() {
 
 
    
-    const totalPages = Math.max(
-        1,
-        Math.ceil(
-            filteredReports.length /
-                pageSize
-        )
-    );
+    // Server-driven pagination: `reports` already only contains the
+    // current page's items, so `filteredReports` (local search/filter
+    // on top of that page) is what we render directly — no further
+    // client-side slicing needed.
+    const totalPages =
+        totalCount !== null
+            ? Math.max(1, Math.ceil(totalCount / pageSize))
+            : 1;
 
+    const currentPage = Math.min(page, totalPages);
 
-    const currentPage = Math.min(
-        page,
-        totalPages
-    );
-
-
-    const paginatedReports =
-        filteredReports.slice(
-            (currentPage - 1) * pageSize,
-            currentPage * pageSize
-        );
-
-
-    useEffect(() => {
-        setPage(1);
-    }, [
-        search,
-        statusFilter,
-        priorityFilter,
-        reasonFilter,
-    ]);
-
-
-   
-
-    const stats = useMemo(() => {
-        return {
-            total: reports.length,
-
-            pending: reports.filter(
-                (report) =>
-                    getStatus(report) ===
-                    "Pending"
-            ).length,
-
-            underReview: reports.filter(
-                (report) =>
-                    getStatus(report) ===
-                    "Under Review"
-            ).length,
-
-            resolved: reports.filter(
-                (report) =>
-                    getStatus(report) ===
-                    "Resolved"
-            ).length,
-
-            rejected: reports.filter(
-                (report) =>
-                    getStatus(report) ===
-                    "Rejected"
-            ).length,
-        };
-    }, [reports]);
+    const paginatedReports = filteredReports;
 
 
 
@@ -464,7 +496,7 @@ export default function ReportList() {
 
                 <button
                     type="button"
-                    onClick={loadReports}
+                    onClick={refresh}
                     disabled={loading}
                     className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF] disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -516,7 +548,7 @@ export default function ReportList() {
 
                             <button
                                 type="button"
-                                onClick={loadReports}
+                                onClick={refresh}
                                 className="mt-3 text-xs font-bold text-red-700 underline"
                             >
                                 Try again
@@ -730,35 +762,54 @@ export default function ReportList() {
             <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
                 <div>
-                    <p className="text-sm font-bold text-[#344054]">
-                        {filteredReports.length}{" "}
-                        report
-                        {filteredReports.length !==
-                        1
-                            ? "s"
-                            : ""}
-                    </p>
+                    {hasActiveFilters ? (
+                        <>
+                            <p className="text-sm font-bold text-[#344054]">
+                                {filteredReports.length}{" "}
+                                match
+                                {filteredReports.length !== 1
+                                    ? "es"
+                                    : ""}{" "}
+                                on this page
+                            </p>
 
-                    <p className="mt-0.5 text-xs text-[#98A2B3]">
-                        Showing{" "}
-                        {filteredReports.length ===
-                        0
-                            ? 0
-                            : (currentPage -
-                                  1) *
-                                  pageSize +
-                              1}{" "}
-                        -{" "}
-                        {Math.min(
-                            currentPage *
-                                pageSize,
-                            filteredReports.length
-                        )}{" "}
-                        of{" "}
-                        {
-                            filteredReports.length
-                        }
-                    </p>
+                            <p className="mt-0.5 text-xs text-[#98A2B3]">
+                                Search and filters only look
+                                within the currently loaded
+                                page ({reports.length} report
+                                {reports.length !== 1
+                                    ? "s"
+                                    : ""}
+                                ). Use the page controls below
+                                to check other pages.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm font-bold text-[#344054]">
+                                {totalCount ?? reports.length}{" "}
+                                report
+                                {(totalCount ?? reports.length) !==
+                                1
+                                    ? "s"
+                                    : ""}
+                            </p>
+
+                            <p className="mt-0.5 text-xs text-[#98A2B3]">
+                                Showing{" "}
+                                {reports.length === 0
+                                    ? 0
+                                    : (currentPage - 1) *
+                                          pageSize +
+                                      1}{" "}
+                                -{" "}
+                                {(currentPage - 1) * pageSize +
+                                    reports.length}{" "}
+                                of{" "}
+                                {totalCount ?? reports.length}
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {hasActiveFilters && (
@@ -894,8 +945,8 @@ export default function ReportList() {
 
 
             {!loading &&
-                filteredReports.length >
-                    0 && (
+                (reports.length > 0 ||
+                    totalPages > 1) && (
                     <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
                         <p className="text-xs font-semibold text-[#98A2B3]">
@@ -908,8 +959,8 @@ export default function ReportList() {
                             <button
                                 type="button"
                                 disabled={
-                                    currentPage ===
-                                    1
+                                    !hasPrevious &&
+                                    currentPage === 1
                                 }
                                 onClick={() =>
                                     setPage(
@@ -973,8 +1024,8 @@ export default function ReportList() {
                             <button
                                 type="button"
                                 disabled={
-                                    currentPage ===
-                                    totalPages
+                                    !hasNext &&
+                                    currentPage === totalPages
                                 }
                                 onClick={() =>
                                     setPage(
