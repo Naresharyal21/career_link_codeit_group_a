@@ -4,7 +4,7 @@ import React, { useState } from "react";
 
 
 import { useFormik } from "formik";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 import EmployerForm from "./EmployerForm";
 import JobseekerForm from "./JobseekerForm";
@@ -236,7 +236,7 @@ const SignupForm = () => {
               ? "Select your Company Location"
               : "Select your Location"}
           </option>
-          {nepalLocations.map((loc) => (
+          {nepallocation.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
             </option>

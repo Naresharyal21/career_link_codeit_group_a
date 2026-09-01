@@ -7,6 +7,13 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView,
+    TokenBlacklistView
+)
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/schema/",
@@ -27,7 +34,7 @@ urlpatterns = [
                 path("accounts/", include("accounts.urls")),
                 path("applications/", include("applications.urls")),
                 path("jobs/", include("jobs.urls")),
-                path("moderator/", include("moderator.urls")),
+                path("reports/", include("moderator.urls")),
                 path("notifications/", include("notifications.urls")),
             ]
         ),
