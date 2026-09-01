@@ -141,9 +141,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         # Get role
         role = validated_data.get("role")
      
-        company_description = validated_data.pop("company_description", "")
-        website = validated_data.pop("website", "")
-        logo = validated_data.pop("logo", None)
 
         # Get role
         role = validated_data.get("role")

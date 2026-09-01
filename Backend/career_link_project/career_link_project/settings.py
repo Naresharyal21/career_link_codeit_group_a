@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "jobs",
     "moderator",
     "notifications",
+    "drf_spectacular",#for api documentation
+
 ]
 
 MIDDLEWARE = [
@@ -149,6 +151,13 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema", ## for api documentation
+}
+## for api documentation
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Accounts API",
+    "DESCRIPTION": "API documentation for the Account app",
+    "VERSION": "1.0.0",
 }
 
 # ── 3. JWT config ──

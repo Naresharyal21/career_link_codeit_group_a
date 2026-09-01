@@ -3,3 +3,6 @@ db.sqlite3
 __pycache__
 .vscode
 node_modules
+profile_pic
+company_logo
+.env
