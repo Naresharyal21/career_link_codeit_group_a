@@ -9,7 +9,12 @@ import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
 
 import logo from "../assets/logo.png";
-import MyProfilecart from "../pages/accounts/MyProfilecart";
+import MyProfilecart from '../pages/accounts/MyProfilecart';
+import { useTheme } from '../context/ThemeContext';
+import accountsApi from '../apis/accountsApi';
+import { AuthenticationContext } from '../context/AuthContext';
+// import { data } from 'react-router';
+
 
 import { useTheme } from "../context/ThemeContext";
 import accountsApi from "../apis/accountsApi";
@@ -29,12 +34,17 @@ const Navbar = () => {
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
 
+  useEffect(() => {
+
+    const fetchuser = async () => {
+      
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const data = await accountsApi.getMe();
-        console.log(data)
+
+
 
         setUser(data);
       } catch (err) {
@@ -69,6 +79,7 @@ const Navbar = () => {
       handleOutsideClick
     );
 
+
     return () => {
       document.removeEventListener(
         "mousedown",
@@ -88,6 +99,14 @@ const Navbar = () => {
           className="h-16 w-auto object-contain"
         />
       </div>
+      <div className=" font-mono text-green-700">
+
+
+        {user?.role_display.toUpperCase()} PORTAL
+      </div>
+
+
+
 
 
 
@@ -111,13 +130,19 @@ const Navbar = () => {
               className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
-              {user?.profile?.profile_pictur ? (
+              {user?.role === "js" && user?.profile?.profile_pictur ? (
                 <img
                   src={`${MEDIA_BASE_URL}${user.profile.profile_pictur}`}
                   alt="profile"
-                  className="w-full h-full rounded-full object-cover"
+                  className="w-full h-full rounded-full object-cover "
                 />
-              ) : (
+                
+              ) : user?.role === "ep" && user?.profile?.logo ? (
+                <img
+                  src={`${MEDIA_BASE_URL}${user.profile.logo}`}
+                  alt="company logo"
+                  className="w-full h-full rounded-full object-cover bg-white"
+                />) : (
                 initials
               )}
             </div>

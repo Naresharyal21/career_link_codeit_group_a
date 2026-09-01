@@ -27,8 +27,8 @@ class User(AbstractUser, TimeStamp):
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
-        return self.username
-
+        return f"{self.email} - {self.get_role_display()}"
+  
 
 class JobseekerProfile(TimeStamp):
     """
