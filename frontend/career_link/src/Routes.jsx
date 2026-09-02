@@ -1,11 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 
-import Layout from "./components/Layout";
 import DashboardLayout from "./layout/DashboardLayout";
-
 import Loginform from "./accounts/components/Loginform";
 
-import HomePage from "./home/components/pages/HomePage";
 import BrowseJobsPage from "./pages/BrowseJobsPage";
 import JobDetailPage from "./pages/JobDetailPage";
 
@@ -19,13 +16,9 @@ const AppRoutes = () => {
     return (
         <Routes>
             {/* Public pages */}
-            <Route element={<Layout />}>
-                {/* <Route path="/" element={<HomePage />} /> */}
-                <Route path="/home" element={<HomePage />} />
-                <Route path="/jobs" element={<BrowseJobsPage />} />
-                <Route path="/jobs/:id" element={<JobDetailPage />} />
-                <Route path="/login" element={<Loginform />} />
-            </Route>
+            <Route path="/jobs" element={<BrowseJobsPage />} />
+            <Route path="/jobs/:id" element={<JobDetailPage />} />
+            <Route path="/login" element={<Loginform />} />
 
             {/* Authenticated / dashboard pages */}
             <Route path="/dashboard" element={<DashboardLayout />}>
@@ -41,6 +34,8 @@ const AppRoutes = () => {
                     />
                 ))}
             </Route>
+
+            <Route path="*" element={<div>Page not found</div>} />
         </Routes>
     );
 };

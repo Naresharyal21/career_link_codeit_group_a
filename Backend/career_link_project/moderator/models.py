@@ -69,3 +69,4 @@ class Report(models.Model):
 
     def __str__(self):
         return f"{self.reported_job} - {self.status}"
+

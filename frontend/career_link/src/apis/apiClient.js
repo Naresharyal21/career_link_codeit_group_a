@@ -15,11 +15,13 @@ const request = async (endpoint, options = {}) => {
             : null,
     });
 
+    const isFormData = options.body instanceof FormData;
+
     const response = await fetch(finalURL, {
         ...options,
 
         headers: {
-            "Content-Type": "application/json",
+            ...(isFormData ? {} : { "Content-Type": "application/json" }),
 
             ...(token
                 ? {
@@ -60,11 +62,7 @@ const request = async (endpoint, options = {}) => {
             message = String(data);
         }
 
-        setError(
-            err?.response?.data?.detail ||
-                err?.message ||
-                "Unable to load reports."
-        );
+        throw new Error(message);
     }
     return data;
 };
@@ -83,7 +81,7 @@ const apiClient = {
 
             ...(body !== undefined
                 ? {
-                      body: JSON.stringify(body),
+                      body: body instanceof FormData ? body : JSON.stringify(body),
                   }
                 : {}),
         }),
@@ -92,7 +90,7 @@ const apiClient = {
         request(endpoint, {
             ...options,
             method: "PUT",
-            body: JSON.stringify(body),
+            body: body instanceof FormData ? body : JSON.stringify(body),
         }),
 
     delete: (endpoint, options = {}) =>

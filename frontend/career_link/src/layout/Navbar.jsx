@@ -7,6 +7,7 @@ import React, {
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 import logo from "../assets/logo.png";
 import MyProfilecart from "../pages/accounts/MyProfilecart";
@@ -14,11 +15,15 @@ import MyProfilecart from "../pages/accounts/MyProfilecart";
 import { useTheme } from "../context/ThemeContext";
 import accountsApi from "../apis/accountsApi";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+
 const Navbar = () => {
   const [user, setUser] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const { theme, toggleModes } = useTheme();
+  const navigate = useNavigate();
 
   const profileRef = useRef(null);
 
@@ -37,6 +42,31 @@ const Navbar = () => {
     };
 
     fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        const res = await fetch(`${API_BASE}/notifications/unread-count/`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setUnreadCount(data.unread_count || 0);
+      } catch (err) {
+        console.error("Error fetching unread count:", err);
+      }
+    };
+
+    fetchUnreadCount();
   }, []);
 
 
@@ -120,6 +150,7 @@ const Navbar = () => {
         <button
           type="button"
           aria-label="Notifications"
+          onClick={() => navigate("/dashboard/notifications")}
           className="
             relative
             flex h-10 w-10 items-center justify-center
@@ -135,13 +166,15 @@ const Navbar = () => {
         >
           <IoIosNotificationsOutline className="text-[25px]" />
 
-          <span className="
-            absolute right-[8px] top-[7px]
-            h-2 w-2
-            rounded-full
-            bg-[#6C4DFF]
-            ring-2 ring-white
-          " />
+          {unreadCount > 0 && (
+            <span className="
+              absolute right-[8px] top-[7px]
+              h-2 w-2
+              rounded-full
+              bg-[#6C4DFF]
+              ring-2 ring-white
+            " />
+          )}
         </button>
 
        
