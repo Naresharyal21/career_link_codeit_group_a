@@ -12,6 +12,7 @@ from .serializers import (
     RegistrationSerializer,
     JobseekerProfileSerializer,
     EmployerProfileSerializer,
+   
 )
 from .models import (
     JobseekerProfile,
@@ -60,6 +61,7 @@ class MeView(APIView):
                 "profile": data,
             }
         )
+
     def put(self, request):
         user = request.user
 
@@ -90,7 +92,6 @@ class MeView(APIView):
             {"error": "Profile picture upload is only available for jobseekers"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
 
 
 class ForgetPasswordView(APIView):
@@ -242,24 +243,23 @@ class confirmPasswordView(APIView):
     def post(self, request):
 
         password = request.data.get("password")
-       
-
 
         if not password:
-            return Response({"error": "Password is required"},
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
         user = request.user
-      
 
         if not user.check_password(password):
-            return Response({"error": "Password does not match"},
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Password does not match"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        
-        return Response({"message": "Password confirmed sucess"},
-            status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Password confirmed sucess"}, status=status.HTTP_200_OK
+        )
 
-    
+
 class SendNewEmailOTPView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -270,22 +270,18 @@ class SendNewEmailOTPView(APIView):
         if not new_email:
             return Response({"error": "Email is required"})
 
-
         if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
-              return Response(
+            return Response(
                 {"error": "This email is already in use"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        user =request.user
+        user = request.user
 
-
-        
-
-        create_and_send_otp(user=user, purpose="cev",
-        email=new_email)
+        create_and_send_otp(user=user, purpose="cev", email=new_email)
 
         return Response({"message": "Verification OTP sent successfully"})
-    
+
+
 class ChangeEmail(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -294,26 +290,21 @@ class ChangeEmail(APIView):
 
         if not new_email:
             return Response(
-                {"error": "Email is required"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         new_email = new_email.strip().lower()
 
-        if User.objects.filter(email=new_email).exclude(
-            id=request.user.id
-        ).exists():
+        if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
             return Response(
                 {"error": "This email is already in use"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         request.user.email = new_email
         request.user.email_verified = True
 
-        request.user.save(
-            update_fields=["email", "email_verified"]
-        )
+        request.user.save(update_fields=["email", "email_verified"])
 
         return Response(
             {
@@ -321,6 +312,7 @@ class ChangeEmail(APIView):
                 "email": request.user.email,
                 "email_verified": request.user.email_verified,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
+
 
