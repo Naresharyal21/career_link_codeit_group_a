@@ -26,6 +26,7 @@ import EmailChangePage from '../pages/accounts/EmailChangePage'
 import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
 import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
 import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
+import AdminLogin from '../pages/moderator/AdminLogin'
 
 
 
@@ -38,6 +39,8 @@ const AppRoutes = () => {
 
 
       <Routes>
+        {/* admin routes */}
+        <Route path="admin/login" element={<AdminLogin/>}/>
 
         {/* public pages */}
         <Route path="login/" element={<Login />} />
