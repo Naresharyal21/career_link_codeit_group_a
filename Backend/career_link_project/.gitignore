@@ -2,12 +2,6 @@ venv/
 __pycache__
 .vscode
 node_modules
-.venv
+profile_pic
+company_logo
 .env
-env/
-# SQLite databases
-*.sqlite3
-*.sqlite3-journal
-*.sqlite3-wal
-*.sqlite3-shm
-db.sqlite3

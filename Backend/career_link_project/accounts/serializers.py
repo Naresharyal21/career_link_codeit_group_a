@@ -140,6 +140,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         # Get role
         role = validated_data.get("role")
+     
+
+        # Get role
+        role = validated_data.get("role")
         # Create User
         user = User.objects.create_user(**validated_data)
 

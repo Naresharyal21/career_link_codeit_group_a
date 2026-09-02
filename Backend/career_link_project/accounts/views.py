@@ -56,6 +56,7 @@ class MeView(APIView):
                 "username": user.username,
                 "email": user.email,
                 "role": user.role,
+                "role_display": user.get_role_display(),
                 "profile": data,
             }
         )
