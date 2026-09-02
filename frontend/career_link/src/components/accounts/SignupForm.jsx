@@ -222,14 +222,14 @@ const SignupForm = () => {
       </div>
 
       {/* LOCATION */}
-      <div className="mb-4">
+      <div className="mb-4 ">
         <select
           id="location"
           name="location"
           value={formik.values.location}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          className="border rounded p-2 pr-5 w-full bg-white"
+          className="border rounded p-2 pr-5 w-full  bg-blue-100"
         >
           <option value="" disabled>
             {formik.values.role === "ep"

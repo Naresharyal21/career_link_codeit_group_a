@@ -71,7 +71,7 @@ if(message==="Please verify your email before logging in"){
 
 
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form  onSubmit={formik.handleSubmit}>
 
 
 

@@ -58,8 +58,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # Employer fields
     # -------------------------
 
-    company_name = serializers.CharField(required=False, allow_blank=True)
-
     company_description = serializers.CharField(required=False, allow_blank=True)
 
     website = serializers.URLField(required=False, allow_blank=True)
@@ -82,7 +80,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "profile_pictur",
             "date_of_birth",
             # Employer
-            "company_name",
             "company_description",
             "website",
             "logo",
@@ -140,7 +137,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         # Get role
         role = validated_data.get("role")
-     
 
         # Get role
         role = validated_data.get("role")
@@ -167,7 +163,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             EmployerProfile.objects.create(
                 user=user,
-                company_name=company_name or user.username,
                 company_description=company_description,
                 website=website,
                 location=location,
@@ -208,7 +203,6 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
-            "company_name",
             "company_description",
             "website",
             "location",
@@ -220,3 +214,5 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = ["is_verified"]
+
+
