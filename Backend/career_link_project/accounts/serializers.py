@@ -149,6 +149,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             JobseekerProfile.objects.create(
                 user=user,
+                full_name=user.username,
                 phone=phone,
                 resume_file=resume_file,
                 location=location,

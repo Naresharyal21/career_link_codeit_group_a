@@ -6,10 +6,28 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0003_user_email_verified_emailotp'),
+        ('accounts', '0001_initial'),
     ]
 
     operations = [
+        migrations.RunSQL(
+            sql="""
+                CREATE TABLE IF NOT EXISTS accounts_emailotp (
+                    id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    created_at datetime NOT NULL,
+                    updated_at datetime NOT NULL,
+                    otp varchar(6) NOT NULL,
+                    expires_at datetime NOT NULL,
+                    is_verified bool NOT NULL,
+                    purpose varchar(30) NOT NULL,
+                    user_id bigint NOT NULL REFERENCES accounts_user(id)
+                        DEFERRABLE INITIALLY DEFERRED
+                );
+                CREATE INDEX IF NOT EXISTS accounts_emailotp_user_id_idx
+                    ON accounts_emailotp (user_id);
+            """,
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AlterField(
             model_name='emailotp',
             name='purpose',

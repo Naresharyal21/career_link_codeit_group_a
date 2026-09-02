@@ -1,35 +1,38 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState } from "react";
 
-const ThemeModes = createContext(null);
+const ThemeContext = createContext(null);
 
-export const useTheme = () => useContext(ThemeModes);
+export const ThemeProvider = ({ children }) => {
+    const [theme, setTheme] = useState(
+        localStorage.getItem("theme") || "light"
+    );
 
-const ThemeContext = ({ children }) => {
+    const toggleTheme = () => {
+        setTheme((currentTheme) => {
+            const newTheme =
+                currentTheme === "light" ? "dark" : "light";
 
-  // Get saved theme
-  const [theme, settheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
-  });
+            localStorage.setItem("theme", newTheme);
 
-  // Save theme
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+            return newTheme;
+        });
+    };
 
-  // Change theme
-  const toggleModes = () => {
-    settheme((current) => (
-      current === 'light' ? 'dark' : 'light'
-    ));
-  };
+    return (
+        <ThemeContext.Provider
+            value={{
+                theme,
+                setTheme,
+                toggleTheme,
+            }}
+        >
+            {children}
+        </ThemeContext.Provider>
+    );
+};
 
-  return (
-    <ThemeModes.Provider value={{ theme, toggleModes }}>
-      <div className={theme}>
-        {children}
-      </div>
-    </ThemeModes.Provider>
-  )
-}
+export const useTheme = () => {
+    return useContext(ThemeContext);
+};
 
 export default ThemeContext;
