@@ -81,6 +81,7 @@ if(message==="Please verify your email before logging in"){
           id="email"
           name="email"
           type="email"
+          autoComplete="email"
 
           placeholder="Enter your Email"
 
@@ -109,6 +110,7 @@ if(message==="Please verify your email before logging in"){
           id="password"
           name="password"
           type={showPassword ? "text" : "password"}
+          autoComplete="current-password"
           placeholder="Enter your password"
 
           value={formik.values.password}

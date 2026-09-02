@@ -133,7 +133,6 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-
 html {
     min-width: 320px;
     min-height: 100%;
@@ -152,7 +151,6 @@ body {
 
     font-family: "Inter", sans-serif;
 }
-
 
 h1,
 h2,

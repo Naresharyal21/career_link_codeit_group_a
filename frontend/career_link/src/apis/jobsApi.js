@@ -1,18 +1,25 @@
-const API_BASE = "http://127.0.0.1:8000/api/v1/jobs";
+import apiClient from "./apiClient";
+
+const JOBS_ENDPOINT = "/jobs/";
+
+const unwrapList = (data) => (
+  Array.isArray(data) ? data : data?.results || []
+);
 
 export async function getJobs() {
-  const res = await fetch(`${API_BASE}/`);
-  if (!res.ok) throw new Error("Failed to fetch jobs");
-  return res.json();
+  const data = await apiClient.get(JOBS_ENDPOINT);
+  return unwrapList(data);
 }
 
 export async function getJobById(id) {
-  const res = await fetch(`${API_BASE}/${id}/`);
-  if (!res.ok) {
-    if (res.status === 404) return null;
-    throw new Error("Failed to fetch job");
+  try {
+    return await apiClient.get(`/jobs/${id}/`);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return null;
+    }
+    throw error;
   }
-  return res.json();
 }
 
 export async function getSimilarJobs(currentId, limit = 2) {

@@ -1,5 +1,5 @@
-import apiClient from "./apiClient";
-import { MODERATOR_ENDPOINTS } from "./endpoints";
+import apiClient from "../apis/apiClient";
+import { MODERATOR_ENDPOINTS } from "../apis/endpoints";
 
 export const getReports = async () => {
     return apiClient.get(
@@ -38,19 +38,19 @@ export const deleteReport = async (reportId) => {
 
 export const startReview = async (reportId) => {
     return apiClient.post(
-        `${MODERATOR_ENDPOINTS.REPORT(reportId)}start_review/`
+        MODERATOR_ENDPOINTS.START_REVIEW(reportId)
     );
 };
 
 export const resolveReport = async (reportId) => {
     return apiClient.post(
-        `${MODERATOR_ENDPOINTS.REPORT(reportId)}resolve/`
+        MODERATOR_ENDPOINTS.RESOLVE(reportId)
     );
 };
 
 export const rejectReport = async (reportId) => {
     return apiClient.post(
-        `${MODERATOR_ENDPOINTS.REPORT(reportId)}reject/`
+        MODERATOR_ENDPOINTS.REJECT(reportId)
     );
 };
 

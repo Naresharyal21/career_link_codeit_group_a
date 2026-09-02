@@ -17,22 +17,24 @@ class ModeratorDashboardAPITests(APITestCase):
     def setUp(self):
         self.moderator = User.objects.create_user(
             username="dashboard_moderator",
+            email="dashboard_moderator@example.com",
             password="testpassword123",
             is_staff=True,
         )
         self.reporter = User.objects.create_user(
             username="dashboard_reporter",
+            email="dashboard_reporter@example.com",
             password="testpassword123",
             role="js",
         )
         self.employer_user = User.objects.create_user(
             username="dashboard_employer",
+            email="dashboard_employer@example.com",
             password="testpassword123",
             role="ep",
         )
         self.employer = EmployerProfile.objects.create(
             user=self.employer_user,
-            company_name="Dashboard Test Company",
         )
         self.job = JobPosting.objects.create(
             employer=self.employer,
@@ -51,17 +53,17 @@ class ModeratorDashboardAPITests(APITestCase):
         Report.objects.create(
             reported_job=self.job,
             reported_by=self.reporter,
-            report_reason=Report.Reason.SCAM,
+            report_reason="Scam",
             report_description="Possible scam listing.",
-            status=Report.Status.PENDING,
+            status="Pending",
         )
 
-        resolved = Report.objects.create(
+        Report.objects.create(
             reported_job=self.job,
             reported_by=self.moderator,
-            report_reason=Report.Reason.SPAM,
+            report_reason="Spam",
             report_description="Spam report.",
-            status=Report.Status.RESOLVED,
+            status="Resolved",
             reviewed_by=self.moderator,
             reviewed_at=timezone.now() - timedelta(hours=1),
         )
@@ -70,15 +72,8 @@ class ModeratorDashboardAPITests(APITestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["stats"]["review_queue"]["count"], 1)
-        self.assertEqual(
-            response.data["stats"]["review_queue"]["critical_priority"],
-            1,
-        )
-        self.assertEqual(response.data["stats"]["reported_content"]["count"], 2)
-        self.assertEqual(len(response.data["queue"]), 1)
-        self.assertEqual(response.data["queue"][0]["item_type"], "Job Post")
-        self.assertEqual(response.data["queue"][0]["item_id"], self.job.id)
-        self.assertEqual(response.data["performance"]["today_reviews"], 1)
-        self.assertEqual(response.data["stats"]["pending_job_approvals"], None)
-        self.assertEqual(response.data["stats"]["flagged_companies"], None)
+        self.assertEqual(response.data["total_reports"], 2)
+        self.assertEqual(response.data["pending_reports"], 1)
+        self.assertEqual(response.data["under_review_reports"], 0)
+        self.assertEqual(response.data["resolved_reports"], 1)
+        self.assertEqual(response.data["rejected_reports"], 0)

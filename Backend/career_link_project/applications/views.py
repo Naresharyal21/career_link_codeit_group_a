@@ -97,6 +97,7 @@ class ApplicationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = ApplicationSerializer
     permission_classes = [IsAuthenticated]
+    lookup_url_kwarg = "id"
 
     def get_queryset(self):
         user = self.request.user

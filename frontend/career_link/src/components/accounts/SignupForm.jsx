@@ -236,7 +236,7 @@ const SignupForm = () => {
               ? "Select your Company Location"
               : "Select your Location"}
           </option>
-          {nepallocation.map((loc) => (
+          {nepalLocations.map((loc) => (
             <option key={loc} value={loc}>
               {loc}
             </option>
