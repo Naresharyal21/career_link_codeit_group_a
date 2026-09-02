@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+import apiClient from "../../../apis/apiClient";
 
 const TYPE_STYLES = {
   status_update: "bg-blue-50 border-l-4 border-l-blue-400",
@@ -34,24 +33,11 @@ function NotificationsPage() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
 
-  const token = localStorage.getItem("access_token");
-
   async function fetchNotifications() {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/notifications/`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Something went wrong");
-      }
-
-      const data = await res.json();
-      setNotifications(data);
+      const data = await apiClient.get("/notifications/");
+      setNotifications(Array.isArray(data) ? data : data?.results || []);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -66,13 +52,7 @@ function NotificationsPage() {
     setNotifications(updated);
 
     try {
-      await fetch(`${API_BASE}/notifications/${id}/read/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await apiClient.patch(`/notifications/${id}/read/`);
     } catch (err) {
       console.log(err);
     }

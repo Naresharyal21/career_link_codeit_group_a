@@ -35,7 +35,6 @@ class ModeratorDashboardAPITests(APITestCase):
         )
         self.employer = EmployerProfile.objects.create(
             user=self.employer_user,
-            company_name="Dashboard Test Company",
         )
         self.job = JobPosting.objects.create(
             employer=self.employer,

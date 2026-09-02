@@ -33,7 +33,6 @@ class JobApprovalAPITests(APITestCase):
         )
         self.employer = EmployerProfile.objects.create(
             user=self.employer_user,
-            company_name="Job Approval Test Co",
         )
 
         self.pending_job = JobPosting.objects.create(

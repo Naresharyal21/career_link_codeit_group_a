@@ -58,7 +58,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # Employer fields
     # -------------------------
 
-  
+    company_name = serializers.CharField(required=False, allow_blank=True)
 
     company_description = serializers.CharField(required=False, allow_blank=True)
 
@@ -82,7 +82,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "profile_pictur",
             "date_of_birth",
             # Employer
-           
+            "company_name",
             "company_description",
             "website",
             "logo",
@@ -140,13 +140,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
         # Get role
         role = validated_data.get("role")
-     
-        company_description = validated_data.pop("company_description", "")
-        website = validated_data.pop("website", "")
-        logo = validated_data.pop("logo", None)
-
-        # Get role
-        role = validated_data.get("role")
         # Create User
         user = User.objects.create_user(**validated_data)
 
@@ -156,6 +149,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             JobseekerProfile.objects.create(
                 user=user,
+                full_name=user.username,
                 phone=phone,
                 resume_file=resume_file,
                 location=location,
@@ -169,7 +163,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             EmployerProfile.objects.create(
                 user=user,
-                
+                company_name=company_name or user.username,
                 company_description=company_description,
                 website=website,
                 location=location,
@@ -210,7 +204,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
-          
+            "company_name",
             "company_description",
             "website",
             "location",

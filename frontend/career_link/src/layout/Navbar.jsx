@@ -1,7 +1,4 @@
-import React, { use, useContext, useEffect, useRef, useState } from 'react'
-
-
-
+import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { IoIosNotificationsOutline } from "react-icons/io";
 
@@ -13,18 +10,12 @@ import MyProfilecart from "../pages/accounts/MyProfilecart";
 
 import { useTheme } from "../context/ThemeContext";
 import accountsApi from "../apis/accountsApi";
+import { AuthenticationContext } from "../context/AuthContext";
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-
   const { theme, toggleModes } = useTheme();
-
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
   const { user, setUser } = useContext(AuthenticationContext);
-
-
 
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
@@ -34,8 +25,6 @@ const Navbar = () => {
     const fetchUser = async () => {
       try {
         const data = await accountsApi.getMe();
-        console.log(data)
-
         setUser(data);
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -120,11 +109,14 @@ const Navbar = () => {
               ) : (
                 initials
               )}
-            </div>
+            </button>
+          </div>
 
-
-
-            <div className="hidden text-left sm:block">
+          <button
+            className="hidden items-center gap-2 text-left sm:flex"
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+          >
+            <div>
               <p className="max-w-[130px] truncate text-sm font-semibold text-[#172337]">
                 {user?.username || "User"}
               </p>
@@ -133,8 +125,6 @@ const Navbar = () => {
                 {user?.role || "Account"}
               </p>
             </div>
-
-
 
             <FiChevronDown
               className={`

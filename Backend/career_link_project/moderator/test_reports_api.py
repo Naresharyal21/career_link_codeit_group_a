@@ -49,11 +49,9 @@ class ReportAPITests(APITestCase):
 
         self.employer = EmployerProfile.objects.create(
             user=self.employer_user,
-            company_name="Test Company",
         )
         self.other_employer = EmployerProfile.objects.create(
             user=self.other_employer_user,
-            company_name="Other Company",
         )
 
         self.job = JobPosting.objects.create(
@@ -194,14 +192,95 @@ class ReportAPITests(APITestCase):
             own_job_report.id,
         )
 
-    def test_job_seeker_cannot_update_own_report(self):
+    def test_job_seeker_can_edit_own_report_while_pending(self):
         report = Report.objects.create(
             reported_job=self.job,
             reported_by=self.user,
             report_reason="Spam",
+            status="Pending",
         )
 
         self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            f"{self.report_url}{report.id}/",
+            {"report_description": "Adding more detail."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        report.refresh_from_db()
+        self.assertEqual(
+            report.report_description, "Adding more detail."
+        )
+
+    def test_job_seeker_cannot_edit_own_report_once_under_review(
+        self,
+    ):
+        report = Report.objects.create(
+            reported_job=self.job,
+            reported_by=self.user,
+            report_reason="Spam",
+            status="Under Review",
+        )
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            f"{self.report_url}{report.id}/",
+            {"report_description": "Trying to edit"},
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_job_seeker_cannot_edit_someone_elses_report(self):
+        report = Report.objects.create(
+            reported_job=self.other_job,
+            reported_by=self.other_job_seeker,
+            report_reason="Spam",
+            status="Pending",
+        )
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            f"{self.report_url}{report.id}/",
+            {"report_description": "Trying to edit"},
+            format="json",
+        )
+
+        # Out of this job seeker's scoped queryset entirely, so it
+        # 404s rather than revealing the report exists.
+        self.assertEqual(
+            response.status_code, status.HTTP_404_NOT_FOUND
+        )
+
+    def test_job_seeker_cannot_delete_own_pending_report(self):
+        report = Report.objects.create(
+            reported_job=self.job,
+            reported_by=self.user,
+            report_reason="Spam",
+            status="Pending",
+        )
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(
+            f"{self.report_url}{report.id}/"
+        )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )
+
+    def test_employer_still_cannot_edit_report_on_own_job(self):
+        report = Report.objects.create(
+            reported_job=self.job,
+            reported_by=self.user,
+            report_reason="Spam",
+            status="Pending",
+        )
+
+        self.client.force_authenticate(user=self.employer_user)
         response = self.client.patch(
             f"{self.report_url}{report.id}/",
             {"report_description": "Trying to edit"},
@@ -341,7 +420,6 @@ class ReportReviewWorkflowAPITests(APITestCase):
         )
         self.employer = EmployerProfile.objects.create(
             user=self.employer_user,
-            company_name="Workflow Test Company",
         )
         self.job = JobPosting.objects.create(
             employer=self.employer,
@@ -480,7 +558,6 @@ class ReportPaginationAPITests(APITestCase):
         )
         employer = EmployerProfile.objects.create(
             user=employer_user,
-            company_name="Pagination Check Co",
         )
         job = JobPosting.objects.create(
             employer=employer,
