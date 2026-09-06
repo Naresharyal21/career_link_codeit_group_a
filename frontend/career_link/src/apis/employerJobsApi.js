@@ -11,13 +11,15 @@ function authHeaders() {
 export async function getCategories() {
   const res = await fetch(`${API_BASE}/categories/`);
   if (!res.ok) throw new Error("Failed to fetch categories");
-  return res.json();
+  const data = await res.json();
+  return data.results ?? data;
 }
 
 export async function getSkills() {
   const res = await fetch(`${API_BASE}/skills/`);
   if (!res.ok) throw new Error("Failed to fetch skills");
-  return res.json();
+  const data = await res.json();
+  return data.results ?? data;
 }
 
 export async function getMyJobPostings() {
@@ -25,7 +27,8 @@ export async function getMyJobPostings() {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error("Failed to fetch your job postings");
-  return res.json();
+  const data = await res.json();
+  return data.results ?? data;
 }
 
 export async function createJobPosting(payload) {

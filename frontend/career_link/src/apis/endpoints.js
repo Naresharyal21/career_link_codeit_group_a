@@ -1,19 +1,30 @@
 export const MODERATOR_ENDPOINTS = {
+
     DASHBOARD:
-        "/moderator/dashboard/",
+        "/reports/dashboard/",
 
     REPORTS:
-        "/moderator/reports/",
+        "/reports/",
 
     REPORT: (id) =>
-        `/moderator/reports/${id}/`,
+        `/reports/${id}/`,
 
     START_REVIEW: (id) =>
-        `/moderator/reports/${id}/review/`,
+        `/reports/${id}/review/`,
 
     RESOLVE: (id) =>
-        `/moderator/reports/${id}/resolve/`,
+        `/reports/${id}/resolve/`,
 
     REJECT: (id) =>
-        `/moderator/reports/${id}/reject/`,
+        `/reports/${id}/reject/`,
+
+
+    JOB_APPROVALS:
+        "/reports/job-approvals/",
+
+    APPROVE_JOB: (id) =>
+        `/reports/job-approvals/${id}/approve/`,
+
+    REJECT_JOB: (id) =>
+        `/reports/job-approvals/${id}/reject/`,
 };

@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import Report
-
+from .models import Report, JobApproval
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
@@ -32,3 +31,37 @@ class ReportAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-reported_at",)
+
+
+
+@admin.register(JobApproval)
+class JobApprovalAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "job",
+        "status",
+        "reviewed_by",
+        "reviewed_at",
+        "created_at",
+    )
+
+    list_filter = (
+        "status",
+        "created_at",
+        "reviewed_at",
+    )
+
+    search_fields = (
+        "job__title",
+        "job__employer__company_name",
+        "reviewed_by__username",
+        "reviewed_by__email",
+    )
+
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "reviewed_at",
+    )
+
+    ordering = ("-created_at",)

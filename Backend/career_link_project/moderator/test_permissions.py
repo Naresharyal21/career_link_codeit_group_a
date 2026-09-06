@@ -9,7 +9,7 @@ class ReportPermissionTests(APITestCase):
 
     def test_unauthenticated_user_cannot_create_report(self):
         response = self.client.post(
-            "/api/moderator/reports/",
+            "/api/v1/reportss/",
             {
                 "report_reason": "Spam",
                 "report_description": "Test report",

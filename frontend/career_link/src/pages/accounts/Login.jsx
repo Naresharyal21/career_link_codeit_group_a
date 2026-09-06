@@ -1,6 +1,7 @@
 import React from 'react'
 import LoginForm from '../../components/accounts/LoginForm'
 
+
 const Login = () => {
   return (
     <div className='flex flex-col h-screen items-center justify-center'>

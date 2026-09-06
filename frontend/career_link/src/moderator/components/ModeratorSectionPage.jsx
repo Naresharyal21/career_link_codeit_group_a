@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 
 const ModeratorSectionPage = ({
@@ -8,7 +8,7 @@ const ModeratorSectionPage = ({
   eyebrow = "Moderation",
   children,
   backLabel = "Back",
-  backTo = "/moderator",
+  backTo = "/report",
   action = null,
   className = "",
 }) => {

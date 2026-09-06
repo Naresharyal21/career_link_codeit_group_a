@@ -3,7 +3,8 @@ const API_BASE = "http://127.0.0.1:8000/api/v1/jobs";
 export async function getJobs() {
   const res = await fetch(`${API_BASE}/`);
   if (!res.ok) throw new Error("Failed to fetch jobs");
-  return res.json();
+  const data = await res.json();
+  return data.results ?? data;
 }
 
 export async function getJobById(id) {

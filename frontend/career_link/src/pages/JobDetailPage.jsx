@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineLocationMarker, HiOutlineBriefcase, HiOutlineArrowLeft } from 'react-icons/hi'
 import { FaRupeeSign } from 'react-icons/fa'
 import { getJobById, getSimilarJobs, JOB_TYPE_LABELS } from '../apis/jobsApi'

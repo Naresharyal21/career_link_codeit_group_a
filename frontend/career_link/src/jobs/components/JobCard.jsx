@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import { HiOutlineLocationMarker, HiOutlineBriefcase } from 'react-icons/hi'
 import { FaRupeeSign } from 'react-icons/fa'
 import { JOB_TYPE_LABELS } from '../../apis/jobsApi'

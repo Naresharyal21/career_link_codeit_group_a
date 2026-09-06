@@ -9,7 +9,7 @@ import {
     Search,
     ShieldAlert,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 8;
 
@@ -131,7 +131,7 @@ const ModerationTablePage = ({
         }
 
         if (row.id) {
-            navigate(`/moderator/reports/${row.id}`);
+            navigate(`reports/${row.id}`);
         }
     };
 

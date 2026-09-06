@@ -10,10 +10,13 @@ import {
     ShieldAlert,
     Users,
 } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 import moderatorApi from "../../apis/moderatorApi";
 import ModeratorSectionPage from "../components/ModeratorSectionPage";
+import { formatReportId } from "../utils/report";
+
+const PAGE_SIZE = 10;
 
 const ReviewQueue = () => {
     const navigate = useNavigate();
@@ -21,6 +24,7 @@ const ReviewQueue = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [page, setPage] = useState(1);
 
     const loadQueue = async () => {
         try {
@@ -123,6 +127,23 @@ const ReviewQueue = () => {
         return items;
     }, [pendingReports]);
 
+    const totalPages = Math.max(
+        1,
+        Math.ceil(queueItems.length / PAGE_SIZE)
+    );
+
+    const safePage = Math.min(page, totalPages);
+
+    const paginatedItems = useMemo(() => {
+        const start = (safePage - 1) * PAGE_SIZE;
+
+        return queueItems.slice(start, start + PAGE_SIZE);
+    }, [queueItems, safePage]);
+
+    useEffect(() => {
+        setPage(1);
+    }, [queueItems.length]);
+
     const highPriority = queueItems.filter(
         (item) => item.priority === "High"
     ).length;
@@ -151,7 +172,7 @@ const ReviewQueue = () => {
             title="Review Queue"
             description="Review pending moderation items and prioritize actions that require moderator attention."
             backLabel="Dashboard"
-            backTo="/moderator"
+            backTo="/reports"
             action={
                 <button
                     type="button"
@@ -266,6 +287,22 @@ const ReviewQueue = () => {
 
                         <p className="mt-1 text-sm text-[#64748b]">
                             Pending moderation items from the current queue.
+                            {queueItems.length > 0 && (
+                                <>
+                                    {" "}Showing{" "}
+                                    <span className="font-bold text-[#334155]">
+                                        {(safePage - 1) * PAGE_SIZE + 1}
+                                    </span>
+                                    {"–"}
+                                    <span className="font-bold text-[#334155]">
+                                        {Math.min(safePage * PAGE_SIZE, queueItems.length)}
+                                    </span>
+                                    {" of "}
+                                    <span className="font-bold text-[#334155]">
+                                        {queueItems.length}
+                                    </span>
+                                </>
+                            )}
                         </p>
                     </div>
 
@@ -273,7 +310,7 @@ const ReviewQueue = () => {
                         type="button"
                         onClick={() =>
                             navigate(
-                                "/moderator/reports"
+                                "reports"
                             )
                         }
                         className="inline-flex items-center gap-2 self-start rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#334155] transition hover:border-[#00b4d8] hover:text-[#00a6c7]"
@@ -335,7 +372,7 @@ const ReviewQueue = () => {
                                 </thead>
 
                                 <tbody>
-                                    {queueItems.map((item) => {
+                                    {paginatedItems.map((item) => {
                                         const Icon =
                                             typeIcon[
                                                 item.type
@@ -395,7 +432,7 @@ const ReviewQueue = () => {
                                                         type="button"
                                                         onClick={() =>
                                                             navigate(
-                                                                `/moderator/reports/${item.id}`
+                                                                `reports/${item.id}`
                                                             )
                                                         }
                                                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#00b4d8] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#009bbb]"
@@ -413,7 +450,7 @@ const ReviewQueue = () => {
 
                         
                         <div className="divide-y divide-[#f1f5f9] md:hidden">
-                            {queueItems.map((item) => {
+                            {paginatedItems.map((item) => {
                                 const Icon =
                                     typeIcon[
                                         item.type
@@ -484,7 +521,7 @@ const ReviewQueue = () => {
                                             type="button"
                                             onClick={() =>
                                                 navigate(
-                                                    `/moderator/reports/${item.id}`
+                                                    `reports/${item.id}`
                                                 )
                                             }
                                             className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#00b4d8] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#009bbb]"
@@ -499,6 +536,64 @@ const ReviewQueue = () => {
                     </>
                 )}
             </div>
+
+            {!loading &&
+                !error &&
+                queueItems.length > 0 &&
+                totalPages > 1 && (
+                    <div className="mt-4 flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-5 py-4">
+                        <button
+                            type="button"
+                            disabled={safePage === 1}
+                            onClick={() =>
+                                setPage((current) =>
+                                    Math.max(1, current - 1)
+                                )
+                            }
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            Previous
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {Array.from(
+                                { length: totalPages },
+                                (_, index) => index + 1
+                            ).map((pageNumber) => (
+                                <button
+                                    key={pageNumber}
+                                    type="button"
+                                    onClick={() =>
+                                        setPage(pageNumber)
+                                    }
+                                    className={`h-8 min-w-8 rounded-lg px-2 text-xs font-bold transition ${
+                                        safePage === pageNumber
+                                            ? "bg-[#00b4d8] text-white"
+                                            : "text-[#64748b] hover:bg-[#f1f5f9]"
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            disabled={safePage === totalPages}
+                            onClick={() =>
+                                setPage((current) =>
+                                    Math.min(
+                                        totalPages,
+                                        current + 1
+                                    )
+                                )
+                            }
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
         </ModeratorSectionPage>
     );
 };

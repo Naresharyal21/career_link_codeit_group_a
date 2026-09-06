@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router-dom";
 import accountsApi from "../../apis/accountsApi";
 
 const Loginform = () => {
@@ -29,7 +29,7 @@ const Loginform = () => {
             localStorage.setItem("accessToken", data.access);
             localStorage.setItem("refreshToken", data.refresh);
 
-            const destination = location.state?.from || "/moderator";
+            const destination = location.state?.from || "/reports";
             navigate(destination, { replace: true });
         } catch (err) {
             console.error("LOGIN ERROR:", err);

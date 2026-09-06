@@ -6,16 +6,12 @@ const accountsApi = {
 
     Object.keys(userData).forEach((key) => {
       const value = userData[key];
-
-      if (value !== null && value !== "") {
+      if (value !== null && value !== undefined && value !== "") {
         formData.append(key, value);
       }
     });
 
-    return await apiClient.post("/accounts/register/", undefined, {
-      body: formData,
-      headers: {},
-    });
+    return await apiClient.post("/accounts/register/", formData);
   },
 
   login: async (credentials) => {
@@ -35,11 +31,7 @@ const accountsApi = {
   },
 
   verifyOTP: async (email, otp, purpose) => {
-    return await apiClient.post("/accounts/verify/otp/", {
-      email,
-      otp,
-      purpose,
-    });
+    return await apiClient.post("/accounts/verify/otp/", { email, otp, purpose });
   },
 
   resetpassword: async (email, newpassword) => {
@@ -47,6 +39,30 @@ const accountsApi = {
       email,
       new_password: newpassword,
     });
+  },
+
+  sendDeleteOTP: async () => {
+    return await apiClient.post("/accounts/delete/sendotp/", { purpose: "dav" });
+  },
+
+  deleteAccount: async (otp, purpose) => {
+    return await apiClient.post("/accounts/pr/verify/otp/", { otp, purpose });
+  },
+
+  resendVerificationOTP: async (email, purpose) => {
+    return await apiClient.post("/accounts/verify/resend/otp/", { email, purpose });
+  },
+
+  confirmPassword: async (password) => {
+    return await apiClient.post("/accounts/verify/emailchange/password/", { password });
+  },
+
+  sendnewemailotp: async (email) => {
+    return await apiClient.post("/accounts/send/emailchange/otp/", { email });
+  },
+
+  updateEmail: async (email) => {
+    return await apiClient.put("/accounts/update/email/", { email });
   },
 };
 
