@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
-import { getCategories, getSkills, createJobPosting } from "../../apis/employerJobsApi";
+import useJobs from "../../hooks/useJobs";
 
 const JOB_TYPES = [
   { value: "FT", label: "Full-time" },
@@ -19,19 +19,17 @@ const EXPERIENCE_LEVELS = [
 
 const PostJobPage = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState([]);
-  const [skills, setSkills] = useState([]);
-  const [loadingOptions, setLoadingOptions] = useState(true);
-  const [submitError, setSubmitError] = useState(null);
+  const { data: categories, loading: loadingCategories, fetchCategories } = useJobs();
+  const { data: skills, loading: loadingSkills, fetchSkills } = useJobs();
+  const { error: submitApiError, postJob } = useJobs();
+
+  const loadingOptions = loadingCategories || loadingSkills;
+  const categoryList = categories || [];
+  const skillList = skills || [];
 
   useEffect(() => {
-    Promise.all([getCategories(), getSkills()])
-      .then(([cats, sks]) => {
-        setCategories(cats);
-        setSkills(sks);
-      })
-      .catch(() => setSubmitError("Couldn't load categories/skills."))
-      .finally(() => setLoadingOptions(false));
+    fetchCategories().catch(() => {});
+    fetchSkills().catch(() => {});
   }, []);
 
   const formik = useFormik({
@@ -70,7 +68,6 @@ const PostJobPage = () => {
         ),
     }),
     onSubmit: async (values, { setSubmitting, resetForm }) => {
-      setSubmitError(null);
       try {
         const payload = {
           ...values,
@@ -79,11 +76,11 @@ const PostJobPage = () => {
           salary_max: values.salary_max || null,
           deadline: values.deadline || null,
         };
-        await createJobPosting(payload);
+        await postJob(payload);
         resetForm();
         navigate("/employer/jobs");
       } catch (err) {
-        setSubmitError(err.message || "Something went wrong.");
+        // error is already captured in submitApiError via the hook
       } finally {
         setSubmitting(false);
       }
@@ -106,9 +103,9 @@ const PostJobPage = () => {
     <div className="p-4 max-w-3xl">
       <h2 className="text-xl font-bold mb-4">Post a New Job</h2>
 
-      {submitError && (
+      {submitApiError && (
         <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 mb-4 text-sm">
-          {submitError}
+          {submitApiError}
         </div>
       )}
 
@@ -199,7 +196,7 @@ const PostJobPage = () => {
               disabled={loadingOptions}
             >
               <option value="">Select category</option>
-              {categories.map((c) => (
+              {categoryList.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
@@ -300,7 +297,7 @@ const PostJobPage = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Skills</label>
           <div className="flex flex-wrap gap-2">
-            {skills.map((s) => (
+            {skillList.map((s) => (
               <button
                 type="button"
                 key={s.id}

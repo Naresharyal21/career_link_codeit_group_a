@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { getJobs } from '../apis/jobsApi'
+import useJobs from '../hooks/useJobs'
 import JobList from '../jobs/components/JobList'
 import JobFilters from '../jobs/components/JobFilters'
 
 const BrowseJobsPage = () => {
-  const [jobs, setJobs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { data: jobs, loading, error, fetchJobs } = useJobs()
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({ jobType: '', location: '', experience: '' })
@@ -14,24 +12,16 @@ const BrowseJobsPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
 
   const loadJobs = () => {
-    setLoading(true)
-    setError(null)
-    getJobs()
-      .then((data) => {
-        setJobs(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        setError(err.message || 'Something went wrong while loading jobs.')
-        setLoading(false)
-      })
+    fetchJobs().catch(() => {})
   }
 
   useEffect(() => {
     loadJobs()
   }, [])
 
-  const filteredJobs = jobs
+  const jobList = jobs || []
+
+  const filteredJobs = jobList
     .filter((job) => {
       if (filters.jobType && job.job_type !== filters.jobType) return false
       if (filters.experience && job.experience_level !== filters.experience) return false

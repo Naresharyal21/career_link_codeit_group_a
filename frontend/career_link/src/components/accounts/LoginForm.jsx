@@ -19,7 +19,7 @@ import {toast} from "react-toastify"
 const LoginForm = () => {
   const navigate = useNavigate();
 
-  const { login, loading } = useAccounts();
+  const { login, loading, getMe } = useAccounts();
 
   const [showPassword, setShowPassword] = useState(false)
 
@@ -43,9 +43,11 @@ const LoginForm = () => {
       try {
         const response = await login(values)
 
+        const userData = await getMe();
         loginUser(
           response.access,
-          response.refresh
+          response.refresh,
+          userData
         );
 toast.success("Login successful!")
 

@@ -2,38 +2,27 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { HiOutlineLocationMarker, HiOutlineBriefcase, HiOutlineArrowLeft } from 'react-icons/hi'
 import { FaRupeeSign } from 'react-icons/fa'
-import { getJobById, getSimilarJobs, JOB_TYPE_LABELS } from '../apis/jobsApi'
+import { JOB_TYPE_LABELS } from '../apis/jobsApi'
+import useJobs from '../hooks/useJobs'
 
 const JobDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [job, setJob] = useState(null)
-  const [similarJobs, setSimilarJobs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: job, loading, error, fetchJobById } = useJobs()
+  const { data: similarJobs, fetchSimilarJobs } = useJobs()
   const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState(null)
 
   const loadJob = () => {
-    setLoading(true)
     setNotFound(false)
-    setError(null)
-    getJobById(id)
+    fetchJobById(id)
       .then((data) => {
         if (!data) {
           setNotFound(true)
-          setLoading(false)
           return
         }
-        setJob(data)
-        return getSimilarJobs(id).then((similar) => {
-          setSimilarJobs(similar)
-          setLoading(false)
-        })
+        return fetchSimilarJobs(id)
       })
-      .catch((err) => {
-        setError(err.message || 'Something went wrong while loading this job.')
-        setLoading(false)
-      })
+      .catch(() => {})
   }
 
   useEffect(() => {
@@ -66,7 +55,7 @@ const JobDetailPage = () => {
     )
   }
 
-  if (notFound) {
+  if (notFound || !job) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 max-w-3xl text-center">
         <p className="text-gray-700 font-medium">This job posting couldn't be found.</p>
@@ -79,6 +68,8 @@ const JobDetailPage = () => {
       </div>
     )
   }
+
+  const similarList = similarJobs || []
 
   return (
     <div className="max-w-5xl">
@@ -137,11 +128,11 @@ const JobDetailPage = () => {
           </button>
         </div>
 
-        {similarJobs.length > 0 && (
+        {similarList.length > 0 && (
           <div className="w-full md:w-72 shrink-0">
             <h3 className="font-semibold text-gray-900 mb-3">Similar Jobs</h3>
             <div className="space-y-3">
-              {similarJobs.map((sj) => (
+              {similarList.map((sj) => (
                 <div
                   key={sj.id}
                   onClick={() => navigate(`/jobs/${sj.id}`)}
