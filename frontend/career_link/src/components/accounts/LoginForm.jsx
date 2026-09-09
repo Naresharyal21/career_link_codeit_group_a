@@ -24,7 +24,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false)
 
 
-  const { loginUser } = useContext(AuthenticationContext);
+  const { loginUser, setUser } = useContext(AuthenticationContext);
 
   const handletoggle = () => {
     setShowPassword(showPassword ? false : true)
@@ -39,16 +39,15 @@ const LoginForm = () => {
     validationSchema: loginValidationSchema,
 
     onSubmit: async (values) => {
-
       try {
-        const response = await login(values)
 
-        const userData = await getMe();
+        const response = await login(values)
         loginUser(
           response.access,
-          response.refresh,
-          userData
+          response.refresh
         );
+        const userData = await getMe();
+        setUser(userData);
 toast.success("Login successful!")
 
 
