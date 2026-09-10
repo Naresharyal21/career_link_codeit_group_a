@@ -12,7 +12,7 @@ class CustomUserAdmin(UserAdmin):
         (
             'Additional Info',  # Header title for your new section
             {
-                'fields': ('role',),  # Add your new field name here
+                'fields': ('role','email_verified',),  # Add your new field name here
             },
         ),
     )
