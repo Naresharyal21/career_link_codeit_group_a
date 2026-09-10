@@ -1,5 +1,6 @@
 import PostJobPage from "../employer/pages/PostJobPage";
 import MyJobPostingsPage from "../employer/pages/MyJobPostingsPage";
+import EditJobPage from "../employer/pages/EditJobPage";
 
 const employerRoutes = [
     {
@@ -9,6 +10,10 @@ const employerRoutes = [
     {
         path: "employer/jobs",
         element: <MyJobPostingsPage />,
+    },
+    {
+        path: "employer/edit-job/:id",
+        element: <EditJobPage />,
     },
 ];
 

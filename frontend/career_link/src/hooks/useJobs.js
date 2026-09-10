@@ -5,6 +5,9 @@ import {
   getSkills,
   getMyJobPostings,
   createJobPosting,
+  getJobPostingById,
+  updateJobPosting,
+  deleteJobPosting,
 } from "../apis/employerJobsApi";
 
 const useJobs = () => {
@@ -38,6 +41,18 @@ const useJobs = () => {
     return await execute(() => createJobPosting(payload));
   };
 
+  const fetchMyJobPostingById = async (id) => {
+    return await execute(() => getJobPostingById(id));
+  };
+
+  const editJob = async (id, payload) => {
+    return await execute(() => updateJobPosting(id, payload));
+  };
+
+  const removeJob = async (id) => {
+    return await execute(() => deleteJobPosting(id));
+  };
+
   return {
     data,
     loading,
@@ -49,6 +64,9 @@ const useJobs = () => {
     fetchSkills,
     fetchMyJobPostings,
     postJob,
+    fetchMyJobPostingById,
+    editJob,
+    removeJob,
   };
 };
 

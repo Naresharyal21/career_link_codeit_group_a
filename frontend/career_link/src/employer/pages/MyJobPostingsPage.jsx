@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { getMyJobPostings } from "../../apis/employerJobsApi";
+import { Link, useNavigate } from "react-router-dom";
+import useJobs from "../../hooks/useJobs";
 
 const JOB_TYPE_LABELS = {
   FT: "Full-time",
@@ -10,16 +10,37 @@ const JOB_TYPE_LABELS = {
 };
 
 const MyJobPostingsPage = () => {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { data: jobs, loading, error, fetchMyJobPostings } = useJobs();
+  const { removeJob } = useJobs();
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
+
+  const loadJobs = () => {
+    fetchMyJobPostings().catch(() => {});
+  };
 
   useEffect(() => {
-    getMyJobPostings()
-      .then((data) => setJobs(data))
-      .catch((err) => setError(err.message || "Failed to load your job postings."))
-      .finally(() => setLoading(false));
+    loadJobs();
   }, []);
+
+  const jobList = jobs || [];
+
+  const handleDelete = async (id, title) => {
+    if (!window.confirm(`Delete "${title}"? This cannot be undone.`)) {
+      return;
+    }
+    setDeleteError(null);
+    setDeletingId(id);
+    try {
+      await removeJob(id);
+      loadJobs();
+    } catch (err) {
+      setDeleteError(err.message || "Failed to delete job posting.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="p-4">
@@ -36,12 +57,18 @@ const MyJobPostingsPage = () => {
       {loading && <p className="text-gray-500">Loading...</p>}
 
       {error && (
-        <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 text-sm">
+        <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 text-sm mb-4">
           {error}
         </div>
       )}
 
-      {!loading && !error && jobs.length === 0 && (
+      {deleteError && (
+        <div className="bg-red-50 text-red-700 border border-red-200 rounded p-3 text-sm mb-4">
+          {deleteError}
+        </div>
+      )}
+
+      {!loading && !error && jobList.length === 0 && (
         <div className="bg-gray-50 shadow shadow-black/12 rounded p-8 text-center">
           <p className="text-gray-600">You haven't posted any jobs yet.</p>
           <Link
@@ -54,7 +81,7 @@ const MyJobPostingsPage = () => {
       )}
 
       <div className="space-y-3">
-        {jobs.map((job) => (
+        {jobList.map((job) => (
           <div
             key={job.id}
             className="bg-gray-50 shadow shadow-black/12 rounded p-4 flex items-center justify-between"
@@ -65,15 +92,30 @@ const MyJobPostingsPage = () => {
                 {job.location} · {JOB_TYPE_LABELS[job.job_type] || job.job_type}
               </p>
             </div>
-            <span
-              className={
-                job.is_active
-                  ? "px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
-                  : "px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600"
-              }
-            >
-              {job.is_active ? "Active" : "Inactive"}
-            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className={
+                  job.is_active
+                    ? "px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700"
+                    : "px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600"
+                }
+              >
+                {job.is_active ? "Active" : "Inactive"}
+              </span>
+              <button
+                onClick={() => navigate(`/employer/edit-job/${job.id}`)}
+                className="px-3 py-1.5 rounded border border-gray-300 text-sm text-[#0f2a52] hover:bg-gray-100 cursor-pointer"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(job.id, job.title)}
+                disabled={deletingId === job.id}
+                className="px-3 py-1.5 rounded border border-red-200 text-sm text-red-700 hover:bg-red-50 cursor-pointer disabled:opacity-50"
+              >
+                {deletingId === job.id ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         ))}
       </div>

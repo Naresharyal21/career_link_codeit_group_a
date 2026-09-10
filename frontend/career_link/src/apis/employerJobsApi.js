@@ -43,3 +43,35 @@ export async function createJobPosting(payload) {
   }
   return res.json();
 }
+
+export async function getJobPostingById(id) {
+  const res = await fetch(`${API_BASE}/manage/${id}/`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error("Failed to fetch this job posting");
+  return res.json();
+}
+
+export async function updateJobPosting(id, payload) {
+  const res = await fetch(`${API_BASE}/manage/${id}/`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.detail || "Failed to update job posting");
+  }
+  return res.json();
+}
+
+export async function deleteJobPosting(id) {
+  const res = await fetch(`${API_BASE}/manage/${id}/`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to delete job posting");
+  }
+  return true;
+}
