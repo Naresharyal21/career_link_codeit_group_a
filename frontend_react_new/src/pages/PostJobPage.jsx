@@ -19,8 +19,10 @@ const PostJobPage = () => {
           axios.get('http://localhost:8000/api/v1/jobs/categories/'),
           axios.get('http://localhost:8000/api/v1/jobs/skills/')
         ]);
-        setCategories(catRes.data);
-        setAllSkills(skillRes.data);
+        
+        // Ensure array mapping
+        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data.results || []));
+        setAllSkills(Array.isArray(skillRes.data) ? skillRes.data : (skillRes.data.results || []));
       } catch (err) {
         console.error("Error fetching form data", err);
       }
@@ -41,7 +43,6 @@ const PostJobPage = () => {
     e.preventDefault();
     const token = localStorage.getItem('access_token');
     
-    // Clean up empty fields
     const cleanedData = { ...formData };
     if (!cleanedData.category) delete cleanedData.category;
     if (cleanedData.skills.length === 0) delete cleanedData.skills;
@@ -106,13 +107,17 @@ const PostJobPage = () => {
           <label className="block text-sm font-medium text-gray-700">Category</label>
           <select name="category" value={formData.category} onChange={handleChange} className="w-full mt-1 p-2 border rounded-lg">
             <option value="">Select Category</option>
-            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            {Array.isArray(categories) && categories.map(function(cat) {
+              return <option key={cat.id} value={cat.id}>{cat.name}</option>
+            })}
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Skills (Ctrl+Click to select multiple)</label>
           <select name="skills" multiple value={formData.skills} onChange={handleChange} className="w-full mt-1 p-2 border rounded-lg h-32">
-            {allSkills.map(skill => <option key={skill.id} value={skill.id}>{skill.name}</option>)}
+            {Array.isArray(allSkills) && allSkills.map(function(skill) {
+              return <option key={skill.id} value={skill.id}>{skill.name}</option>
+            })}
           </select>
         </div>
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">Post Job</button>
