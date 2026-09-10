@@ -16,7 +16,9 @@ const ManageJobsPage = () => {
       const response = await axios.get('http://localhost:8000/api/v1/jobs/manage/', {
         headers: { Authorization: 'Bearer ' + token }
       });
-      setJobs(response.data);
+      // Standardized fix: Ensure array mapping
+      const jobsData = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      setJobs(jobsData);
     } catch (err) {
       console.error("Error fetching jobs", err);
     }
@@ -50,7 +52,7 @@ const ManageJobsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {jobs.map(function(job) {
+            {Array.isArray(jobs) && jobs.map(function(job) {
               return (
                 <tr key={job.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="py-3 px-4">
@@ -59,7 +61,7 @@ const ManageJobsPage = () => {
                   </td>
                   <td className="py-3 px-4 text-sm text-gray-600">{new Date(job.created_at).toLocaleDateString()}</td>
                   <td className="py-3 px-4 text-sm text-gray-600">{job.deadline || 'N/A'}</td>
-                  <td className="py-3 px-4 text-sm font-semibold text-blue-600">{job.applicant_count}</td>
+                  <td className="py-3 px-4 text-sm font-semibold text-blue-600">{job.applicant_count || 0}</td>
                   <td className="py-3 px-4 flex gap-2">
                     <Link to={'/job/' + job.id} className="text-blue-600 hover:text-blue-800 font-medium">View</Link>
                     <button onClick={() => handleDelete(job.id)} className="text-red-600 hover:text-red-800 font-medium">Delete</button>

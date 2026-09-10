@@ -16,10 +16,11 @@ const SignupPage = () => {
     setError('');
     try {
       await axios.post('http://localhost:8000/api/v1/accounts/register/', formData);
-      alert('Registration successful! Please login.');
-      navigate('/login');
+      alert('Registration successful! A verification code (OTP) has been sent to your email.');
+      // Dynamically redirect to the OTP verification page with query parameters
+      navigate('/verify-otp?email=' + encodeURIComponent(formData.email) + '&purpose=emv');
     } catch (err) {
-      setError('Registration failed. Please check your inputs.');
+      setError(err.response?.data?.error || 'Registration failed. Please check your inputs.');
       console.error(err);
     }
   };

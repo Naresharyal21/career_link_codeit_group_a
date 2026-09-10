@@ -3,6 +3,9 @@ import HomePage from './pages/HomePage';
 import JobDetailPage from './pages/JobDetailPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import OTPVerifyPage from './pages/OTPVerifyPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import ManageJobsPage from './pages/ManageJobsPage';
@@ -18,6 +21,9 @@ function App() {
         <Route path="/job/:id" element={<JobDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/verify-otp" element={<OTPVerifyPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="applications" element={<ApplicationsPage />} />

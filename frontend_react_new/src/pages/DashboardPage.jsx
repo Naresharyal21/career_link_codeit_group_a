@@ -24,9 +24,15 @@ const DashboardPage = () => {
 
         const responses = await Promise.all(requests);
         
+        // Normalize response data to ensure array access
+        const applications = Array.isArray(responses[0].data) ? responses[0].data : (responses[0].data.results || []);
+        const savedJobs = profile.role === 'js' 
+          ? (Array.isArray(responses[1].data) ? responses[1].data : (responses[1].data.results || []))
+          : [];
+        
         setData({ 
-            applications: responses[0].data, 
-            savedJobs: profile.role === 'js' ? responses[1].data : [],
+            applications: applications, 
+            savedJobs: savedJobs,
             profile: profile 
         });
       } catch (err) {
@@ -62,12 +68,14 @@ const DashboardPage = () => {
         <div className={isEmployer ? "lg:col-span-3 space-y-6" : "lg:col-span-2 space-y-6"}>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <h3 className="font-bold text-lg mb-4">{isEmployer ? "Received Applications" : "My Applications"} ({data.applications.length})</h3>
-            {data.applications.map(app => (
-              <div key={app.id} className="p-4 border border-gray-100 rounded-xl mb-3 flex justify-between items-center">
-                <h4 className="font-semibold">{app.job_title}</h4>
-                <span className="text-blue-600 font-semibold text-sm">{app.status}</span>
-              </div>
-            ))}
+            {data.applications.map(function(app) {
+              return (
+                <div key={app.id} className="p-4 border border-gray-100 rounded-xl mb-3 flex justify-between items-center">
+                    <h4 className="font-semibold">{app.job_title}</h4>
+                    <span className="text-blue-600 font-semibold text-sm">{app.status}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
         
@@ -75,11 +83,13 @@ const DashboardPage = () => {
         <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-lg mb-4">Saved Jobs ({data.savedJobs.length})</h3>
-                {data.savedJobs.map(job => (
-                  <div key={job.id} className="p-4 border border-gray-100 rounded-xl mb-3">
-                    <h4 className="font-semibold">{job.job_title}</h4>
-                  </div>
-                ))}
+                {data.savedJobs.map(function(job) {
+                  return (
+                    <div key={job.id} className="p-4 border border-gray-100 rounded-xl mb-3">
+                        <h4 className="font-semibold">{job.job_title}</h4>
+                    </div>
+                  );
+                })}
             </div>
         </div>
         )}

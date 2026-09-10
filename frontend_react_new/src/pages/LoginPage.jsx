@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -15,15 +15,21 @@ const LoginPage = () => {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/auth/token/', formData);
+      // The backend LoginSerializer expects 'email' and 'password' in the request payload
+      const response = await axios.post('http://localhost:8000/api/v1/accounts/login/', formData);
       console.log('Login successful:', response.data);
-      // Store token
       localStorage.setItem('access_token', response.data.access);
-      // Navigate to dashboard
       navigate('/dashboard');
     } catch (err) {
-      setError('Invalid email or password');
-      console.error(err);
+      if (err.response?.data?.email && err.response.data.email.includes("Please verify your email before logging in")) {
+        // Redirect to OTP verification page if email is unverified
+        navigate('/verify-otp?email=' + encodeURIComponent(formData.email) + '&purpose=emv');
+        return;
+      }
+      
+      const errMsg = err.response?.data?.detail || err.response?.data?.error || 'Invalid email or password';
+      setError(errMsg);
+      console.error("Login error details:", err.response?.data);
     }
   };
 
@@ -68,7 +74,10 @@ const LoginPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Password</label>
+              <div className="flex justify-between items-center">
+                <label className="block text-sm font-semibold text-gray-700">Password</label>
+                <Link to="/forgot-password" className="text-sm text-blue-700 font-semibold hover:underline">Forgot Password?</Link>
+              </div>
               <input
                 type="password"
                 name="password"
@@ -87,7 +96,7 @@ const LoginPage = () => {
             </button>
           </form>
           <p className="text-center text-gray-600 mt-6 text-sm">
-            Don't have an account? <a href="#" className="text-blue-700 font-semibold hover:underline">Sign up</a>
+            Don't have an account? <Link to="/signup" className="text-blue-700 font-semibold hover:underline">Sign up</Link>
           </p>
         </div>
       </div>

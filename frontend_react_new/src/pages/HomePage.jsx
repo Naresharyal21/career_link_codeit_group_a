@@ -3,18 +3,22 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+  // Synchronously initialize login state from localStorage to avoid flickering on first render
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const token = localStorage.getItem('access_token');
+    return !!token && token !== 'undefined' && token !== 'null';
+  });
   const [jobs, setJobs] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    setIsLoggedIn(!!token);
-
     const fetchJobs = async () => {
       try {
         const response = await axios.get('http://localhost:8000/api/v1/jobs/');
-        setJobs(response.data);
+        const jobsData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.results || []);
+        setJobs(jobsData);
       } catch (err) {
         console.error("Error fetching jobs", err);
       }
@@ -69,10 +73,10 @@ const HomePage = () => {
             return (
               <div key={job.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                 <h3 className="text-lg font-bold mb-1">{job.title}</h3>
-                <p className="text-primary font-medium mb-4">{job.employer ? job.employer.company_name : 'N/A'}</p>
+                <p className="text-primary font-medium mb-4">{job.employer_name || 'N/A'}</p>
                 <div className="flex justify-between items-center text-sm text-gray-500 mb-6">
                   <span>{job.location}</span>
-                  <span>{job.job_type}</span>
+                  <span>{job.job_type_display || job.job_type}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <Link to={'/job/' + job.id} className="text-gray-600 font-semibold hover:text-primary">View Details</Link>
