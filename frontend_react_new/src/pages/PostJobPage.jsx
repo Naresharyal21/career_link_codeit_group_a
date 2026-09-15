@@ -41,7 +41,7 @@ const PostJobPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
 
     const cleanedData = { ...formData };
     if (!cleanedData.category) delete cleanedData.category;

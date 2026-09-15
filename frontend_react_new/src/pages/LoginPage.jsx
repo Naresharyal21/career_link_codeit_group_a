@@ -18,7 +18,7 @@ const LoginPage = () => {
       // The backend LoginSerializer expects 'email' and 'password' in the request payload
       const response = await axios.post('http://localhost:8000/api/v1/accounts/login/', formData);
       console.log('Login successful:', response.data);
-      localStorage.setItem('access_token', response.data.access);
+      sessionStorage.setItem('access_token', response.data.access);
       navigate('/dashboard');
     } catch (err) {
       if (err.response?.data?.email && err.response.data.email.includes("Please verify your email before logging in")) {

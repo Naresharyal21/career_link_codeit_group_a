@@ -12,7 +12,7 @@ const ProfileSettingsPage = () => {
   }, []);
 
   const fetchProfile = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     if (!token) return;
     try {
       const response = await axios.get('http://localhost:8000/api/v1/accounts/me/', {
@@ -28,7 +28,7 @@ const ProfileSettingsPage = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     setError('');
     setMessage('');
     try {

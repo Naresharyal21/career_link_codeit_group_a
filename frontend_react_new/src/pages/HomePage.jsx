@@ -3,9 +3,9 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
-  // Synchronously initialize login state from localStorage to avoid flickering on first render
+  // Synchronously initialize login state from sessionStorage to avoid flickering on first render
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     return !!token && token !== 'undefined' && token !== 'null';
   });
   const [jobs, setJobs] = useState([]);

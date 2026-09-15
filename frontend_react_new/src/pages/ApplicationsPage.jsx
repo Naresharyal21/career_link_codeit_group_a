@@ -14,7 +14,7 @@ const ApplicationsPage = () => {
   }, []);
 
   const fetchData = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     if (!token || token === 'undefined' || token === 'null') {
       navigate('/login');
       return;
@@ -41,7 +41,7 @@ const ApplicationsPage = () => {
     } catch (err) {
       console.error("Error fetching data", err);
       if (err.response && err.response.status === 401) {
-        localStorage.removeItem('access_token');
+        sessionStorage.removeItem('access_token');
         navigate('/login');
       }
       setLoading(false);
@@ -49,7 +49,7 @@ const ApplicationsPage = () => {
   };
 
   const handleUnapply = async (appId) => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     try {
       await axios.delete('http://localhost:8000/api/v1/applications/' + appId + '/', {
         headers: { Authorization: 'Bearer ' + token }
