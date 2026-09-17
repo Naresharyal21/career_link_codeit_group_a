@@ -15,8 +15,8 @@ const HomePage = () => {
     const fetchJobs = async () => {
       try {
         const response = await axios.get('http://localhost:8000/api/v1/jobs/');
-        const jobsData = Array.isArray(response.data) 
-          ? response.data 
+        const jobsData = Array.isArray(response.data)
+          ? response.data
           : (response.data.results || []);
         setJobs(jobsData);
       } catch (err) {
@@ -29,39 +29,120 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav className="bg-white shadow-sm p-4 flex justify-between items-center px-12 border-b border-gray-100">
-        <h1 className="text-2xl font-bold text-primary">Career Link</h1>
-        <div className="space-x-6 flex items-center">
-          <Link to="#" className="text-gray-600 hover:text-primary">Find Jobs</Link>
-          <Link to="#" className="text-gray-600 hover:text-primary">Companies</Link>
-          {isLoggedIn ? (
-            <Link to="/dashboard" className="bg-primary text-white px-5 py-2 rounded-lg font-semibold">Dashboard</Link>
-          ) : (
-            <>
-              <Link to="/login" className="text-gray-600 hover:text-primary">Login</Link>
-              <Link to="/signup" className="bg-primary text-white px-5 py-2 rounded-lg font-semibold">Sign Up</Link>
-            </>
-          )}
+      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="h-20 flex items-center justify-between">
+
+            {/* Logo */}
+            <Link
+              to="/"
+              className="flex items-center gap-3 group"
+            >
+              {/* Logo Icon */}
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-all duration-200">
+                <span className="text-white text-lg font-extrabold">
+                  C
+                </span>
+              </div>
+
+              {/* Logo Text */}
+              <div className="leading-none">
+                <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
+                  Career<span className="text-primary">Link</span>
+                </h1>
+
+                <p className="text-[10px] text-gray-400 font-medium tracking-widest uppercase mt-1">
+                  Find Your Future
+                </p>
+              </div>
+            </Link>
+
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center gap-8">
+
+              <Link
+                to="/jobs"
+                className="relative text-sm font-semibold text-gray-600 hover:text-primary transition-colors duration-200 group"
+              >
+                Find Jobs
+
+                <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-200" />
+              </Link>
+
+              <Link
+                to="/companies"
+                className="relative text-sm font-semibold text-gray-600 hover:text-primary transition-colors duration-200 group"
+              >
+                Companies
+
+                <span className="absolute -bottom-2 left-0 w-0 h-0.5 bg-primary rounded-full group-hover:w-full transition-all duration-200" />
+              </Link>
+
+            </div>
+
+            {/* Authentication */}
+            <div className="flex items-center gap-3">
+
+              {isLoggedIn ? (
+
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  Dashboard
+
+                  <span className="text-base">
+                    →
+                  </span>
+                </Link>
+
+              ) : (
+
+                <>
+                  <Link
+                    to="/login"
+                    className="hidden sm:block px-4 py-2.5 text-sm font-semibold text-gray-600 hover:text-primary transition-colors"
+                  >
+                    Login
+                  </Link>
+
+                  <Link
+                    to="/signup"
+                    className="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    Get Started
+
+                    <span className="text-base">
+                      →
+                    </span>
+                  </Link>
+                </>
+
+              )}
+
+            </div>
+
+          </div>
         </div>
       </nav>
 
       {/* Hero */}
       <div className="bg-blue-50 py-20 text-center">
         <h1 className="text-5xl font-extrabold mb-6 text-primary-dark">Find Your Dream Career in Nepal</h1>
-        
+
         {/* Search Bar */}
         <div className="max-w-4xl mx-auto bg-white p-2 rounded-full shadow-lg flex items-center mt-8">
-            <input type="text" placeholder="Job title, skill, or company" className="flex-1 px-6 py-4 rounded-full focus:outline-none" />
-            <select className="px-4 py-4 focus:outline-none text-gray-500">
-                <option>Kathmandu</option>
-                <option>Pokhara</option>
-            </select>
-            <button className="bg-primary text-white px-10 py-4 rounded-full font-bold">Search Jobs</button>
+          <input type="text" placeholder="Job title, skill, or company" className="flex-1 px-6 py-4 rounded-full focus:outline-none" />
+          <select className="px-4 py-4 focus:outline-none text-gray-500">
+            <option>Kathmandu</option>
+            <option>Pokhara</option>
+          </select>
+          <button className="bg-primary text-white px-10 py-4 rounded-full font-bold">Search Jobs</button>
         </div>
-        
+
         {/* Tags */}
         <div className="mt-6 space-x-3 text-sm">
-            {['IT', 'Banking', 'NGO', 'Engineering'].map(tag => <span key={tag} className="bg-white px-4 py-1 rounded-full border border-gray-200">{tag}</span>)}
+          {['IT', 'Banking', 'NGO', 'Engineering'].map(tag => <span key={tag} className="bg-white px-4 py-1 rounded-full border border-gray-200">{tag}</span>)}
         </div>
       </div>
 
@@ -69,7 +150,7 @@ const HomePage = () => {
       <div className="max-w-6xl mx-auto py-12 px-6">
         <h2 className="text-3xl font-bold mb-8">Featured Opportunities</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobs.map(function(job) {
+          {jobs.map(function (job) {
             return (
               <div key={job.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
                 <h3 className="text-lg font-bold mb-1">{job.title}</h3>
