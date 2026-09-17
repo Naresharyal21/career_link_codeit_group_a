@@ -152,18 +152,137 @@ const HomePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobs.map(function (job) {
             return (
-              <div key={job.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
-                <h3 className="text-lg font-bold mb-1">{job.title}</h3>
-                <p className="text-primary font-medium mb-4">{job.employer_name || 'N/A'}</p>
-                <div className="flex justify-between items-center text-sm text-gray-500 mb-6">
-                  <span>{job.location}</span>
-                  <span>{job.job_type_display || job.job_type}</span>
+              <div
+                key={job.id}
+                className="group bg-white rounded-2xl border border-gray-200 p-6
+             hover:border-blue-200 hover:shadow-xl hover:shadow-blue-100/40
+             transition-all duration-300"
+              >
+                {/* Top Section */}
+                <div className="flex items-start justify-between gap-4">
+
+                  {/* Company Logo */}
+                  <div
+                    className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100
+                 flex items-center justify-center text-primary font-bold text-lg
+                 group-hover:bg-primary group-hover:text-white
+                 transition-all duration-300"
+                  >
+                    {(job.employer_name || "C").charAt(0).toUpperCase()}
+                  </div>
+
+                  {/* Job Type */}
+                  <span className="px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-xs font-semibold">
+                    {job.job_type_display || job.job_type}
+                  </span>
+
                 </div>
-                <div className="flex justify-between items-center">
-                  <Link to={'/job/' + job.id} className="text-gray-600 font-semibold hover:text-primary">View Details</Link>
-                  <Link to={'/job/' + job.id} className="bg-blue-50 text-primary px-4 py-2 rounded-lg font-semibold hover:bg-blue-100">Apply Now</Link>
+
+                {/* Job Information */}
+                <div className="mt-6">
+
+                  <h3
+                    className="text-lg font-bold text-gray-900 leading-snug
+                 group-hover:text-primary transition-colors duration-200"
+                  >
+                    {job.title}
+                  </h3>
+
+                  <p className="mt-1 text-sm font-semibold text-primary">
+                    {job.employer_name || "Company Not Available"}
+                  </p>
+
+                </div>
+
+                {/* Job Details */}
+                <div className="flex flex-wrap gap-2 mt-5">
+
+                  {/* Location */}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 text-xs font-medium">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 21s8-7 8-13a8 8 0 10-16 0c0 6 8 13 8 13z"
+                      />
+                      <circle cx="12" cy="8" r="2.5" />
+                    </svg>
+
+                    {job.location || "Location not specified"}
+                  </span>
+
+                  {/* Job Type */}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 text-gray-500 text-xs font-medium">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M20 7h-4V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M8 7V5h8v2"
+                      />
+                    </svg>
+
+                    {job.job_type_display || job.job_type}
+                  </span>
+
+                </div>
+
+                {/* Divider */}
+                <div className="border-t border-gray-100 mt-6 pt-5">
+
+                  <div className="flex items-center justify-between">
+
+                    {/* View Details */}
+                    <Link
+                      to={`/job/${job.id}`}
+                      className="inline-flex items-center gap-1.5
+                   text-sm font-semibold text-gray-600
+                   hover:text-primary transition-colors duration-200"
+                    >
+                      View Details
+
+                      <span className="group-hover:translate-x-1 transition-transform duration-200">
+                        →
+                      </span>
+                    </Link>
+
+                    {/* Apply Button */}
+                    <Link
+                      to={`/job/${job.id}`}
+                      className="inline-flex items-center gap-2
+                   bg-primary text-white
+                   px-4 py-2.5 rounded-xl
+                   text-sm font-bold
+                   hover:bg-primary-dark
+                   shadow-sm hover:shadow-md
+                   transition-all duration-200"
+                    >
+                      Apply Now
+                      <span>→</span>
+                    </Link>
+
+                  </div>
+
                 </div>
               </div>
+
             );
           })}
         </div>
