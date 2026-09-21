@@ -203,6 +203,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
+            "company_name",
             "company_description",
             "website",
             "location",
