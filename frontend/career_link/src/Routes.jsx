@@ -1,38 +1,67 @@
+import React from "react";
 import { Route, Routes } from "react-router-dom";
 
-import DashboardLayout from "./layout/DashboardLayout";
-import Loginform from "./accounts/components/Loginform";
+import Home from "./pages/Home";
 
-import BrowseJobsPage from "./pages/BrowseJobsPage";
+
+import Login from "./pages/accounts/Login";
+import Signup from "./pages/accounts/Signup";
+import MyProfilecart from "./pages/accounts/MyProfilecart";
+
+import ForgetPasswordPage from "./pages/accounts/ForgetPasswordPage";
+import VerifyOTPpage from "./pages/accounts/VerifyOTPpage";
+import ResetPasswordPage from "./pages/accounts/ResetPasswordPage";
+
+import DashboardLayout from "./layout/DashboardLayout";
+import ProtectedRoute from "./context/ProtectedRoute";
+
 import JobDetailPage from "./pages/JobDetailPage";
+import BrowseJobsPage from "./pages/BrowseJobsPage";
 
 import ApplicationPage from "./applications/ApplicationForm";
 import MyApplicationsPage from "./applications/components/pages/MyApplicationsPage";
 import NotificationsPage from "./notifications/components/pages/NotificationsPage";
 
-import moderatorRoutes from "./routes/ModeratorRoutes";
+import ModeratorRoutes from "./routes/ModeratorRoutes";
 
 const AppRoutes = () => {
     return (
         <Routes>
-            {/* Public pages */}
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+          
+
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            <Route path="/forgetpassword" element={<ForgetPasswordPage />} />
+            <Route path="/verifyotp/:purpose" element={<VerifyOTPpage />} />
+            <Route path="/resetpassword" element={<ResetPasswordPage />} />
+
             <Route path="/jobs" element={<BrowseJobsPage />} />
             <Route path="/jobs/:id" element={<JobDetailPage />} />
-            <Route path="/login" element={<Loginform />} />
 
-            {/* Authenticated / dashboard pages */}
+            {/* Applications - top level */}
+            <Route path="/application" element={<ApplicationPage />} />
+            <Route path="/applications" element={<MyApplicationsPage />} />
+            <Route path="/applied-jobs" element={<MyApplicationsPage />} />
+
+            {/* Dashboard */}
             <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route path="application" element={<ApplicationPage />} />
                 <Route path="applications" element={<MyApplicationsPage />} />
                 <Route path="notifications" element={<NotificationsPage />} />
+            </Route>
 
-                {moderatorRoutes.map((route) => (
-                    <Route
-                        key={route.path}
-                        path={route.path}
-                        element={route.element}
-                    />
-                ))}
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+                <Route element={<DashboardLayout />}>
+                    {/* User Profile */}
+                    <Route path="/profile" element={<MyProfilecart />} />
+
+                    {/* Moderator */}
+                    <Route path="/reports/*" element={<ModeratorRoutes />} />
+                </Route>
             </Route>
 
             <Route path="*" element={<div>Page not found</div>} />

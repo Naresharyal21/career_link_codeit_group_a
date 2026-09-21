@@ -1,49 +1,60 @@
 from rest_framework import serializers
-from .models import Report
+from accounts.models import User
+from django.contrib.auth import authenticate
 
 
-class ReportSerializer(serializers.ModelSerializer):
-    reported_job_title = serializers.CharField(
-        source="reported_job.title",
-        read_only=True
-    )
 
-    reported_by_name = serializers.CharField(
-        source="reported_by.username",
-        read_only=True
-    )
-
-    reviewed_by_name = serializers.CharField(
-        source="reviewed_by.username",
-        read_only=True
-    )
+class AdminRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
-        model = Report
-
+        model = User
         fields = [
-            "id",
-            "reported_job",
-            "reported_job_title",
-            "reported_by",
-            "reported_by_name",
-            "reviewed_by",
-            "reviewed_by_name",
-            "report_reason",
-            "report_description",
-            "status",
-            "reported_at",
-            "reviewed_at",
-            "created_at",
-            "updated_at",
+            "username",
+            "email",
+            "password",
+            "first_name",
+            "last_name",
         ]
 
-        read_only_fields = [
-            "id",
-            "reported_by",
-            "reviewed_by",
-            "reported_at",
-            "reviewed_at",
-            "created_at",
-            "updated_at",
-        ]
+    def create(self, validate_data):
+        user = User.objects.create_user(
+            username=validate_data["username"],
+            email=validate_data["email"],
+            password=validate_data["password"],
+            first_name=validate_data.get("first_name", ""),
+            last_name=validate_data.get("last_name", ""),
+        )
+        user.is_staff = True
+        user.is_active = True
+        user.save()
+        return user
+
+class AdminLoginSerializer(serializers.Serializer):
+ email=serializers.EmailField()
+ password=serializers.CharField(write_only=True)
+
+ def validate(self, attrs):
+     email=attrs["email"]
+     password=attrs["password"]
+
+     user=authenticate(
+        username=email,
+        password=password
+     )
+
+     if not user:
+        raise serializers.ValidationError(
+           "Invalid email or password"
+        )
+     if not user.is_staff:
+        raise serializers.ValidationError(
+           "You are not authorized as an admin"
+        )
+     if not user.is_active:
+        raise serializers.ValidationError(
+           "You account is inactive"
+        )
+
+     attrs["user"]=user
+     return attrs

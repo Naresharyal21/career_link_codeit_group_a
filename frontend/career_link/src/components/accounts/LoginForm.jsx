@@ -1,12 +1,17 @@
 import { useFormik } from 'formik'
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
+
+
 
 
 import { FiEye } from "react-icons/fi";
 import { FiEyeOff } from "react-icons/fi";
 import { loginValidationSchema } from './validationSchema';
-import { Link, useNavigate, } from 'react-router';
+import { Link, useNavigate, } from 'react-router-dom';
 import useAccounts from '../../hooks/useAccounts';
+import { AuthenticationContext } from '../../context/AuthContext';
+import Button from '../commonuiPart/Button';
+import {toast} from "react-toastify"
 
 
 
@@ -17,6 +22,10 @@ const LoginForm = () => {
   const { login, loading } = useAccounts();
 
   const [showPassword, setShowPassword] = useState(false)
+
+
+  const { loginUser } = useContext(AuthenticationContext);
+
   const handletoggle = () => {
     setShowPassword(showPassword ? false : true)
   }
@@ -33,15 +42,23 @@ const LoginForm = () => {
 
       try {
         const response = await login(values)
-        localStorage.setItem("accessToken", response.access);
-        localStorage.setItem("refreshToken", response.refresh);
+
+        loginUser(
+          response.access,
+          response.refresh
+        );
+toast.success("Login successful!")
 
 
         navigate("/")
 
 
       } catch (err) {
-       
+        const message=err.message;
+toast.error(message || "Please verify your Credentials")
+if(message==="Please verify your email before logging in"){
+  navigate("/verifyotp/emv",{replace:true});
+}
 
       }
     }
@@ -54,7 +71,7 @@ const LoginForm = () => {
 
 
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form  onSubmit={formik.handleSubmit}>
 
 
 
@@ -64,6 +81,7 @@ const LoginForm = () => {
           id="email"
           name="email"
           type="email"
+          autoComplete="email"
 
           placeholder="Enter your Email"
 
@@ -92,6 +110,7 @@ const LoginForm = () => {
           id="password"
           name="password"
           type={showPassword ? "text" : "password"}
+          autoComplete="current-password"
           placeholder="Enter your password"
 
           value={formik.values.password}
@@ -112,7 +131,12 @@ const LoginForm = () => {
       </div>
 
 
-      <button className="bg-green-600 text-white p-2 rounded-2xl w-full mt-7" type="submit">Login</button>
+      <Button
+        type="submit"
+        className="w-full mt-7"
+      >
+        Login
+      </Button>
 
       <div className="flex flex-col items-center ">
 

@@ -14,13 +14,14 @@ class Notification(models.Model):
         on_delete=models.CASCADE,
         related_name="notifications",
     )
-    message = models.CharField(max_length=255)
+    message = models.TextField()
     type = models.CharField(
         max_length=32,
         choices=NotificationType.choices,
         default=NotificationType.SYSTEM,
     )
     is_read = models.BooleanField(default=False)
+    link = models.CharField(max_length=255, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,197 +1,67 @@
-from django.utils import timezone
+from django.shortcuts import render
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from rest_framework import generics
+# importing serializers here.
+from .serializers import AdminRegistrationSerializer, AdminLoginSerializer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import AllowAny
 
-from .models import Report
-from .serializers import ReportSerializer
-from .permissions import IsModerator
+# Create your views here.
 
 
-class ModeratorDashboardView(APIView):
-    permission_classes = [IsModerator]
+class AdminRegistrationView(APIView):
+    permission_classes = [AllowAny]
 
-    def get(self, request):
-        return Response({
-            "total_reports": Report.objects.count(),
+    def post(self, request):
+        serializer = AdminRegistrationSerializer(data=request.data)
 
-            "pending_reports": Report.objects.filter(
-                status="Pending"
-            ).count(),
+        if serializer.is_valid():
+            user = serializer.save()
 
-            "under_review_reports": Report.objects.filter(
-                status="Under Review"
-            ).count(),
-
-            "resolved_reports": Report.objects.filter(
-                status="Resolved"
-            ).count(),
-
-            "rejected_reports": Report.objects.filter(
-                status="Rejected"
-            ).count(),
-        })
-
-
-class ReportListCreateAPIView(generics.ListCreateAPIView):
-    queryset = Report.objects.select_related(
-        "reported_by",
-        "reported_job",
-        "reviewed_by",
-    )
-
-    serializer_class = ReportSerializer
-    permission_classes = [IsModerator]
-
-    def perform_create(self, serializer):
-        serializer.save(
-            reported_by=self.request.user
-        )
-
-
-class ReportDetailAPIView(
-    generics.RetrieveUpdateDestroyAPIView
-):
-    queryset = Report.objects.select_related(
-        "reported_by",
-        "reported_job",
-        "reviewed_by",
-    )
-
-    serializer_class = ReportSerializer
-    permission_classes = [IsModerator]
-
-    lookup_url_kwarg = "id"
-
-
-class StartReviewAPIView(APIView):
-    permission_classes = [IsModerator]
-
-    def post(self, request, id):
-        try:
-            report = Report.objects.get(id=id)
-        except Report.DoesNotExist:
             return Response(
                 {
-                    "detail": "Report not found."
+                    "message": "Admin registration sucessfully",
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                    },
                 },
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_201_CREATED,
             )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if report.status != "Pending":
+
+class AdminLoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = AdminLoginSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            refresh = RefreshToken.for_user(user)
+
             return Response(
                 {
-                    "detail": (
-                        "Only pending reports can be "
-                        "started for review."
-                    )
+                    "message": "Admin login sucessful",
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                    },
+                    "token": {
+                        "refresh": str(refresh),
+                        "access": str(refresh.access_token),
+                    },
                 },
+                status=status.HTTP_200_OK,
+            )
+            return Response(
+                serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        report.status = "Under Review"
-        report.reviewed_by = request.user
-        report.reviewed_at = timezone.now()
-        report.save(
-            update_fields=[
-                "status",
-                "reviewed_by",
-                "reviewed_at",
-                "updated_at",
-            ]
-        )
-
-        return Response(
-            ReportSerializer(report).data,
-            status=status.HTTP_200_OK,
-        )
-
-
-class ResolveReportAPIView(APIView):
-    permission_classes = [IsModerator]
-
-    def post(self, request, id):
-        try:
-            report = Report.objects.get(id=id)
-        except Report.DoesNotExist:
-            return Response(
-                {
-                    "detail": "Report not found."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        if report.status != "Under Review":
-            return Response(
-                {
-                    "detail": (
-                        "Only reports under review "
-                        "can be resolved."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        report.status = "Resolved"
-        report.reviewed_by = request.user
-        report.reviewed_at = timezone.now()
-
-        report.save(
-            update_fields=[
-                "status",
-                "reviewed_by",
-                "reviewed_at",
-                "updated_at",
-            ]
-        )
-
-        return Response(
-            ReportSerializer(report).data,
-            status=status.HTTP_200_OK,
-        )
-
-
-class RejectReportAPIView(APIView):
-    permission_classes = [IsModerator]
-
-    def post(self, request, id):
-        try:
-            report = Report.objects.get(id=id)
-        except Report.DoesNotExist:
-            return Response(
-                {
-                    "detail": "Report not found."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        if report.status != "Under Review":
-            return Response(
-                {
-                    "detail": (
-                        "Only reports under review "
-                        "can be rejected."
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        report.status = "Rejected"
-        report.reviewed_by = request.user
-        report.reviewed_at = timezone.now()
-
-        report.save(
-            update_fields=[
-                "status",
-                "reviewed_by",
-                "reviewed_at",
-                "updated_at",
-            ]
-        )
-
-        return Response(
-            ReportSerializer(report).data,
-            status=status.HTTP_200_OK,
-        )

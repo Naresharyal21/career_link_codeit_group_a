@@ -25,6 +25,7 @@ export const loginValidationSchema = Yup.object({
 
 export const signupValidationSchema = Yup.object({
   username: usernameRule,
+  
   email: emailRule,
   password: passwordRule,
   confirmpassword:passwordconfirmRule,

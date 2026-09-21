@@ -1,12 +1,8 @@
+import React from "react";
 import AppRoutes from "./Routes";
-import ThemeContext from "./context/ThemeContext";
 
 const App = () => {
-    return (
-        <ThemeContext>
-            <AppRoutes />
-        </ThemeContext>
-    );
+    return <AppRoutes />;
 };
 
 export default App;

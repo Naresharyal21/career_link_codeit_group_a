@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Trash2, Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 const POLL_INTERVAL_MS = 30000;
@@ -7,14 +8,14 @@ const POLL_INTERVAL_MS = 30000;
 const TYPE_STYLES = {
   status_update: "bg-blue-50 border-l-4 border-l-blue-400",
   new_job_match: "bg-green-50 border-l-4 border-l-green-400",
-   job_approval_update: "bg-amber-50 border-l-4 border-l-amber-400",
+  job_approval_update: "bg-amber-50 border-l-4 border-l-amber-400",
   system: "bg-gray-50 border-l-4 border-l-gray-300",
 };
 
 const TYPE_LABELS = {
-    job_approval_update: "Job Approval Update",
   status_update: "Status Update",
   new_job_match: "New Job Match",
+  job_approval_update: "Job Approval Update",
   system: "System",
 };
 
@@ -31,15 +32,18 @@ function timeAgo(dateString) {
 }
 
 function forceLogout() {
-//   localStorage.removeItem("accessToken");
-//   window.location.href = "/login";
+  // localStorage.removeItem("accessToken");
+  // window.location.href = "/login";
 }
 
 function NotificationsPage() {
+  const navigate = useNavigate();
+
   const [notifications, setNotifications] = useState([]);
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // initial load / filter switch only
+  const [refreshing, setRefreshing] = useState(false); // background polls — doesn't hide the list
   const [loadingMore, setLoadingMore] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState(null);
@@ -73,8 +77,12 @@ function NotificationsPage() {
   }, []);
 
   const fetchNotifications = useCallback(
-    async (currentFilter, signal) => {
-      setLoading(true);
+    async (currentFilter, signal, { background = false } = {}) => {
+      if (background) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       try {
         const params = new URLSearchParams();
         if (currentFilter === "unread") params.set("is_read", "false");
@@ -98,10 +106,17 @@ function NotificationsPage() {
         setError(null);
       } catch (err) {
         if (err.name !== "AbortError") {
-          setError(err.message);
+          // Don't blow away the visible list with an error banner just
+          // because a silent background poll failed — the user still has
+          // their last-known-good data on screen.
+          if (!background) setError(err.message);
         }
       } finally {
-        setLoading(false);
+        if (background) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
       }
     },
     []
@@ -148,6 +163,39 @@ function NotificationsPage() {
         prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
       );
       setUnreadCount((prev) => prev + 1);
+    }
+  }
+
+  function handleNotificationClick(n) {
+    if (!n.is_read) markAsRead(n.id);
+    if (n.link) navigate(n.link);
+  }
+
+  async function deleteNotification(id) {
+    const previous = notifications;
+    const deletedNotif = notifications.find((n) => n.id === id);
+
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (deletedNotif && !deletedNotif.is_read) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/notifications/${id}/`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (res.status === 401) {
+        forceLogout();
+        return;
+      }
+      if (!res.ok) throw new Error();
+    } catch (err) {
+      setNotifications(previous);
+      if (deletedNotif && !deletedNotif.is_read) {
+        setUnreadCount((prev) => prev + 1);
+      }
+      setError("Couldn't delete notification.");
     }
   }
 
@@ -209,10 +257,11 @@ function NotificationsPage() {
   }
 
   const isFirstRun = useRef(true);
+  const pollControllerRef = useRef(null);
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchNotifications(filter, controller.signal);
+    fetchNotifications(filter, controller.signal); // foreground — shows the spinner
     if (isFirstRun.current) {
       fetchUnreadCount(controller.signal);
       isFirstRun.current = false;
@@ -222,11 +271,19 @@ function NotificationsPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
+      // Cancel the previous tick's request if it's still in flight, so a
+      // slow response can't resolve after a newer one and overwrite it
+      // with stale data.
+      pollControllerRef.current?.abort();
       const controller = new AbortController();
-      fetchNotifications(filter, controller.signal);
+      pollControllerRef.current = controller;
+      fetchNotifications(filter, controller.signal, { background: true }); // background — no spinner
       fetchUnreadCount(controller.signal);
     }, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      pollControllerRef.current?.abort();
+    };
   }, [filter, fetchNotifications, fetchUnreadCount]);
 
   const hasRead = notifications.some((n) => n.is_read);
@@ -234,7 +291,15 @@ function NotificationsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-blue-900">Notifications</h1>
+        <h1 className="text-xl font-semibold text-blue-900 flex items-center gap-2">
+          Notifications
+          {refreshing && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"
+              aria-hidden="true"
+            />
+          )}
+        </h1>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button
@@ -314,33 +379,43 @@ function NotificationsPage() {
         <>
           <div className="space-y-2">
             {notifications.map((n) => (
-              <button
+              <div
                 key={n.id}
-                onClick={() => !n.is_read && markAsRead(n.id)}
-                aria-label={
-                  n.is_read ? n.message : `Unread: ${n.message}`
-                }
-                className={`w-full text-left px-4 py-4 rounded-md transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${
+                className={`w-full px-4 py-4 rounded-md transition-shadow group ${
                   TYPE_STYLES[n.type] || "bg-white border-l-4 border-l-gray-200"
                 } ${n.is_read ? "opacity-60" : "hover:shadow-sm"}`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => handleNotificationClick(n)}
+                    aria-label={n.is_read ? n.message : `Unread: ${n.message}`}
+                    className="flex items-start gap-2 text-left flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded"
+                  >
                     {!n.is_read && (
                       <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                     )}
-                    <div>
+                    <div className="min-w-0">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                         {TYPE_LABELS[n.type] || n.type}
                       </span>
                       <p className="text-sm text-gray-800 mt-0.5">{n.message}</p>
                     </div>
+                  </button>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {timeAgo(n.created_at)}
+                    </span>
+                    <button
+                      onClick={() => deleteNotification(n.id)}
+                      aria-label="Delete notification"
+                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 rounded p-1"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap shrink-0">
-                    {timeAgo(n.created_at)}
-                  </span>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
