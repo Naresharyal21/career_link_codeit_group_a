@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import useJobs from '../hooks/useJobs'
 import JobList from '../jobs/components/JobList'
 import JobFilters from '../jobs/components/JobFilters'
+import Trie from '../utils/trie'
 
 const BrowseJobsPage = () => {
   const { data: jobs, loading, error, fetchJobs } = useJobs()
   const [search, setSearch] = useState('')
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [filters, setFilters] = useState({ jobType: '', location: '', experience: '' })
   const jobsPerPage = 6
@@ -20,6 +22,26 @@ const BrowseJobsPage = () => {
   }, [])
 
   const jobList = jobs || []
+
+  // Build a Trie from job titles and skill names whenever the job list changes.
+  const searchTrie = useMemo(() => {
+    const trie = new Trie()
+    jobList.forEach((job) => {
+      if (job.title) trie.insert(job.title)
+      job.skills?.forEach((s) => trie.insert(s.name))
+    })
+    return trie
+  }, [jobList])
+
+  const suggestions = useMemo(() => {
+    if (!search) return []
+    return searchTrie.getSuggestions(search, 6)
+  }, [search, searchTrie])
+
+  const handleSuggestionClick = (word) => {
+    setSearch(word)
+    setShowSuggestions(false)
+  }
 
   const filteredJobs = jobList
     .filter((job) => {
@@ -80,14 +102,34 @@ const BrowseJobsPage = () => {
 
   return (
     <div className='   p-4 '>
-      <div className="bg-gray-50   shadow shadow-black/12 rounded p-4 mb-6 flex gap-3">
-        <input
-          type="text"
-          placeholder="Job title, skills, or company"
-          className="flex-1 border rounded p-2 text-sm w-full"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="bg-gray-50   shadow shadow-black/12 rounded p-4 mb-6 flex gap-3 relative">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Job title, skills, or company"
+            className="border rounded p-2 text-sm w-full"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setShowSuggestions(true)
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-10 top-full left-0 right-0 bg-white border border-gray-200 rounded shadow-md mt-1 max-h-48 overflow-y-auto">
+              {suggestions.map((word) => (
+                <li
+                  key={word}
+                  onMouseDown={() => handleSuggestionClick(word)}
+                  className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                >
+                  {word}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <button className="bg-[#0f2a52] text-white px-6 py-2 rounded hover:bg-[#173a6e] active:bg-[#0a1d3a] transition-colors cursor-pointer whitespace-nowrap">
           Search
         </button>
