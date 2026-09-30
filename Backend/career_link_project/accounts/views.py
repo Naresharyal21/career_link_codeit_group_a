@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import LoginSerializer
 
@@ -12,6 +12,8 @@ from .serializers import (
     RegistrationSerializer,
     JobseekerProfileSerializer,
     EmployerProfileSerializer,
+    UserSerializer,
+   
 )
 from .models import (
     JobseekerProfile,
@@ -37,7 +39,7 @@ class LoginView(TokenObtainPairView):
 
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
         user = request.user
@@ -56,40 +58,39 @@ class MeView(APIView):
                 "username": user.username,
                 "email": user.email,
                 "role": user.role,
+                "role_display": user.get_role_display(),
                 "profile": data,
             }
         )
+
+
     def put(self, request):
         user = request.user
-
+        
+        # Determine profile based on role
         if user.role == User.Role.JOBSEEKERS:
             profile = JobseekerProfile.objects.filter(user=user).first()
+            if not profile: return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = JobseekerProfileSerializer(profile, data=request.data, partial=True)
+        elif user.role == User.Role.EMPLOYEERS:
+            profile = EmployerProfile.objects.filter(user=user).first()
+            if not profile: return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = EmployerProfileSerializer(profile, data=request.data, partial=True)
+        else:
+            return Response({"error": "Role not supported"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not profile:
-                return Response(
-                    {"error": "Jobseeker profile not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            serializer = JobseekerProfileSerializer(
-                profile,
-                data=request.data,
-                partial=True,
-            )
-
-            serializer.is_valid(raise_exception=True)
+        # Update User details (username, email)
+        user_serializer = UserSerializer(user, data=request.data, partial=True)
+        
+        if serializer.is_valid() and user_serializer.is_valid():
             serializer.save()
+            user_serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        errors = serializer.errors
+        errors.update(user_serializer.errors)
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            {"error": "Profile picture upload is only available for jobseekers"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    
 
 
 class ForgetPasswordView(APIView):
@@ -241,24 +242,23 @@ class confirmPasswordView(APIView):
     def post(self, request):
 
         password = request.data.get("password")
-       
-
 
         if not password:
-            return Response({"error": "Password is required"},
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST
+            )
         user = request.user
-      
 
         if not user.check_password(password):
-            return Response({"error": "Password does not match"},
-                status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Password does not match"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        
-        return Response({"message": "Password confirmed sucess"},
-            status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Password confirmed sucess"}, status=status.HTTP_200_OK
+        )
 
-    
+
 class SendNewEmailOTPView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -269,22 +269,18 @@ class SendNewEmailOTPView(APIView):
         if not new_email:
             return Response({"error": "Email is required"})
 
-
         if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
-              return Response(
+            return Response(
                 {"error": "This email is already in use"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        user =request.user
+        user = request.user
 
-
-        
-
-        create_and_send_otp(user=user, purpose="cev",
-        email=new_email)
+        create_and_send_otp(user=user, purpose="cev", email=new_email)
 
         return Response({"message": "Verification OTP sent successfully"})
-    
+
+
 class ChangeEmail(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -293,26 +289,21 @@ class ChangeEmail(APIView):
 
         if not new_email:
             return Response(
-                {"error": "Email is required"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         new_email = new_email.strip().lower()
 
-        if User.objects.filter(email=new_email).exclude(
-            id=request.user.id
-        ).exists():
+        if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
             return Response(
                 {"error": "This email is already in use"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         request.user.email = new_email
         request.user.email_verified = True
 
-        request.user.save(
-            update_fields=["email", "email_verified"]
-        )
+        request.user.save(update_fields=["email", "email_verified"])
 
         return Response(
             {
@@ -320,6 +311,7 @@ class ChangeEmail(APIView):
                 "email": request.user.email,
                 "email_verified": request.user.email_verified,
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
+
 

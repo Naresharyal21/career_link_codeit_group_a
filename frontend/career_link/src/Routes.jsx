@@ -1,6 +1,7 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
+import HomePage from "./home/components/pages/HomePage";
 import Login from "./pages/accounts/Login";
 import Signup from "./pages/accounts/Signup";
 import MyProfilecart from "./pages/accounts/MyProfilecart";
@@ -12,6 +13,9 @@ import JobDetailPage from "./pages/JobDetailPage";
 import BrowseJobsPage from "./pages/BrowseJobsPage";
 import ProtectedRoute from "./context/ProtectedRoute";
 import EmployerRoute from "./context/EmployerRoute";
+import ApplicationPage from "./applications/ApplicationForm";
+import MyApplicationsPage from "./applications/components/pages/MyApplicationsPage";
+import NotificationsPage from "./notifications/components/pages/NotificationsPage";
 import ModeratorRoutes from "./routes/ModeratorRoutes";
 import employerRoutes from "./routes/EmployerRoutes";
 const AppRoutes = () => {
@@ -19,6 +23,7 @@ const AppRoutes = () => {
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route
@@ -41,11 +46,19 @@ const AppRoutes = () => {
                 path="/jobs/:id"
                 element={<JobDetailPage />}
             />
-            {/*
+            {/* Dashboard / Applications & Notifications */}
+            <Route path="/application" element={<ApplicationPage />} />
+            <Route path="/applications" element={<MyApplicationsPage />} />
+            <Route path="/applied-jobs" element={<MyApplicationsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
 
+            <Route path="/dashboard" element={<DashboardLayout />}>
+                <Route path="application" element={<ApplicationPage />} />
+                <Route path="applications" element={<MyApplicationsPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+            </Route>
 
-
- Protected Routes */}
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                     {/* User Profile */}

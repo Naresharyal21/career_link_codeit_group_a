@@ -1,669 +1,581 @@
-import React, { useEffect, useMemo, useState } from "react";
-import {
-    AlertTriangle,
-    ArrowRight,
-    BriefcaseBusiness,
-    Building2,
-    Clock3,
-    Flag,
-    RefreshCw,
-    ShieldAlert,
-    Users,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import {
+    AlertCircle,
+    CalendarDays,
+    CheckCircle2,
+    Clock3,
+    Eye,
+    Flag,
+    Gavel,
+    RefreshCw,
+    ShieldAlert,
+    UserRound,
+    XCircle,
+} from "lucide-react";
+
 import moderatorApi from "../../apis/moderatorApi";
+import accountsApi from "../../apis/accountsApi";
+import ReportStatusBadge from "../components/ReportStatusBadge";
 import ModeratorSectionPage from "../components/ModeratorSectionPage";
+
 import { formatReportId } from "../utils/report";
+
+
+
+
+function formatDate(value) {
+    if (!value) {
+        return "N/A";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "N/A";
+    }
+
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+    });
+}
+
+
+function getReportedBy(report) {
+    if (
+        typeof report?.reported_by === "object" &&
+        report?.reported_by !== null
+    ) {
+        return (
+            report.reported_by.username ||
+            report.reported_by.email ||
+            "Unknown user"
+        );
+    }
+
+    return (
+        report?.reported_by_name ||
+        report?.reported_by ||
+        report?.reporter ||
+        "Unknown user"
+    );
+}
+
+
+function getJobTitle(report) {
+    if (
+        typeof report?.reported_job === "object" &&
+        report?.reported_job !== null
+    ) {
+        return (
+            report.reported_job.title ||
+            `Job ${report.reported_job.id}`
+        );
+    }
+
+    return (
+        report?.reported_job_title ||
+        report?.job?.title ||
+        "Unknown job"
+    );
+}
+
+
+function getReason(report) {
+    return (
+        report?.report_reason ||
+        report?.reason ||
+        "Other"
+    );
+}
+
+
+function getStatus(report) {
+    return (
+        report?.status ||
+        report?.report_status ||
+        "Pending"
+    );
+}
+
+
+// Mirrors the priority derivation used on the full Reports list,
+// so a report shows the same priority everywhere in the app.
+function getPriority(report) {
+    if (report?.priority) {
+        return report.priority;
+    }
+
+    const reason = String(getReason(report)).toLowerCase();
+
+    if (
+        reason.includes("scam") ||
+        reason.includes("fake") ||
+        reason.includes("fraud") ||
+        reason.includes("phishing")
+    ) {
+        return "Critical";
+    }
+
+    if (
+        reason.includes("harassment") ||
+        reason.includes("abuse") ||
+        reason.includes("offensive")
+    ) {
+        return "High";
+    }
+
+    if (
+        reason.includes("spam") ||
+        reason.includes("misleading") ||
+        reason.includes("duplicate")
+    ) {
+        return "Medium";
+    }
+
+    return "Low";
+}
+
+
+function getPriorityStyle(priority) {
+    switch (priority) {
+        case "Critical":
+            return "bg-red-50 text-red-700 border-red-200";
+
+        case "High":
+            return "bg-orange-50 text-orange-700 border-orange-200";
+
+        case "Medium":
+            return "bg-amber-50 text-amber-700 border-amber-200";
+
+        case "Low":
+        default:
+            return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    }
+}
+
 
 const PAGE_SIZE = 10;
 
-const ReviewQueue = () => {
+// The queue only ever cares about reports still awaiting action.
+const QUEUE_STATUSES = "Pending,Under Review";
+
+
+
+
+export default function ReviewQueue() {
     const navigate = useNavigate();
 
     const [reports, setReports] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [page, setPage] = useState(1);
 
-    const loadQueue = async () => {
+    const [currentUser, setCurrentUser] = useState(null);
+
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(null);
+    const [hasNext, setHasNext] = useState(false);
+    const [hasPrevious, setHasPrevious] = useState(false);
+
+    // Per-report id -> which quick action is in flight, so only
+    // that row's buttons show a loading state.
+    const [actionLoadingId, setActionLoadingId] = useState(null);
+    const [actionError, setActionError] = useState("");
+
+
+    const isAdmin =
+        currentUser?.is_staff === true ||
+        currentUser?.is_superuser === true;
+
+
+    const loadCurrentUser = async () => {
+        try {
+            const data = await accountsApi.getMe();
+            setCurrentUser(data);
+        } catch (err) {
+            console.error(
+                "Failed to load current user:",
+                err
+            );
+        }
+    };
+
+
+    const loadQueue = async (pageNumber = 1) => {
         try {
             setLoading(true);
             setError("");
 
-            const data = await moderatorApi.getReports();
+            const response = await moderatorApi.getReports({
+                status: QUEUE_STATUSES,
+                page: pageNumber,
+                page_size: PAGE_SIZE,
+            });
 
-            const reportData = Array.isArray(data)
-                ? data
-                : data?.results || [];
+            console.log("REVIEW QUEUE RESPONSE:", response);
 
-            setReports(reportData);
+            if (Array.isArray(response)) {
+                setReports(response);
+                setTotalCount(null);
+                setHasNext(false);
+                setHasPrevious(false);
+            } else {
+                setReports(
+                    Array.isArray(response?.results)
+                        ? response.results
+                        : []
+                );
+                setTotalCount(
+                    typeof response?.count === "number"
+                        ? response.count
+                        : null
+                );
+                setHasNext(Boolean(response?.next));
+                setHasPrevious(Boolean(response?.previous));
+            }
         } catch (err) {
             console.error("Failed to load review queue:", err);
 
+            setReports([]);
+            setTotalCount(null);
+            setHasNext(false);
+            setHasPrevious(false);
+
             setError(
                 err?.response?.data?.detail ||
-                err?.message ||
-                "Unable to load the review queue."
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "Unable to load the review queue."
             );
-
-            setReports([]);
         } finally {
             setLoading(false);
         }
     };
 
+
+    const refresh = () => loadQueue(page);
+
+
     useEffect(() => {
-        loadQueue();
+        loadCurrentUser();
     }, []);
 
-    const pendingReports = useMemo(() => {
-        return reports.filter((report) => {
-            const status = String(
-                report.status || ""
-            ).toLowerCase();
-
-            return (
-                status === "pending" ||
-                status === "under review"
-            );
-        });
-    }, [reports]);
-
-    const queueItems = useMemo(() => {
-        const items = [];
-
-        pendingReports.forEach((report) => {
-            const reason = String(
-                report.report_reason || ""
-            ).toLowerCase();
-
-            let priority = "Low";
-
-            if (
-                /scam|fake|fraud|harassment|abuse/.test(
-                    reason
-                )
-            ) {
-                priority = "High";
-            } else if (
-                /spam|misleading|duplicate|salary/.test(
-                    reason
-                )
-            ) {
-                priority = "Medium";
-            }
-
-            items.push({
-                id: report.id,
-                type: report.reported_job
-                    ? "User Report"
-                    : "Reported Content",
-                title: report.report_reason ||
-                    "Reported content",
-                submittedBy:
-                    typeof report.reported_by === "object"
-                        ? (
-                              report.reported_by.username ||
-                              report.reported_by.email ||
-                              "Unknown user"
-                          )
-                        : report.reported_by ||
-                          "Unknown user",
-                date: report.reported_at
-                    ? new Date(
-                          report.reported_at
-                      ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                      })
-                    : "—",
-                priority,
-                status: report.status || "Pending",
-            });
-        });
-
-        return items;
-    }, [pendingReports]);
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(queueItems.length / PAGE_SIZE)
-    );
-
-    const safePage = Math.min(page, totalPages);
-
-    const paginatedItems = useMemo(() => {
-        const start = (safePage - 1) * PAGE_SIZE;
-
-        return queueItems.slice(start, start + PAGE_SIZE);
-    }, [queueItems, safePage]);
 
     useEffect(() => {
-        setPage(1);
-    }, [queueItems.length]);
+        loadQueue(page);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page]);
 
-    const highPriority = queueItems.filter(
-        (item) => item.priority === "High"
-    ).length;
 
-    const mediumPriority = queueItems.filter(
-        (item) => item.priority === "Medium"
-    ).length;
+    const totalPages =
+        totalCount !== null
+            ? Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+            : 1;
 
-    const lowPriority = queueItems.filter(
-        (item) => item.priority === "Low"
-    ).length;
+    const currentPage = Math.min(page, totalPages);
 
-    const priorityClasses = {
-        High: "border-red-100 bg-red-50 text-red-700",
-        Medium: "border-amber-100 bg-amber-50 text-amber-700",
-        Low: "border-emerald-100 bg-emerald-50 text-emerald-700",
+
+    const runAction = async (report, action) => {
+        setActionError("");
+        setActionLoadingId(report.id);
+
+        try {
+            if (action === "review") {
+                await moderatorApi.startReview(report.id);
+            } else if (action === "resolve") {
+                await moderatorApi.resolveReport(report.id);
+            } else if (action === "reject") {
+                await moderatorApi.rejectReport(report.id);
+            }
+
+            // The report likely no longer belongs in the queue
+            // (Under Review or resolved/rejected out of it), so
+            // reload the current page from the server rather than
+            // patch it locally.
+            await loadQueue(page);
+        } catch (err) {
+            console.error(
+                `Failed to ${action} report ${report.id}:`,
+                err
+            );
+
+            setActionError(
+                err?.response?.data?.detail ||
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "That action couldn't be completed."
+            );
+        } finally {
+            setActionLoadingId(null);
+        }
     };
 
-    const typeIcon = {
-        "User Report": Flag,
-        "Reported Content": ShieldAlert,
-    };
 
     return (
         <ModeratorSectionPage
+            eyebrow="Moderation"
             title="Review Queue"
-            description="Review pending moderation items and prioritize actions that require moderator attention."
-            backLabel="Dashboard"
-            backTo="/reports"
+            description="Reports that are still Pending or Under Review, oldest first."
+            backLabel="Back to dashboard"
+            backTo="/reports/"
             action={
                 <button
                     type="button"
-                    onClick={loadQueue}
-                    disabled={loading}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[#e2e8f0] bg-white px-4 py-2.5 text-sm font-bold text-[#334155] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={refresh}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF]"
                 >
-                    <RefreshCw
-                        className={`h-4 w-4 ${
-                            loading ? "animate-spin" : ""
-                        }`}
-                    />
-
-                    {loading ? "Refreshing..." : "Refresh"}
+                    <RefreshCw className="h-4 w-4" />
+                    Refresh
                 </button>
             }
         >
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <QueueStat
-                    icon={Clock3}
-                    label="Pending Review"
-                    value={queueItems.length}
-                    description="Items waiting for action"
-                />
+            {!isAdmin && currentUser && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>
+                        You can view the queue, but only an admin
+                        can start review, resolve, or reject a
+                        report.
+                    </p>
+                </div>
+            )}
 
-                <QueueStat
-                    icon={AlertTriangle}
-                    label="High Priority"
-                    value={highPriority}
-                    description="Requires attention"
-                />
+            {actionError && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <p>{actionError}</p>
+                </div>
+            )}
 
-                <QueueStat
-                    icon={ShieldAlert}
-                    label="Medium Priority"
-                    value={mediumPriority}
-                    description="Needs review"
-                />
-
-                <QueueStat
-                    icon={Flag}
-                    label="Low Priority"
-                    value={lowPriority}
-                    description="Standard review"
-                />
-            </div>
-
-   
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-                <QueueSectionCard
-                    icon={BriefcaseBusiness}
-                    title="Job Approvals"
-                    description="Review newly submitted job postings."
-                    count={8}
-                    onClick={() =>
-                        navigate(
-                            "/moderator/job-approvals"
-                        )
-                    }
-                />
-
-                <QueueSectionCard
-                    icon={Building2}
-                    title="Company Reviews"
-                    description="Review employer profiles and verification requests."
-                    count={5}
-                    onClick={() =>
-                        navigate(
-                            "/moderator/company-reviews"
-                        )
-                    }
-                />
-
-                <QueueSectionCard
-                    icon={Flag}
-                    title="Flagged Listings"
-                    description="Inspect listings flagged by users or the system."
-                    count={12}
-                    onClick={() =>
-                        navigate(
-                            "/moderator/flagged-listings"
-                        )
-                    }
-                />
-            </div>
-
-
-            {error && (
-                <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4">
+            {loading ? (
+                <div className="rounded-2xl border border-[#E7E3F2] bg-white p-10 text-center text-sm text-[#98A2B3]">
+                    Loading the review queue…
+                </div>
+            ) : error ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-10 text-center">
                     <p className="text-sm font-semibold text-red-700">
                         {error}
                     </p>
-
                     <button
                         type="button"
-                        onClick={loadQueue}
-                        className="mt-2 text-sm font-bold text-red-700 underline"
+                        onClick={refresh}
+                        className="mt-4 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-100"
                     >
                         Try again
                     </button>
                 </div>
-            )}
-
-
-            <div className="mt-6 overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white">
-                <div className="flex flex-col gap-3 border-b border-[#f1f5f9] px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <h2 className="text-base font-extrabold text-[#1e293b]">
-                            Items Requiring Review
-                        </h2>
-
-                        <p className="mt-1 text-sm text-[#64748b]">
-                            Pending moderation items from the current queue.
-                            {queueItems.length > 0 && (
-                                <>
-                                    {" "}Showing{" "}
-                                    <span className="font-bold text-[#334155]">
-                                        {(safePage - 1) * PAGE_SIZE + 1}
-                                    </span>
-                                    {"–"}
-                                    <span className="font-bold text-[#334155]">
-                                        {Math.min(safePage * PAGE_SIZE, queueItems.length)}
-                                    </span>
-                                    {" of "}
-                                    <span className="font-bold text-[#334155]">
-                                        {queueItems.length}
-                                    </span>
-                                </>
-                            )}
-                        </p>
-                    </div>
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "reports"
-                            )
-                        }
-                        className="inline-flex items-center gap-2 self-start rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#334155] transition hover:border-[#00b4d8] hover:text-[#00a6c7]"
-                    >
-                        View All Reports
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </button>
+            ) : reports.length === 0 ? (
+                <div className="rounded-2xl border border-[#E7E3F2] bg-white p-10 text-center">
+                    <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500" />
+                    <p className="mt-3 text-sm font-semibold text-[#344054]">
+                        Nothing waiting on this page.
+                    </p>
+                    <p className="mt-1 text-xs text-[#98A2B3]">
+                        All caught up — no Pending or Under
+                        Review reports here.
+                    </p>
                 </div>
+            ) : (
+                <div className="space-y-4">
+                    {reports.map((report) => {
+                        const priority = getPriority(report);
+                        const status = getStatus(report);
+                        const busy =
+                            actionLoadingId === report.id;
 
-                {loading ? (
-                    <div className="px-6 py-20 text-center">
-                        <RefreshCw className="mx-auto h-6 w-6 animate-spin text-[#00a6c7]" />
+                        return (
+                            <div
+                                key={report.id}
+                                className="rounded-2xl border border-[#E7E3F2] bg-white p-5 shadow-sm"
+                            >
+                                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 
-                        <p className="mt-3 text-sm font-medium text-[#64748b]">
-                            Loading review queue...
-                        </p>
-                    </div>
-                ) : queueItems.length === 0 ? (
-                    <div className="px-6 py-20 text-center">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                            <ShieldAlert className="h-5 w-5" />
-                        </div>
+                                    <div className="min-w-0 flex-1">
 
-                        <h3 className="mt-4 text-sm font-extrabold text-[#1e293b]">
-                            Queue is clear
-                        </h3>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <span className="text-xs font-bold text-[#98A2B3]">
+                                                {formatReportId(
+                                                    report.id
+                                                )}
+                                            </span>
 
-                        <p className="mt-1 text-sm text-[#94a3b8]">
-                            There are no pending reports requiring review.
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        
-                        <div className="hidden overflow-x-auto md:block">
-                            <table className="w-full min-w-[850px]">
-                                <thead>
-                                    <tr className="bg-[#f8fafc]">
-                                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wide text-[#64748b]">
-                                            Item
-                                        </th>
-
-                                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wide text-[#64748b]">
-                                            Submitted By
-                                        </th>
-
-                                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wide text-[#64748b]">
-                                            Submitted
-                                        </th>
-
-                                        <th className="px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wide text-[#64748b]">
-                                            Priority
-                                        </th>
-
-                                        <th className="px-5 py-4 text-right text-[11px] font-bold uppercase tracking-wide text-[#64748b]">
-                                            Action
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {paginatedItems.map((item) => {
-                                        const Icon =
-                                            typeIcon[
-                                                item.type
-                                            ] || Flag;
-
-                                        return (
-                                            <tr
-                                                key={item.id}
-                                                className="border-t border-[#f1f5f9] transition hover:bg-[#f8fafc]"
-                                            >
-                                                <td className="px-5 py-5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ecfeff] text-[#00a6c7]">
-                                                            <Icon className="h-4 w-4" />
-                                                        </div>
-
-                                                        <div>
-                                                            <p className="font-bold text-[#1e293b]">
-                                                                {
-                                                                    item.title
-                                                                }
-                                                            </p>
-
-                                                            <p className="mt-1 text-xs text-[#94a3b8]">
-                                                                {
-                                                                    item.type
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                <td className="px-5 py-5 text-sm font-medium text-[#475569]">
-                                                    {
-                                                        item.submittedBy
-                                                    }
-                                                </td>
-
-                                                <td className="px-5 py-5 text-sm text-[#64748b]">
-                                                    {
-                                                        item.date
-                                                    }
-                                                </td>
-
-                                                <td className="px-5 py-5">
-                                                    <span
-                                                        className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-bold ${priorityClasses[item.priority]}`}
-                                                    >
-                                                        {
-                                                            item.priority
-                                                        }
-                                                    </span>
-                                                </td>
-
-                                                <td className="px-5 py-5 text-right">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            navigate(
-                                                                `reports/${item.id}`
-                                                            )
-                                                        }
-                                                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#00b4d8] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#009bbb]"
-                                                    >
-                                                        Review
-                                                        <ArrowRight className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        
-                        <div className="divide-y divide-[#f1f5f9] md:hidden">
-                            {paginatedItems.map((item) => {
-                                const Icon =
-                                    typeIcon[
-                                        item.type
-                                    ] || Flag;
-
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="p-5"
-                                    >
-                                        <div className="flex items-start justify-between gap-3">
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#ecfeff] text-[#00a6c7]">
-                                                    <Icon className="h-4 w-4" />
-                                                </div>
-
-                                                <div className="min-w-0">
-                                                    <p className="truncate font-bold text-[#1e293b]">
-                                                        {
-                                                            item.title
-                                                        }
-                                                    </p>
-
-                                                    <p className="mt-1 text-xs text-[#64748b]">
-                                                        {
-                                                            item.type
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            <ReportStatusBadge
+                                                status={status}
+                                            />
 
                                             <span
-                                                className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${priorityClasses[item.priority]}`}
+                                                className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-bold ${getPriorityStyle(
+                                                    priority
+                                                )}`}
                                             >
-                                                {
-                                                    item.priority
-                                                }
+                                                <Flag className="mr-1 h-3 w-3" />
+                                                {priority}
                                             </span>
                                         </div>
 
-                                        <div className="mt-4 space-y-2 text-sm">
-                                            <div className="flex justify-between gap-4">
-                                                <span className="text-[#94a3b8]">
-                                                    Submitted by
-                                                </span>
+                                        <h3 className="mt-2 truncate text-sm font-extrabold text-[#172337]">
+                                            {getJobTitle(report)}
+                                        </h3>
 
-                                                <span className="font-semibold text-[#334155]">
-                                                    {
-                                                        item.submittedBy
-                                                    }
-                                                </span>
-                                            </div>
+                                        <p className="mt-1 text-sm text-[#667085]">
+                                            {getReason(report)}
+                                        </p>
 
-                                            <div className="flex justify-between gap-4">
-                                                <span className="text-[#94a3b8]">
-                                                    Submitted
-                                                </span>
+                                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#98A2B3]">
+                                            <span className="inline-flex items-center gap-1">
+                                                <UserRound className="h-3.5 w-3.5" />
+                                                {getReportedBy(
+                                                    report
+                                                )}
+                                            </span>
 
-                                                <span className="font-semibold text-[#334155]">
-                                                    {
-                                                        item.date
-                                                    }
-                                                </span>
-                                            </div>
+                                            <span className="inline-flex items-center gap-1">
+                                                <CalendarDays className="h-3.5 w-3.5" />
+                                                {formatDate(
+                                                    report.reported_at ||
+                                                        report.created_at
+                                                )}
+                                            </span>
                                         </div>
+                                    </div>
+
+                                    <div className="flex shrink-0 flex-wrap items-center gap-2">
 
                                         <button
                                             type="button"
                                             onClick={() =>
                                                 navigate(
-                                                    `reports/${item.id}`
+                                                    `/reports/${report.id}/`
                                                 )
                                             }
-                                            className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-[#00b4d8] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#009bbb]"
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-3 py-2 text-xs font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF]"
                                         >
-                                            Review Report
-                                            <ArrowRight className="h-4 w-4" />
+                                            <Eye className="h-3.5 w-3.5" />
+                                            View
                                         </button>
+
+                                        {isAdmin &&
+                                            status === "Pending" && (
+                                                <button
+                                                    type="button"
+                                                    disabled={busy}
+                                                    onClick={() =>
+                                                        runAction(
+                                                            report,
+                                                            "review"
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#6D4AFF] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#5A3AE0] disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <Clock3 className="h-3.5 w-3.5" />
+                                                    Start Review
+                                                </button>
+                                            )}
+
+                                        {isAdmin &&
+                                            status ===
+                                                "Under Review" && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            busy
+                                                        }
+                                                        onClick={() =>
+                                                            runAction(
+                                                                report,
+                                                                "resolve"
+                                                            )
+                                                        }
+                                                        className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        <Gavel className="h-3.5 w-3.5" />
+                                                        Resolve
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            busy
+                                                        }
+                                                        onClick={() =>
+                                                            runAction(
+                                                                report,
+                                                                "reject"
+                                                            )
+                                                        }
+                                                        className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        <XCircle className="h-3.5 w-3.5" />
+                                                        Reject
+                                                    </button>
+                                                </>
+                                            )}
+
                                     </div>
-                                );
-                            })}
-                        </div>
-                    </>
-                )}
-            </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
 
             {!loading &&
-                !error &&
-                queueItems.length > 0 &&
-                totalPages > 1 && (
-                    <div className="mt-4 flex items-center justify-between rounded-2xl border border-[#e2e8f0] bg-white px-5 py-4">
-                        <button
-                            type="button"
-                            disabled={safePage === 1}
-                            onClick={() =>
-                                setPage((current) =>
-                                    Math.max(1, current - 1)
-                                )
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            Previous
-                        </button>
+                (reports.length > 0 || totalPages > 1) && (
+                    <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-                        <div className="flex items-center gap-1">
-                            {Array.from(
-                                { length: totalPages },
-                                (_, index) => index + 1
-                            ).map((pageNumber) => (
-                                <button
-                                    key={pageNumber}
-                                    type="button"
-                                    onClick={() =>
-                                        setPage(pageNumber)
-                                    }
-                                    className={`h-8 min-w-8 rounded-lg px-2 text-xs font-bold transition ${
-                                        safePage === pageNumber
-                                            ? "bg-[#00b4d8] text-white"
-                                            : "text-[#64748b] hover:bg-[#f1f5f9]"
-                                    }`}
-                                >
-                                    {pageNumber}
-                                </button>
-                            ))}
-                        </div>
+                        <p className="text-xs font-semibold text-[#98A2B3]">
+                            Page {currentPage} of {totalPages}
+                            {totalCount !== null &&
+                                ` — ${totalCount} in queue`}
+                        </p>
 
-                        <button
-                            type="button"
-                            disabled={safePage === totalPages}
-                            onClick={() =>
-                                setPage((current) =>
-                                    Math.min(
-                                        totalPages,
-                                        current + 1
+                        <div className="flex items-center gap-2">
+
+                            <button
+                                type="button"
+                                disabled={
+                                    !hasPrevious &&
+                                    currentPage === 1
+                                }
+                                onClick={() =>
+                                    setPage((current) =>
+                                        Math.max(1, current - 1)
                                     )
-                                )
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-xs font-bold text-[#475569] transition hover:bg-[#f8fafc] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                            Next
-                        </button>
+                                }
+                                className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF] disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Previous
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={
+                                    !hasNext &&
+                                    currentPage === totalPages
+                                }
+                                onClick={() =>
+                                    setPage((current) =>
+                                        Math.min(
+                                            totalPages,
+                                            current + 1
+                                        )
+                                    )
+                                }
+                                className="rounded-xl border border-[#E2E8F0] bg-white px-4 py-2.5 text-sm font-bold text-[#475467] transition hover:border-[#6D4AFF] hover:text-[#6D4AFF] disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                                Next
+                            </button>
+
+                        </div>
                     </div>
                 )}
+
         </ModeratorSectionPage>
     );
-};
-
-const QueueStat = ({
-    icon: Icon,
-    label,
-    value,
-    description,
-}) => {
-    return (
-        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-5">
-            <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ecfeff] text-[#00a6c7]">
-                    <Icon className="h-5 w-5" />
-                </div>
-
-                <span className="text-2xl font-extrabold text-[#1e293b]">
-                    {value}
-                </span>
-            </div>
-
-            <h3 className="mt-4 text-sm font-extrabold text-[#334155]">
-                {label}
-            </h3>
-
-            <p className="mt-1 text-xs text-[#94a3b8]">
-                {description}
-            </p>
-        </div>
-    );
-};
-
-const QueueSectionCard = ({
-    icon: Icon,
-    title,
-    description,
-    count,
-    onClick,
-}) => {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="group rounded-2xl border border-[#e2e8f0] bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-[#bae6fd] hover:shadow-sm"
-        >
-            <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ecfeff] text-[#00a6c7]">
-                    <Icon className="h-5 w-5" />
-                </div>
-
-                <span className="rounded-full bg-[#f1f5f9] px-2.5 py-1 text-xs font-bold text-[#475569]">
-                    {count}
-                </span>
-            </div>
-
-            <h3 className="mt-4 text-sm font-extrabold text-[#1e293b]">
-                {title}
-            </h3>
-
-            <p className="mt-1 text-sm leading-5 text-[#64748b]">
-                {description}
-            </p>
-
-            <div className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#00a6c7]">
-                Open section
-                <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-            </div>
-        </button>
-    );
-};
-
-export default ReviewQueue;
+}

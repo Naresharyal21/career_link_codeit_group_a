@@ -1,4 +1,4 @@
-export const nepallocation = [
+export const nepalLocations = [
     "Bhaktapur",
     "Biratnagar",
     "Birgunj",
@@ -13,3 +13,5 @@ export const nepallocation = [
     "Nepalgunj",
     "Pokhara",
 ];
+
+export const nepallocation = nepalLocations;

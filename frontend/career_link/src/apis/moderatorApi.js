@@ -8,9 +8,18 @@ export const getDashboard = async () => {
 };
 
 
-export const getReports = async () => {
+export const getReports = async (params = {}) => {
+    const query = new URLSearchParams(
+        Object.entries(params).filter(
+            ([, value]) =>
+                value !== undefined && value !== null && value !== ""
+        )
+    ).toString();
+
     return apiClient.get(
-        MODERATOR_ENDPOINTS.REPORTS
+        query
+            ? `${MODERATOR_ENDPOINTS.REPORTS}?${query}`
+            : MODERATOR_ENDPOINTS.REPORTS
     );
 };
 
@@ -87,9 +96,20 @@ export const rejectReport = async (
 
 
 
-export const getJobApprovals = async () => {
+export const getJobApprovals = async (
+    params = {}
+) => {
+    const query = new URLSearchParams(
+        Object.entries(params).filter(
+            ([, value]) =>
+                value !== undefined && value !== null && value !== ""
+        )
+    ).toString();
+
     return apiClient.get(
-        MODERATOR_ENDPOINTS.JOB_APPROVALS
+        query
+            ? `${MODERATOR_ENDPOINTS.JOB_APPROVALS}?${query}`
+            : MODERATOR_ENDPOINTS.JOB_APPROVALS
     );
 };
 

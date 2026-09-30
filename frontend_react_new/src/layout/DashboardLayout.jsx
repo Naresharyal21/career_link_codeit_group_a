@@ -9,7 +9,7 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem('access_token');
+      const token = sessionStorage.getItem('access_token');
       if (!token) return;
       try {
         const response = await axios.get('http://localhost:8000/api/v1/accounts/me/', {
@@ -24,7 +24,7 @@ const DashboardLayout = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    sessionStorage.removeItem('access_token');
     navigate('/');
   };
 

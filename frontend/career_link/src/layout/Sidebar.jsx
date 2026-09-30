@@ -36,7 +36,7 @@ const navigationLinks = [
   },
   {
     name: "Reports",
-    path: "reports",
+    path: "/reports",
     icon: MdReport,
   },
 ];

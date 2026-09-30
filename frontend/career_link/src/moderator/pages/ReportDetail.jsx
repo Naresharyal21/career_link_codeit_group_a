@@ -1,4 +1,3 @@
-
 import {
     useEffect,
     useMemo,
@@ -286,6 +285,25 @@ export default function ReportDetail() {
               "Unknown user";
 
 
+    // Backend allows the reporter to PATCH their own report while
+    // it's still Pending (see moderator/permissions.py); this
+    // mirrors that so the Update button only shows when the edit
+    // would actually be allowed.
+    const isOwnReport =
+        currentUser?.id != null &&
+        report?.reported_by != null &&
+        String(currentUser.id) ===
+            String(
+                typeof report.reported_by === "object"
+                    ? report.reported_by.id
+                    : report.reported_by
+            );
+
+
+    const canEdit =
+        canModerate || (isOwnReport && status === "pending");
+
+
     const reporterEmail =
         typeof report?.reported_by === "object" &&
         report?.reported_by !== null
@@ -309,11 +327,11 @@ export default function ReportDetail() {
         typeof report?.reported_job === "object" &&
         report?.reported_job !== null
             ? report.reported_job.title ||
-              `Job #${report.reported_job.id}`
+              `Job report.reported_job.id}`
             : report?.reported_job_title ||
               report?.job?.title ||
               (reportedJobId
-                  ? `Job #${reportedJobId}`
+                  ? `Job ${reportedJobId}`
                   : "Unknown job");
 
 
@@ -691,21 +709,23 @@ export default function ReportDetail() {
                             Refresh
                         </button>
 
+                        {!userLoading && canEdit && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate(
+                                        `/reports/${report.id}/edit/`
+                                    )
+                                }
+                                className="inline-flex items-center gap-2 rounded-xl bg-[#6D4AFF] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#5B21B6] disabled:opacity-50"
+                            >
+                                <Pencil className="h-4 w-4" />
+                                Update
+                            </button>
+                        )}
+
                         {!userLoading && canModerate && (
                             <>
-                                <button
-                                        type="button"
-                                        onClick={() =>
-                                            navigate(
-                                                `/reports/${report.id}/edit/`
-                                            )
-                                        }
-                                    className="inline-flex items-center gap-2 rounded-xl bg-[#6D4AFF] px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-[#5B21B6] disabled:opacity-50"
-                                >
-                                    <Pencil className="h-4 w-4" />
-                                    Update
-                                </button>
-
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -1922,4 +1942,3 @@ function QuickRow({
         </div>
     );
 }
-

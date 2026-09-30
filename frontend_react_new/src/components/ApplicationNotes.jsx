@@ -10,7 +10,7 @@ const ApplicationNotes = ({ applicationId }) => {
   }, [applicationId]);
 
   const fetchNotes = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     try {
       const response = await axios.get('http://localhost:8000/api/v1/applications/notes/', {
         headers: { Authorization: 'Bearer ' + token }
@@ -23,7 +23,7 @@ const ApplicationNotes = ({ applicationId }) => {
 
   const handleAddNote = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     try {
       await axios.post('http://localhost:8000/api/v1/applications/notes/', 
         { application: applicationId, note: newNote },

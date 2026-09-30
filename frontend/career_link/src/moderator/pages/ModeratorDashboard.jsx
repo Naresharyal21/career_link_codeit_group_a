@@ -399,114 +399,33 @@ export default function ModeratorDashboard() {
 
                 <header className="mb-8">
 
-                    <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                        {/* Left: title */}
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            {/* Left: title */}
+                            <div className="min-w-0">
+                                <h1 className="font-montserrat text-headline-lg font-bold text-on-surface md:text-headline-xl">
+                                    Moderation Dashboard
+                                </h1>
 
-                        <div>
-
-                            <div className="mb-4 flex items-center gap-3">
-
-                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-fixed text-primary">
-                                    <span className="material-symbols-outlined">
-                                        admin_panel_settings
-                                    </span>
-                                </div>
-
-                                <div>
-                                    <p className="text-label-md font-semibold uppercase tracking-wider text-primary">
-                                        CareerLink Moderator
-                                    </p>
-
-                                    <p className="text-xs text-on-surface-variant">
-                                        Secure moderation workspace
-                                    </p>
-                                </div>
-
+                                <p className="mt-3 max-w-3xl text-body-md leading-7 text-on-surface-variant">
+                                    Monitor reports, review suspicious activity, approve employer jobs,
+                                    and manage moderation operations from one place.
+                                </p>
                             </div>
 
-                            <h1 className="font-montserrat text-headline-lg font-bold text-on-surface md:text-headline-xl">
-                                Moderation Dashboard
-                            </h1>
+                        {/* Right: ONLY Refresh */}
+                        <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="career-secondary-button"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">
+                            refresh
+                        </span>
+                        Refresh
+                    </button>
 
-                            <p className="mt-3 max-w-3xl text-body-md leading-7 text-on-surface-variant">
-                                Monitor reports, review suspicious
-                                activity, approve employer jobs,
-                                and manage moderation operations
-                                from one place.
-                            </p>
-
-                        </div>
-
-
-                        <div className="flex flex-wrap gap-3">
-
-                            {showModeratorActions && (
-                                <>
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            navigate(
-                                                "/reports/create/"
-                                            )
-                                        }
-                                        className="career-primary-button"
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            add_circle
-                                        </span>
-
-                                        Create Report
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            navigate(
-                                                "/reports/job-approvals/"
-                                            )
-                                        }
-                                        className="career-secondary-button"
-                                    >
-                                        <span className="material-symbols-outlined text-[19px]">
-                                            work
-                                        </span>
-
-                                        Job Approvals
-                                    </button>
-                                </>
-                            )}
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    loadDashboard();
-                                    loadJobApprovals();
-                                }}
-                                disabled={
-                                    loading ||
-                                    jobLoading
-                                }
-                                className="career-secondary-button"
-                            >
-                                <span
-                                    className={`material-symbols-outlined ${
-                                        loading ||
-                                        jobLoading
-                                            ? "animate-spin"
-                                            : ""
-                                    }`}
-                                >
-                                    refresh
-                                </span>
-
-                                {loading ||
-                                jobLoading
-                                    ? "Refreshing..."
-                                    : "Refresh"}
-                            </button>
-
-                        </div>
                     </div>
-
                 </header>
 
 
@@ -1288,8 +1207,8 @@ function JobApprovalItem({
         approval?.job?.title ||
         (typeof approval?.job ===
         "object"
-            ? `Job #${approval.job.id}`
-            : `Job #${approval?.job || "N/A"}`);
+            ? `Job ${approval.job.id}`
+            : `Job ${approval?.job || "N/A"}`);
 
 
     const companyName =
@@ -1333,7 +1252,7 @@ function JobApprovalItem({
 
                         {jobId && (
                             <span>
-                                Job #{jobId}
+                                Job {jobId}
                             </span>
                         )}
 

@@ -27,8 +27,8 @@ class User(AbstractUser, TimeStamp):
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
-        return self.username
-
+        return f"{self.email} - {self.get_role_display()}"
+  
 
 class JobseekerProfile(TimeStamp):
     """
@@ -80,7 +80,8 @@ class EmployerProfile(TimeStamp):
         on_delete=models.CASCADE,
         related_name="employer_profile",
     )
-   
+
+    company_name = models.CharField(max_length=100)
     company_description = models.CharField(max_length=100, blank=True)
     location = models.CharField(max_length=50)
     website = models.URLField(blank=True)

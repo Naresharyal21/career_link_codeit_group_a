@@ -12,7 +12,7 @@ const JobDetailPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = sessionStorage.getItem('access_token');
         const config = token ? { headers: { Authorization: 'Bearer ' + token } } : {};
         
         // Fetch Job Details
@@ -33,7 +33,7 @@ const JobDetailPage = () => {
   }, [id]);
 
   const handleApply = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = sessionStorage.getItem('access_token');
     if (!token) {
         navigate('/login');
         return;

@@ -1,6 +1,6 @@
 import useApi from "./useApi";
 import accountsApi from "../apis/accountsApi";
-import apiClient from "../apis/apiClient";
+
 
 const useAccounts = () => {
   const { data, loading, error, execute } = useApi();
@@ -14,7 +14,8 @@ const useAccounts = () => {
   };
 
   const getMe = async () => {
-    return await execute(() => accountsApi.getMe());
+   return await execute(() => accountsApi.getMe());
+ 
   };
 
 
