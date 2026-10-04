@@ -16,7 +16,7 @@ class SkillSerializer(serializers.ModelSerializer):
 
 class JobPostingListSerializer(serializers.ModelSerializer):
     """Lighter serializer for the Browse Jobs list view."""
-    employer_name = serializers.CharField(source="employer.company_description", read_only=True)
+    employer_name = serializers.CharField(source="employer.company_name", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True, default=None)
     skills = SkillSerializer(many=True, read_only=True)
     job_type_display = serializers.CharField(source="get_job_type_display", read_only=True)
@@ -33,7 +33,7 @@ class JobPostingListSerializer(serializers.ModelSerializer):
 
 class JobPostingDetailSerializer(serializers.ModelSerializer):
     """Full serializer for the Job Detail view and creation."""
-    employer_name = serializers.CharField(source="employer.company_description", read_only=True)
+    employer_name = serializers.CharField(source="employer.company_name", read_only=True)
     # Writable fields for creation/update
     category = serializers.PrimaryKeyRelatedField(queryset=JobCategory.objects.all(), required=False)
     skills = serializers.PrimaryKeyRelatedField(queryset=Skill.objects.all(), many=True, required=False)
