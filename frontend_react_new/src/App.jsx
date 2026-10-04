@@ -14,6 +14,8 @@ import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import SavedJobsPage from './pages/SavedJobsPage';
 import DashboardLayout from './layout/DashboardLayout';
 
+import CVPage from './pages/CVPage';
+
 function App() {
   return (
     <Router>
@@ -27,11 +29,9 @@ function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardPage />} />
-import SavedJobsPage from './pages/SavedJobsPage';
-...
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="saved-jobs" element={<SavedJobsPage />} />
-          <Route path="cv" element={<div className="bg-white p-6 rounded-lg shadow">CV / Resume Page</div>} />
+          <Route path="cv" element={<CVPage />} />
           <Route path="manage-jobs" element={<ManageJobsPage />} />
           <Route path="post-job" element={<PostJobPage />} />
           <Route path="profile" element={<ProfileSettingsPage />} />
