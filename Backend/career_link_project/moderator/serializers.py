@@ -43,7 +43,7 @@ class AdminLoginSerializer(serializers.Serializer):
         password=password
      )
 
-     if not user:
+     if  user is None:
         raise serializers.ValidationError(
            "Invalid email or password"
         )
