@@ -5,18 +5,25 @@ import { useNavigate } from 'react-router'
 import { AuthenticationContext } from '../../context/AuthContext';
 import Button from '../../components/commonuiPart/Button';
 import ManageAccountCart from './ManageAccountCart';
+import AddResume from './AddResume';
+
 
 
 const MyProfilecart = () => {
   const navigate = useNavigate();
   const [showManageAccount , setShowManageAccount]=useState();
 
+  const [showAddResume, setShowAddResume]=useState(false);
+
   const { user } = useContext(AuthenticationContext);
+  
   const initials = user?.username
     ?.split(" ")
     .map((name) => name[0])
     .join("")
     .toUpperCase();
+
+ 
 
 
 
@@ -52,10 +59,20 @@ const MyProfilecart = () => {
        
           <Button className=' m-1' variant='logout' > Edit Profile Picture</Button>
         </li>
+
+{user.role=="js" && (
 <li>
        
-          <Button className='m-1  'variant='logout' > Add Resume</Button>
-        </li>
+          <Button className='m-1  'variant='logout' onClick={()=>{setShowAddResume(true)}} > Add Resume</Button>
+          </li>
+      
+      )}
+
+        {showAddResume&&(
+          <AddResume onClose={()=> setShowAddResume(false)}/>
+        )}
+
+
         {showManageAccount &&(
           <ManageAccountCart onClose={()=>setShowManageAccount(false)}/>
         )}

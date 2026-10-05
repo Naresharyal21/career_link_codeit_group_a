@@ -2,8 +2,14 @@ import React from 'react'
 import Button from '../commonuiPart/Button'
 import { useFormik } from 'formik'
 import { loginValidationSchema } from '../accounts/validationSchema'
+import useModerator from '../../hooks/useModerator'
+import {toast} from "react-toastify"
+
 
 const AdminLoginform = () => {
+
+
+  const {adminlogin}=useModerator();
 
   const formik = useFormik({
     initialValues: {
@@ -11,8 +17,22 @@ const AdminLoginform = () => {
       password: "",
     },
     validationSchema: loginValidationSchema,
+
+
     onSubmit: async (values) => {
-      console.log(values)
+      
+      try{
+      
+    const response=await adminlogin(values)
+   
+    console.log(response)
+        
+       
+     window.location.href = "http://localhost:8000/admin/";
+    
+      }catch(error){
+         toast.error("Login failed!")
+      }
     }
   })
 
