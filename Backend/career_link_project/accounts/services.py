@@ -35,16 +35,17 @@ def create_and_send_otp(user, purpose, email=None,expiry_minutes=3):
         is_verified=True
     )
 
+    recipient_email = (email or user.email).strip().lower()
+
     # Create new OTP
     email_otp = EmailOTP.objects.create(
         user=user,
+        email=recipient_email,
         otp=otp,
         expires_at=expires_at,
         purpose=purpose,
     )
 
-
-    recipient_email = email or user.email
     send_mail(
         f"Your Verification OTP for {purpose}",
         f"Your OTP is {otp}. It will expire in {expiry_minutes} minutes.",
@@ -58,17 +59,20 @@ def create_and_send_otp(user, purpose, email=None,expiry_minutes=3):
 # verification otp part
 
 
-def verify_otp(user, otp, purpose):
+def verify_otp(user, otp, purpose, email=None):
     ensure_emailotp_table()
 
-    try:
-        email_otp = EmailOTP.objects.filter(
-            user=user,
-            otp=otp,
-            purpose=purpose,
-            is_verified=False,
-        ).latest("created_at")
+    otp_query = EmailOTP.objects.filter(
+        user=user,
+        otp=otp,
+        purpose=purpose,
+        is_verified=False,
+    )
+    if email is not None:
+        otp_query = otp_query.filter(email=email)
 
+    try:
+        email_otp = otp_query.latest("created_at")
     except EmailOTP.DoesNotExist:
         return False, "Invalid OTP"
 

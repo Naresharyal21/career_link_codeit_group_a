@@ -25,16 +25,31 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "0.0.0.0",
+    "testserver",
+    "192.168.10.70",
 ]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://0.0.0.0:5173",
+    "http://0.0.0.0:5174",
+    "http://192.168.10.70:5173",
+    "http://192.168.10.70:5174",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://0.0.0.0:5173",
+    "http://0.0.0.0:5174",
+    "http://192.168.10.70:5173",
+    "http://192.168.10.70:5174",
 ]
 
 
@@ -149,6 +164,12 @@ STATIC_URL = "static/"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://0.0.0.0:5173",
+    "http://0.0.0.0:5174",
+    "http://192.168.10.70:5173",
+    "http://192.168.10.70:5174",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -157,7 +178,6 @@ CORS_ALLOW_CREDENTIALS = True
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 AUTH_USER_MODEL = "accounts.User"
-
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -189,14 +209,18 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = (
+    "django.core.mail.backends.console.EmailBackend"
+    if not os.getenv("EMAIL_HOST_USER")
+    else "django.core.mail.backends.smtp.EmailBackend"
+)
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or "noreply@localhost"
 
 
 SESSION_COOKIE_NAME = "sessionid"
@@ -207,5 +231,11 @@ SESSION_COOKIE_SECURE = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://0.0.0.0:5173",
+    "http://0.0.0.0:5174",
+    "http://192.168.10.70:5173",
+    "http://192.168.10.70:5174",
 ]
 CORS_ALLOW_CREDENTIALS = True

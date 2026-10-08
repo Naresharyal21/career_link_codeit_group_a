@@ -58,6 +58,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     # Employer fields
     # -------------------------
 
+    company_name = serializers.CharField(required=False, allow_blank=True)
     company_description = serializers.CharField(required=False, allow_blank=True)
 
     website = serializers.URLField(required=False, allow_blank=True)
@@ -74,6 +75,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "password",
             "role",
             "location",
+            "company_name",
             # Jobseeker
             "phone",
             "resume_file",
@@ -100,18 +102,23 @@ class RegistrationSerializer(serializers.ModelSerializer):
             )
 
         if role == User.Role.JOBSEEKERS:
-
-            if not attrs.get("location"):
+            if not attrs.get("username"):
                 raise serializers.ValidationError(
-                    {"location": "Location is required for jobseekers."}
+                    {"username": "Full name is required for jobseekers."}
                 )
 
         elif role == User.Role.EMPLOYEERS:
-
-            if not attrs.get("username"):
+            company_name = attrs.get("company_name") or attrs.get("username")
+            if not company_name:
                 raise serializers.ValidationError(
-                    {"username": "Company name is required for employers."}
+                    {"company_name": "Company name is required for employers."}
                 )
+            if not attrs.get("location"):
+                raise serializers.ValidationError(
+                    {"location": "Location is required for employers."}
+                )
+            attrs["company_name"] = company_name
+            attrs["username"] = company_name
 
         return attrs
 
@@ -130,23 +137,19 @@ class RegistrationSerializer(serializers.ModelSerializer):
         date_of_birth = validated_data.pop("date_of_birth", None)
 
         # Employer fields
-        company_name = validated_data.pop("company_name", "")
+        company_name = validated_data.pop("company_name", validated_data.get("username", ""))
         company_description = validated_data.pop("company_description", "")
         website = validated_data.pop("website", "")
         logo = validated_data.pop("logo", None)
 
-        # Get role
         role = validated_data.get("role")
 
-        # Get role
-        role = validated_data.get("role")
-        # Create User
+        if role == User.Role.EMPLOYEERS:
+            validated_data["username"] = company_name
+
         user = User.objects.create_user(**validated_data)
 
-        # Jobseeker Profile Creation
-
         if role == User.Role.JOBSEEKERS:
-
             JobseekerProfile.objects.create(
                 user=user,
                 full_name=user.username,
@@ -157,12 +160,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 date_of_birth=date_of_birth,
             )
 
-        # Employer Profile Creation
-
         elif role == User.Role.EMPLOYEERS:
-
             EmployerProfile.objects.create(
                 user=user,
+                company_name=company_name,
                 company_description=company_description,
                 website=website,
                 location=location,
