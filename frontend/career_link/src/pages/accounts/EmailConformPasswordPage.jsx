@@ -1,10 +1,11 @@
 
 import React, { useState } from "react";
-import { Link, replace, useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { toast } from "react-toastify";
 
-import { passwordRule, passwordconfirmRule } from "../../components/accounts/validationSchema";
+import { passwordRule } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
 
 const EmailConformPasswordPage = () => {
@@ -29,31 +30,19 @@ const EmailConformPasswordPage = () => {
       try {
        
 
-        const response = await confirmPassword(
-          
-          values.password
-         
-        );
-
-
-    navigate("/get/new/email/",{ replace:true});
-    
-        
-
-     
-
-        
+        await confirmPassword(values.password);
+        navigate("/get/new/email", { replace: true });
 
       } catch (error) {
-        console.log("Password reset error:", error);
+        toast.error(error.message || "Password confirmation failed.");
       }
     },
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
 
-      <div className="w-full max-w-md p-6 rounded-2xl shadow shadow-blue-600">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
 
         <h1 className="text-2xl font-bold mb-2">
           To Change Email Please Enter Your Password First.

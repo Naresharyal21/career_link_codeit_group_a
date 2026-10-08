@@ -7,8 +7,8 @@ const JobseekerForm = ({ formik }) => {
       {/* 
           PHONE
        */}
-<div className="flex justify-between">
-      <div className="mb-4 w-65">
+<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mb-4 w-full">
         <input
           id="phone"
           name="phone"
@@ -33,7 +33,7 @@ const JobseekerForm = ({ formik }) => {
           DATE OF BIRTH
        */}
 
-      <div className="mb-4 w-65">
+      <div className="mb-4 w-full">
         <input
           id="date_of_birth"
           name="date_of_birth"

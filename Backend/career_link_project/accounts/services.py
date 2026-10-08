@@ -1,5 +1,7 @@
 import secrets
 from datetime import timedelta
+
+from django.db import connection
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
@@ -7,7 +9,19 @@ from django.conf import settings
 from .models import EmailOTP
 
 
+def ensure_emailotp_table():
+    table_name = EmailOTP._meta.db_table
+
+    if table_name in connection.introspection.table_names():
+        return
+
+    with connection.schema_editor() as schema_editor:
+        schema_editor.create_model(EmailOTP)
+
+
 def create_and_send_otp(user, purpose, email=None,expiry_minutes=3):
+    ensure_emailotp_table()
+
     otp = str(secrets.randbelow(900000) + 100000)
 
     expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
@@ -45,6 +59,7 @@ def create_and_send_otp(user, purpose, email=None,expiry_minutes=3):
 
 
 def verify_otp(user, otp, purpose):
+    ensure_emailotp_table()
 
     try:
         email_otp = EmailOTP.objects.filter(

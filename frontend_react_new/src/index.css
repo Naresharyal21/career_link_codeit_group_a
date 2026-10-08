@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1e40af; /* Blue-800 */
+  --color-primary-dark: #1e3a8a; /* Blue-900 */
+  --color-secondary: #0ea5e9; /* Sky-500 */
+  --color-text-body: #374151; /* Gray-700 */
+  --color-text-heading: #111827; /* Gray-900 */
+}
+
+body {
+  @apply text-text-body bg-gray-50 antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply text-text-heading font-bold;
+}

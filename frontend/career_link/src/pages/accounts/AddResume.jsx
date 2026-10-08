@@ -7,13 +7,16 @@ const AddResume = ({onClose}) => {
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center '>
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
- <Button
-          type='button'
+        <Button
+          type="button"
           onClick={onClose}
-          variant='closeButton'><h2 className='font-bold -mt-1 '>X</h2></Button>
-
-
-      <AddResumeForm/>
+          variant="closeButton"
+          aria-label="Close resume dialog"
+        >
+          <span aria-hidden="true" className="font-bold">×</span>
+        </Button>
+        <h2 className="mb-5 pr-8 text-xl font-semibold text-slate-900">Upload your resume</h2>
+        <AddResumeForm onClose={onClose} />
       </div>
     </div>
   )

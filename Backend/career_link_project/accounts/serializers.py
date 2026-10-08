@@ -149,6 +149,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
             JobseekerProfile.objects.create(
                 user=user,
+                full_name=user.username,
                 phone=phone,
                 resume_file=resume_file,
                 location=location,
@@ -202,6 +203,7 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
+            "company_name",
             "company_description",
             "website",
             "location",

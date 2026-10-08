@@ -1,0 +1,15 @@
+GET    /api/v1/applications/
+POST   /api/v1/applications/
+
+GET    /api/v1/applications/<id>/
+PUT    /api/v1/applications/<id>/
+PATCH  /api/v1/applications/<id>/
+DELETE /api/v1/applications/<id>/
+
+GET    http://localhost:8000/api/v1/applications/saved-jobs/
+POST   http://localhost:8000/api/v1/applications/saved-jobs/
+GET    http://localhost:8000/api/v1/applications/saved-jobs/{id}/
+PATCH  http://localhost:8000/api/v1/applications/saved-jobs/{id}/
+DELETE http://localhost:8000/api/v1/applications/saved-jobs/{id}/
+GET    http://localhost:8000/api/v1/applications/saved-jobs/check/?job_id=1
+POST   http://localhost:8000/api/v1/applications/saved-jobs/toggle/

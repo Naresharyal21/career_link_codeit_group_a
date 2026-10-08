@@ -32,10 +32,10 @@ const EmployerForm = ({ formik }) => {
       {/* 
           COMPANY WEBSITE
        */}
-      <div className="flex justify-between">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 
 
-        <div className="mb-2 w-65">
+        <div className="mb-2 w-full">
           <input
             id="website"
             name="website"
@@ -60,7 +60,7 @@ const EmployerForm = ({ formik }) => {
           
 
 
-        <div className="mb-2 w-65">
+        <div className="mb-2 w-full">
           <input
             id="phone"
             name="phone"

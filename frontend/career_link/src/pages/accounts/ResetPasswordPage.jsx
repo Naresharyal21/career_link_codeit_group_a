@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { toast } from "react-toastify";
 
 import { passwordRule, passwordconfirmRule } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
@@ -26,28 +27,31 @@ const ResetPasswordPage = () => {
     onSubmit: async (values) => {
       try {
         const email = localStorage.getItem("resetemail");
+        if (!email) {
+          toast.error("Your password reset session expired. Request a new OTP.");
+          navigate("/forgetpassword", { replace: true });
+          return;
+        }
 
-        const response = await resetPassword(
-          email,
-          values.password
-        );
-
-        console.log("Password reset successful:", response);
+        await resetPassword(email, values.password);
 
         localStorage.removeItem("resetemail");
+        localStorage.removeItem("otpResendCooldown_prv");
+        localStorage.removeItem("forgotPasswordResendTime");
 
+        toast.success("Password reset successfully. Please sign in.");
         navigate("/login");
 
       } catch (error) {
-        console.log("Password reset error:", error);
+        toast.error(error.message || "Unable to reset your password.");
       }
     },
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
 
-      <div className="w-full max-w-md p-6 rounded-2xl shadow shadow-blue-600">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
 
         <h1 className="text-2xl font-bold mb-2">
           Reset Password
@@ -65,6 +69,7 @@ const ResetPasswordPage = () => {
             <input
               id="password"
               name="password"
+              autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="Enter new password"
               value={formik.values.password}
@@ -88,6 +93,7 @@ const ResetPasswordPage = () => {
             <input
               id="confirmpassword"
               name="confirmpassword"
+              autoComplete="new-password"
               type={showPassword ? "text" : "password"}
               placeholder="Confirm new password"
               value={formik.values.confirmpassword}
@@ -125,10 +131,10 @@ const ResetPasswordPage = () => {
           {/* SUBMIT */}
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || formik.isSubmitting}
             className="bg-green-600 text-white p-3 rounded-2xl w-full disabled:bg-gray-400"
           >
-            {loading ? "Resetting..." : "Reset Password"}
+            {loading || formik.isSubmitting ? "Resetting..." : "Reset Password"}
           </button>
 
         </form>

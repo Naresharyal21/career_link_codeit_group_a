@@ -4,7 +4,8 @@ import React, { useState } from "react";
 
 
 import { useFormik } from "formik";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 import EmployerForm from "./EmployerForm";
 import JobseekerForm from "./JobseekerForm";
@@ -48,9 +49,7 @@ const SignupForm = () => {
     onSubmit: async (values) => {
       try {
         // 1. Register user first
-        const response = await register(values);
-        console.log(response)
-
+        await register(values);
         // 2. Save email only after successful registration
         localStorage.setItem("signupemail", values.email);
 
@@ -58,7 +57,7 @@ const SignupForm = () => {
         navigate("/verifyotp/emv");
 
       } catch (err) {
-        console.error("Registration failed:", err);
+        toast.error(err.message || "Registration failed. Please try again.");
       }
     },
   });
@@ -69,27 +68,8 @@ const SignupForm = () => {
   };
 
   const handleRoleChange = (newRole) => {
-    if (newRole === "js") {
-      formik.resetForm({
-        values: {
-          ...formik.initialValues,
-          role: "js"
-        },
-
-      });
-
-    }
-
-    if (newRole === "ep") {
-      formik.resetForm({
-        values: {
-          ...formik.initialValues,
-          role: "ep"
-        },
-
-      });
-
-    }
+    formik.setFieldValue("role", newRole);
+    formik.setTouched({});
   };
 
   return (
@@ -121,8 +101,8 @@ const SignupForm = () => {
       </div>
 
       {/* USERNAME / COMPANY NAME & EMAIL */}
-      <div className="flex justify-between">
-        <div className="mb-4 w-65">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mb-4 w-full">
           <input
             id="username"
             name="username"
@@ -137,21 +117,14 @@ const SignupForm = () => {
             onBlur={formik.handleBlur}
             className="border rounded p-2 w-full"
           />
-          {formik.touched[
-            formik.values.role === "ep" ? "company_name" : "username"
-          ] &&
-            formik.errors[
-            formik.values.role === "ep" ? "company_name" : "username"
-            ] && (
+          {formik.touched.username && formik.errors.username && (
               <p className="text-red-700">
-                {formik.errors[
-                  formik.values.role === "ep" ? "company_name" : "username"
-                ]}
+                {formik.errors.username}
               </p>
             )}
         </div>
 
-        <div className="mb-4 w-65">
+        <div className="mb-4 w-full">
           <input
             id="email"
             name="email"
@@ -173,8 +146,8 @@ const SignupForm = () => {
       </div>
 
       {/* PASSWORD */}
-      <div className="flex justify-between">
-        <div className="mb-4 w-65">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="relative mb-4 w-full">
           <input
             id="password"
             name="password"
@@ -188,7 +161,8 @@ const SignupForm = () => {
           <button
             type="button"
             onClick={handletoggle}
-            className="-ml-9 absolute mt-3 w-4 text-amber-600"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-2.5 text-amber-700"
           >
             {showPassword ? <FiEye /> : <FiEyeOff />}
           </button>
@@ -197,7 +171,7 @@ const SignupForm = () => {
           )}
         </div>
         {/* conform  PASSWORD */}
-        <div className="mb-4 w-65 ">
+        <div className="relative mb-4 w-full">
           <input
             id="confirmpassword"
             name="confirmpassword"
@@ -211,7 +185,8 @@ const SignupForm = () => {
           <button
             type="button"
             onClick={handletoggle}
-            className="-ml-9 absolute mt-3 w-4 text-amber-600"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-2.5 text-amber-700"
           >
             {showPassword ? <FiEye /> : <FiEyeOff />}
           </button>
@@ -256,12 +231,12 @@ const SignupForm = () => {
         <Button
           type="submit"
           disabled={loading}
-          className=" px-6 py-3 rounded-3xl hover:-translate-y-1 transition disabled:opacity-50"
+          className="w-full rounded-xl px-6 py-3 transition hover:-translate-y-0.5 disabled:opacity-50"
         >
           {loading ? "Creating account..." : "Register"}
         </Button>
         <Link
-          className="ml-90 mt-2 text-x text-blue-600 underline hover:text-purple-800"
+          className="mt-3 text-center text-sm text-blue-700 underline hover:text-blue-900"
           to="/login"
         >
           already have account?

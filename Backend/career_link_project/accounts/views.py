@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import LoginSerializer
 
@@ -12,6 +12,7 @@ from .serializers import (
     RegistrationSerializer,
     JobseekerProfileSerializer,
     EmployerProfileSerializer,
+    UserSerializer,
    
 )
 from .models import (
@@ -38,7 +39,7 @@ class LoginView(TokenObtainPairView):
 
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
         user = request.user
@@ -62,36 +63,34 @@ class MeView(APIView):
             }
         )
 
+
     def put(self, request):
         user = request.user
-
+        
+        # Determine profile based on role
         if user.role == User.Role.JOBSEEKERS:
             profile = JobseekerProfile.objects.filter(user=user).first()
+            if not profile: return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = JobseekerProfileSerializer(profile, data=request.data, partial=True)
+        elif user.role == User.Role.EMPLOYEERS:
+            profile = EmployerProfile.objects.filter(user=user).first()
+            if not profile: return Response({"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND)
+            serializer = EmployerProfileSerializer(profile, data=request.data, partial=True)
+        else:
+            return Response({"error": "Role not supported"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if not profile:
-                return Response(
-                    {"error": "Jobseeker profile not found"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            serializer = JobseekerProfileSerializer(
-                profile,
-                data=request.data,
-                partial=True,
-            )
-
-            serializer.is_valid(raise_exception=True)
+        # Update User details (username, email)
+        user_serializer = UserSerializer(user, data=request.data, partial=True)
+        
+        if serializer.is_valid() and user_serializer.is_valid():
             serializer.save()
+            user_serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        errors = serializer.errors
+        errors.update(user_serializer.errors)
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK,
-            )
-
-        return Response(
-            {"error": "Profile picture upload is only available for jobseekers"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
 
 class ForgetPasswordView(APIView):
