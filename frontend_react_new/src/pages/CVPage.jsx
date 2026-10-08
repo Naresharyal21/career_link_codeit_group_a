@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient, { apiUrl } from '../api';
 
 const CVPage = () => {
   const [profile, setProfile] = useState(null);
@@ -17,7 +17,7 @@ const CVPage = () => {
     const token = sessionStorage.getItem('access_token');
     if (!token) return;
     try {
-      const res = await axios.get('http://localhost:8000/api/v1/accounts/me/', {
+      const res = await apiClient.get('/accounts/me/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data.profile);
@@ -52,7 +52,7 @@ const CVPage = () => {
 
     try {
       // Use PUT since the backend only defines get and put for UserProfileView
-      const res = await axios.put('http://localhost:8000/api/v1/accounts/me/', formData, {
+      await apiClient.put('/accounts/me/', formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -128,7 +128,7 @@ const CVPage = () => {
                 <p className="text-xs text-gray-500 mt-0.5">Uploaded successfully</p>
               </div>
               <a 
-                href={profile.resume_file.startsWith('http') ? profile.resume_file : `http://localhost:8000${profile.resume_file}`} 
+                href={apiUrl(profile.resume_file)}
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="btn-secondary py-2 px-4 text-xs shrink-0"

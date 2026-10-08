@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 
 const DashboardPage = () => {
   const [data, setData] = useState({ applications: [], savedJobs: [], profile: {} });
@@ -12,14 +12,14 @@ const DashboardPage = () => {
       try {
         const config = { headers: { Authorization: 'Bearer ' + token } };
         // Fetch profile first to know the role
-        const profileRes = await axios.get('http://localhost:8000/api/v1/accounts/me/', config);
+        const profileRes = await apiClient.get('/accounts/me/', config);
         const profile = profileRes.data;
 
-        const requests = [axios.get('http://localhost:8000/api/v1/applications/', config)];
+        const requests = [apiClient.get('/applications/', config)];
 
         // Only fetch saved jobs for Job Seekers
         if (profile.role === 'js') {
-          requests.push(axios.get('http://localhost:8000/api/v1/applications/saved-jobs/', config));
+          requests.push(apiClient.get('/applications/saved-jobs/', config));
         }
 
         const responses = await Promise.all(requests);

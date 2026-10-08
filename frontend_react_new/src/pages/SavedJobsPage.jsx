@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { Link, useNavigate } from 'react-router-dom';
 
 const SavedJobsPage = () => {
@@ -17,7 +17,7 @@ const SavedJobsPage = () => {
 
       try {
         const config = { headers: { Authorization: 'Bearer ' + token } };
-        const response = await axios.get('http://localhost:8000/api/v1/applications/saved-jobs/', config);
+        const response = await apiClient.get('/applications/saved-jobs/', config);
         const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
         setSavedJobs(data);
       } catch (err) {

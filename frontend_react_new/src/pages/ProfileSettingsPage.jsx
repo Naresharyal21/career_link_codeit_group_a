@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 
 const ProfileSettingsPage = () => {
   const [profileData, setProfileData] = useState(null);
@@ -15,7 +15,7 @@ const ProfileSettingsPage = () => {
     const token = sessionStorage.getItem('access_token');
     if (!token) return;
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/accounts/me/', {
+      const response = await apiClient.get('/accounts/me/', {
         headers: { Authorization: 'Bearer ' + token }
       });
       setProfileData(response.data);
@@ -32,7 +32,7 @@ const ProfileSettingsPage = () => {
     setError('');
     setMessage('');
     try {
-      await axios.put('http://localhost:8000/api/v1/accounts/me/', {
+      await apiClient.put('/accounts/me/', {
         username: profileData.username,
         email: profileData.email,
         ...profileData.profile
@@ -145,8 +145,11 @@ const ProfileSettingsPage = () => {
                 <input type="text" name="username" value={username || ""} onChange={handleUserChange} placeholder="Enter your username" className="form-input" />
               </div>
               <div>
-                <label className="form-label">Email Address</label>
-                <input type="email" name="email" value={email || ""} onChange={handleUserChange} placeholder="you@example.com" className="form-input" />
+                <label className="form-label" htmlFor="profile-email">Email Address</label>
+                <input id="profile-email" type="email" name="email" value={email || ""} readOnly aria-describedby="email-change-help" className="form-input bg-gray-100" />
+                <p id="email-change-help" className="mt-1 text-xs text-gray-500">
+                  Email changes require verification.
+                </p>
               </div>
             </div>
           </div>

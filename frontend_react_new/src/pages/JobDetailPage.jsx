@@ -1,40 +1,63 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 
 const JobDetailPage = () => {
   const { id } = useParams();
   const [job, setJob] = useState(null);
+  const [jobLoading, setJobLoading] = useState(true);
+  const [jobLoadError, setJobLoadError] = useState('');
   const [hasApplied, setHasApplied] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [applying, setApplying] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn] = useState(() => {
+    const token = sessionStorage.getItem('access_token');
+    return !!token && token !== 'undefined' && token !== 'null';
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
+    let isCurrent = true;
     const token = sessionStorage.getItem('access_token');
-    setIsLoggedIn(!!token && token !== 'undefined' && token !== 'null');
 
     const fetchData = async () => {
+      setJobLoading(true);
+      setJobLoadError('');
+      setJob(null);
+      setHasApplied(false);
       try {
-        const config = token ? { headers: { Authorization: 'Bearer ' + token } } : {};
-
-        // Fetch Job Details
-        const jobRes = await axios.get('http://localhost:8000/api/v1/jobs/' + id + '/');
-        setJob(jobRes.data);
-
-        // Check if already applied
-        if (token) {
-          const appRes = await axios.get('http://localhost:8000/api/v1/applications/', config);
-          const apps = Array.isArray(appRes.data) ? appRes.data : (appRes.data.results || []);
-          const applied = apps.some(app => String(app.job) === String(id));
-          setHasApplied(applied);
+        const jobRes = await apiClient.get('/jobs/' + id + '/');
+        if (isCurrent) {
+          setJob(jobRes.data);
         }
       } catch (err) {
-        console.error("Error fetching data", err);
+        console.error("Error fetching job", err);
+        if (isCurrent) {
+          setJobLoadError('This job could not be loaded. It may no longer be available.');
+        }
+      } finally {
+        if (isCurrent) {
+          setJobLoading(false);
+        }
+      }
+
+      if (token && isCurrent) {
+        try {
+          const config = { headers: { Authorization: 'Bearer ' + token } };
+          const appRes = await apiClient.get('/applications/', config);
+          const apps = Array.isArray(appRes.data) ? appRes.data : (appRes.data.results || []);
+          if (isCurrent) {
+            setHasApplied(apps.some(app => String(app.job) === String(id)));
+          }
+        } catch (err) {
+          console.error("Error checking application status", err);
+        }
       }
     };
     fetchData();
+    return () => {
+      isCurrent = false;
+    };
   }, [id]);
 
   const handleApply = async () => {
@@ -45,7 +68,7 @@ const JobDetailPage = () => {
     }
     setApplying(true);
     try {
-      await axios.post('http://localhost:8000/api/v1/applications/',
+      await apiClient.post('/applications/',
         { job: id },
         { headers: { Authorization: 'Bearer ' + token } }
       );
@@ -60,8 +83,7 @@ const JobDetailPage = () => {
     }
   };
 
-  // Loading State
-  if (!job) return (
+  if (jobLoading) return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar skeleton */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -99,6 +121,21 @@ const JobDetailPage = () => {
       </div>
     </div>
   );
+
+  if (jobLoadError || !job) {
+    return (
+      <main className="min-h-screen bg-gray-50 px-6 py-20">
+        <div className="mx-auto max-w-xl rounded-3xl border border-red-100 bg-white p-8 text-center shadow-sm">
+          <p className="text-lg font-bold text-gray-900" role="alert">
+            {jobLoadError || 'This job is no longer available.'}
+          </p>
+          <Link to="/" className="mt-5 inline-flex rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700">
+            Browse other jobs
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   const jobTypeColor = (type) => {
     switch (type) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 
 /* ─── Nav item definitions with icons ─── */
@@ -45,7 +45,7 @@ const DashboardLayout = () => {
       const token = sessionStorage.getItem('access_token');
       if (!token) return;
       try {
-        const res = await axios.get('http://localhost:8000/api/v1/accounts/me/', {
+        const res = await apiClient.get('/accounts/me/', {
           headers: { Authorization: 'Bearer ' + token }
         });
         setUserData({ username: res.data.username, role: res.data.role });

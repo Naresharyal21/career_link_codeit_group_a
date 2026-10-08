@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -17,7 +17,7 @@ const LoginPage = () => {
     setLoading(true);
     try {
       // The backend LoginSerializer expects 'email' and 'password' in the request payload
-      const response = await axios.post('http://localhost:8000/api/v1/accounts/login/', formData);
+      const response = await apiClient.post('/accounts/login/', formData);
       sessionStorage.setItem('access_token', response.data.access);
       navigate('/dashboard');
     } catch (err) {
@@ -108,7 +108,7 @@ const LoginPage = () => {
 
             {/* Email */}
             <div>
-              <label className="form-label">Email Address</label>
+              <label className="form-label" htmlFor="login-email">Email Address</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,7 +116,7 @@ const LoginPage = () => {
                   </svg>
                 </span>
                 <input
-                  type="email" name="email" value={formData.email} onChange={handleChange}
+                  id="login-email" type="email" name="email" value={formData.email} onChange={handleChange}
                   placeholder="name@company.com"
                   className="form-input !pl-11"
                   required
@@ -127,7 +127,7 @@ const LoginPage = () => {
             {/* Password */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="form-label mb-0">Password</label>
+                <label className="form-label mb-0" htmlFor="login-password">Password</label>
                 <Link to="/forgot-password" className="text-xs text-blue-600 font-semibold hover:underline">
                   Forgot Password?
                 </Link>
@@ -139,7 +139,7 @@ const LoginPage = () => {
                   </svg>
                 </span>
                 <input
-                  type={showPw ? 'text' : 'password'} name="password" value={formData.password}
+                  id="login-password" type={showPw ? 'text' : 'password'} name="password" value={formData.password}
                   onChange={handleChange} placeholder="Enter your password"
                   className="form-input !pl-11 !pr-12"
                   required
