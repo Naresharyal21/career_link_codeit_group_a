@@ -22,9 +22,11 @@ import MyApplicationsPage from "./applications/components/pages/MyApplicationsPa
 import NotificationsPage from "./notifications/components/pages/NotificationsPage";
 import ModeratorRoutes from "./routes/ModeratorRoutes";
 import employerRoutes from "./routes/EmployerRoutes";
+import AdminLogin from "./pages/moderator/AdminLogin";
 const AppRoutes = () => {
     return (
         <Routes>
+            <Route path="/custom/admin/login" element={<AdminLogin />} />
             <Route element={<DashboardLayout />}>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />

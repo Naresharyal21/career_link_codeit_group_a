@@ -20,20 +20,17 @@ const AdminLoginform = () => {
 
 
     onSubmit: async (values) => {
-      
-      try{
-      
-    const response=await adminlogin(values)
-   
-    console.log(response)
-        
-       
-     window.location.href = "http://localhost:8000/admin/";
-    
-      }catch(error){
-         toast.error("Login failed!")
+      try {
+        await adminlogin(values);
+        const apiBaseUrl = new URL(
+          import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1",
+          window.location.origin
+        );
+        window.location.assign(new URL("/admin/", apiBaseUrl.origin));
+      } catch (error) {
+        toast.error(error.message || "Login failed!");
       }
-    }
+    },
   })
 
 
@@ -48,9 +45,12 @@ const AdminLoginform = () => {
       <form onSubmit={formik.handleSubmit} className='flex w-90  flex-col  '>
         <div className=' mb-10  '>
 
-          <input className='w-90 border p-3 rounded-3xl '
-            type="email"
-            name="email"
+          <input className='w-full border p-3 rounded-3xl '
+              id="email"
+              type="email"
+              name="email"
+              autoComplete="email"
+              aria-label="Email address"
             placeholder="Enter your email"
             value={formik.values.email}
             onChange={formik.handleChange}
@@ -66,9 +66,12 @@ const AdminLoginform = () => {
 
         <div className=' mb-20 ' >
 
-          <input className='w-90 border p-3 rounded-3xl'
+          <input className='w-full border p-3 rounded-3xl'
+            id="password"
             type="password"
             name="password"
+            autoComplete="current-password"
+            aria-label="Password"
             placeholder="Enter your password"
             value={formik.values.password}
             onChange={formik.handleChange}
@@ -84,8 +87,8 @@ const AdminLoginform = () => {
 
         </div>
 
-        <Button className=' p-3 mb-5 rounded-3xl' type="submit">
-          Login
+        <Button className='w-full p-3 mb-5 rounded-3xl' type="submit" disabled={formik.isSubmitting}>
+          {formik.isSubmitting ? "Signing in..." : "Login"}
         </Button>
       </form>
     </div>
