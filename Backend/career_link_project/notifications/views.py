@@ -38,6 +38,15 @@ class NotificationPagination(PageNumberPagination):
                 ),
                 enum=["true", "false"],
             ),
+            # FIX: document the new type filter
+            OpenApiParameter(
+                name="type",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description="Filter by notification type. Any other value returns 400.",
+                enum=["status_update", "new_job_match", "job_approval_update", "system"],
+            ),
         ],
     )
 )
@@ -49,15 +58,28 @@ class NotificationListView(generics.ListAPIView):
     VALID_IS_READ_VALUES = {"true": True, "false": False}
 
     def get_queryset(self):
+        # FIX: drf-spectacular builds the schema without a real user
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
+
         queryset = Notification.objects.filter(user=self.request.user)
+
         is_read_param = self.request.query_params.get("is_read")
         if is_read_param is not None:
             normalized = is_read_param.lower()
             if normalized not in self.VALID_IS_READ_VALUES:
-                raise ValidationError(
-                    {"is_read": "Must be 'true' or 'false'."}
-                )
+                raise ValidationError({"is_read": "Must be 'true' or 'false'."})
             queryset = queryset.filter(is_read=self.VALID_IS_READ_VALUES[normalized])
+
+        # FIX: new ?type= filter, validated the same way as is_read
+        type_param = self.request.query_params.get("type")
+        if type_param is not None:
+            if type_param not in Notification.NotificationType.values:
+                raise ValidationError(
+                    {"type": f"Must be one of: {', '.join(Notification.NotificationType.values)}."}
+                )
+            queryset = queryset.filter(type=type_param)
+
         return queryset
 
 
@@ -114,7 +136,9 @@ class NotificationMarkAllReadView(APIView):
         updated_count = Notification.objects.filter(
             user=request.user, is_read=False
         ).update(is_read=True)
-        return Response({"detail": "All notifications marked as read.", "updated": updated_count})
+        return Response(
+            {"detail": "All notifications marked as read.", "updated": updated_count}
+        )
 
 
 class NotificationClearReadView(APIView):
@@ -136,9 +160,11 @@ class NotificationClearReadView(APIView):
         ),
     )
     def delete(self, request):
-        deleted_count, _ = Notification.objects.filter(
+        # FIX: count only Notification rows, not cascaded rows from other models
+        _, per_model = Notification.objects.filter(
             user=request.user, is_read=True
         ).delete()
+        deleted_count = per_model.get(Notification._meta.label, 0)
         return Response(
             {"detail": "Read notifications cleared.", "deleted": deleted_count},
             status=status.HTTP_200_OK,

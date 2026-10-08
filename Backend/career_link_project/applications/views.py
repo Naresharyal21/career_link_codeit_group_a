@@ -144,7 +144,7 @@ class ApplicationDetailView(generics.RetrieveUpdateDestroyAPIView):
                     user=application.job_seeker.user,
                     message=STATUS_MESSAGES[new_status],
                     type=Notification.NotificationType.STATUS_UPDATE,
-                    link=f"/applications/{application.id}",
+                       link="/dashboard/applications",
                 )
             except Exception:
                 logger.exception("Failed to send notification for application %s", application.id)

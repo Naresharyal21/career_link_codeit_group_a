@@ -1,5 +1,17 @@
+import logging  # ADDED
+
 from django.contrib import admin
+from django.db import transaction  # ADDED
+
+from notifications.utils import (  # ADDED
+    notify_job_approval_update,
+    notify_matching_job_seekers,
+)
+
 from .models import Report, JobApproval
+
+logger = logging.getLogger(__name__)  # ADDED
+
 
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
@@ -65,3 +77,18 @@ class JobApprovalAdmin(admin.ModelAdmin):
     )
 
     ordering = ("-created_at",)
+
+    # ADDED: sends notifications when the status changes
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+        if not change or "status" not in form.changed_data:
+            return
+
+        try:
+            with transaction.atomic():
+                notify_job_approval_update(obj)
+                if obj.status == "Approved":
+                    notify_matching_job_seekers(obj.job)
+        except Exception:
+            logger.exception("Failed to send notifications for JobApproval id=%s", obj.pk)

@@ -27,9 +27,9 @@ class Notification(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-          models.Index(fields=["user", "is_read"]),
-          models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["user", "is_read"]),
+            models.Index(fields=["user", "-created_at"]),
         ]
 
     def __str__(self):
-        return f"{self.user} — {self.get_type_display()} — {self.message[:30]}"
+        return f"{self.user} - {self.get_type_display()} - {self.message[:30]}"

@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // CHANGED: added useLocation
 
 import logo from "../assets/logo.png";
 import MyProfilecart from "../pages/accounts/MyProfilecart";
@@ -12,6 +12,7 @@ import accountsApi from "../apis/accountsApi";
 import { AuthenticationContext } from "../context/AuthContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const POLL_INTERVAL_MS = 30000; // CHANGED: new constant
 
 const Navbar = () => {
   const { theme, toggleModes } = useTheme();
@@ -19,6 +20,7 @@ const Navbar = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation(); // CHANGED: new line
 
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
@@ -36,17 +38,23 @@ const Navbar = () => {
     fetchUser();
   }, []);
 
+  // CHANGED: this effect used to run once, so the dot never updated.
+  // Now it refetches on every page change, every 30 seconds, and when
+  // the notifications page announces a change.
   useEffect(() => {
-    const fetchUnreadCount = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
+    const controller = new AbortController();
 
+    const fetchUnreadCount = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      try {
         const res = await fetch(`${API_BASE}/notifications/unread-count/`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
 
         if (!res.ok) return;
@@ -54,12 +62,26 @@ const Navbar = () => {
         const data = await res.json();
         setUnreadCount(data.unread_count || 0);
       } catch (err) {
-        console.error("Error fetching unread count:", err);
+        if (err.name !== "AbortError") {
+          console.error("Error fetching unread count:", err);
+        }
       }
     };
 
     fetchUnreadCount();
-  }, []);
+
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchUnreadCount();
+    }, POLL_INTERVAL_MS);
+
+    window.addEventListener("notifications:changed", fetchUnreadCount);
+
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+      window.removeEventListener("notifications:changed", fetchUnreadCount);
+    };
+  }, [location.pathname]);
 
   const initials = user?.username
     ?.split(" ")
