@@ -2,8 +2,9 @@ from django.core import mail
 from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
+from unittest.mock import patch
 
-from .models import EmailOTP, JobseekerProfile, User
+from .models import Auth0Identity, EmailOTP, JobseekerProfile, User
 
 
 @override_settings(
@@ -137,3 +138,98 @@ class MeIdentityUpdateTests(APITestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.user.role, User.Role.JOBSEEKERS)
         self.assertEqual(self.profile.full_name, "Profile User")
+
+
+class Auth0LoginTests(APITestCase):
+    identity = {
+        "issuer": "https://careerlink-test.auth0.com/",
+        "subject": "google-oauth2|test-user",
+        "email": "social@example.com",
+        "name": "Social User",
+    }
+
+    def setUp(self):
+        self.url = "/api/v1/accounts/oauth/auth0/"
+        self.onboarding_url = "/api/v1/accounts/oauth/auth0/onboarding/"
+        self.client = APIClient()
+
+    @patch("accounts.views.verify_auth0_id_token", return_value=identity)
+    def test_new_social_login_requests_role_profile_before_creating_account(self, _verify):
+        response = self.client.post(
+            self.url,
+            {"id_token": "verified-token", "role": User.Role.JOBSEEKERS},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["profile_required"])
+        self.assertFalse(User.objects.filter(email=self.identity["email"]).exists())
+
+    @patch("accounts.views.verify_auth0_id_token", return_value=identity)
+    def test_existing_verified_account_gets_tokens_for_matching_role(self, _verify):
+        user = User.objects.create_user(
+            username="Social User",
+            email=self.identity["email"],
+            password="unused",
+            role=User.Role.JOBSEEKERS,
+            email_verified=True,
+        )
+        JobseekerProfile.objects.create(
+            user=user,
+            full_name=user.username,
+            location="Kathmandu",
+        )
+
+        response = self.client.post(
+            self.url,
+            {"id_token": "verified-token", "role": User.Role.JOBSEEKERS},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertTrue(
+            Auth0Identity.objects.filter(user=user, subject=self.identity["subject"]).exists()
+        )
+
+    @patch("accounts.views.verify_auth0_id_token", return_value=identity)
+    def test_social_login_does_not_change_existing_account_role(self, _verify):
+        user = User.objects.create_user(
+            username="Social Employer",
+            email=self.identity["email"],
+            password="unused",
+            role=User.Role.EMPLOYEERS,
+            email_verified=True,
+        )
+        response = self.client.post(
+            self.url,
+            {"id_token": "verified-token", "role": User.Role.JOBSEEKERS},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        user.refresh_from_db()
+        self.assertEqual(user.role, User.Role.EMPLOYEERS)
+
+    @patch("accounts.views.verify_auth0_id_token", return_value=identity)
+    def test_onboarding_creates_profile_and_unusable_password(self, _verify):
+        response = self.client.post(
+            self.onboarding_url,
+            {
+                "id_token": "verified-token",
+                "role": User.Role.JOBSEEKERS,
+                "username": self.identity["name"],
+                "location": "Kathmandu",
+                "phone": "9800000000",
+                "date_of_birth": "1995-01-01",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email=self.identity["email"])
+        self.assertTrue(user.email_verified)
+        self.assertFalse(user.has_usable_password())
+        self.assertTrue(
+            Auth0Identity.objects.filter(user=user, subject=self.identity["subject"]).exists()
+        )

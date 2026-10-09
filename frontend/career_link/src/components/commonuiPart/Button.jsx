@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Button = ({
   children,
   type = "button",
@@ -12,13 +10,13 @@ const Button = ({
 }) => {
 
   const variants = {
-    primary: "bg-green-600 hover:bg-green-700",
-    secondary: "bg-blue-600 text-white  hover:bg-blue-700",
-    danger: "bg-red-600 text-white  hover:bg-red-700",
-    gray: "bg-gray-200 text-gray-700  hover:bg-gray-300   dark:border-gray-600 dark:hover:bg-gray-700 ",
-    outline: "border border-green-600 text-green-600 hover:bg-green-50",
-    logout: "w-full p-2 hover:bg-purple-900 hover:text-white cursor-pointer",
-    closeButton:"absolute right-8 top-4 text-xl text-gray-500 hover:text-red-500 hover:cursor-pointer"
+    primary: "bg-[#6C4DFF] text-white hover:bg-[#5738E8] shadow-sm hover:shadow-md",
+    secondary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md",
+    danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md",
+    gray: "border border-slate-200 bg-slate-100 text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700",
+    outline: "border border-violet-300 bg-white text-violet-700 hover:border-violet-400 hover:bg-violet-50",
+    logout: "w-full bg-transparent text-slate-700 hover:bg-violet-50 hover:text-violet-700",
+    closeButton: "absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center bg-transparent text-slate-400 hover:bg-red-50 hover:text-red-600"
 
   }
 
@@ -28,10 +26,10 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      data-button-variant={variant}
       {...buttonProps}
-      className={`${variants[variant]}
-      p-2 rounded-2xl disabled:bg-gray-400 disabled:opacity-50
-      ${className}`}     >
+      className={`inline-flex items-center justify-center gap-2 rounded-xl p-2 font-medium transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none disabled:opacity-70 ${variants[variant]} ${className}`}
+    >
       {children}
     </button>
   )

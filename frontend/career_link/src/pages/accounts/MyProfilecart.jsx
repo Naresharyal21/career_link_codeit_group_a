@@ -1,94 +1,96 @@
-import React, { useState } from 'react'
-import { useContext } from 'react';
+import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { AuthenticationContext } from '../../context/AuthContext';
-import Button from '../../components/commonuiPart/Button';
-import ManageAccountCart from './ManageAccountCart';
-import AddResume from './AddResume';
-import EditProfilePicture from './EditProfilePicture';
-
-
+import { AuthenticationContext } from "../../context/AuthContext";
+import ManageAccountCart from "./ManageAccountCart";
+import AddResume from "./AddResume";
+import EditProfilePicture from "./EditProfilePicture";
 
 const MyProfilecart = () => {
-  const [showManageAccount , setShowManageAccount]=useState();
-
-  const [showAddResume, setShowAddResume]=useState(false);
+  const [showManageAccount, setShowManageAccount] = useState(false);
+  const [showAddResume, setShowAddResume] = useState(false);
   const [showEditPicture, setShowEditPicture] = useState(false);
-
   const { user, logoutUser } = useContext(AuthenticationContext);
-  
+  const navigate = useNavigate();
+
   const initials = user?.username
-    ?.split(" ")
+    ?.trim()
+    .split(/\s+/)
     .map((name) => name[0])
     .join("")
     .toUpperCase();
 
- 
-
-
-
   const handleLogout = () => {
     logoutUser();
-  }
+    navigate("/login", { replace: true });
+  };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 dark:text-white  shadow-lg shadow-black-800/50 mt-16 pb-4 pt-5  w-65 -ml-45 position absolute rounded-b-2xl flex flex-col h-fit">
-      <ul className="pl-4  font-bold" >Settings</ul>
-      <ul>
-        <h2 className="pl-4  mt-3 mb-5 font-medium">Account</h2>
-        <li className="pl-4 flex">
-          <div className="  flex rounded-full h-9 w-9 text-white justify-center items-center p-2 bg-gray-600">
-
-
-            {initials}
+    <>
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-800 shadow-xl shadow-slate-900/15 ring-1 ring-black/5">
+        <div className="border-b border-slate-100 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Account
+          </p>
+          <div className="mt-3 flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-semibold text-violet-700">
+              {initials || "U"}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900">
+                {user?.username || "User"}
+              </p>
+              <p className="truncate text-xs text-slate-500">{user?.email}</p>
+            </div>
           </div>
-          <div className="ml-1 -mt-2">
-            <div className="">  {user?.username}</div>
-            <div className="-mt-1"> {user?.email}</div>
+        </div>
 
-          </div>
-        </li>
+        <div className="space-y-1 p-2">
+          <button
+            type="button"
+            onClick={() => setShowManageAccount(true)}
+            className="account-menu-item w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100"
+          >
+            Manage my account
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowEditPicture(true)}
+            className="account-menu-item w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100"
+          >
+            Edit profile picture
+          </button>
+          {user?.role === "js" && (
+            <button
+              type="button"
+              onClick={() => setShowAddResume(true)}
+              className="account-menu-item w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium transition hover:bg-slate-100"
+            >
+              Add resume
+            </button>
+          )}
+        </div>
 
-<li>
-       
-          <Button className='m-1 mt-5  ' onClick={()=>setShowManageAccount(true)} variant='logout' > Manage My Account</Button>
-        </li>
-<li>
-       
-          <Button className='m-1' variant='logout' onClick={() => setShowEditPicture(true)}>
-            Edit Profile Picture
-          </Button>
-        </li>
+        <div className="border-t border-slate-100 p-2">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+          >
+            Log out
+          </button>
+        </div>
+      </div>
 
-{user?.role=="js" && (
-<li>
-       
-          <Button className='m-1  'variant='logout' onClick={()=>{setShowAddResume(true)}} > Add Resume</Button>
-          </li>
-      
+      {showAddResume && <AddResume onClose={() => setShowAddResume(false)} />}
+      {showEditPicture && (
+        <EditProfilePicture onClose={() => setShowEditPicture(false)} />
       )}
+      {showManageAccount && (
+        <ManageAccountCart onClose={() => setShowManageAccount(false)} />
+      )}
+    </>
+  );
+};
 
-        {showAddResume&&(
-          <AddResume onClose={()=> setShowAddResume(false)}/>
-        )}
-
-        {showEditPicture && (
-          <EditProfilePicture onClose={() => setShowEditPicture(false)} />
-        )}
-
-        {showManageAccount &&(
-          <ManageAccountCart onClose={()=>setShowManageAccount(false)}/>
-        )}
-
-
-        <hr className='m-2'></hr>
-        <li>
-          <Button onClick={handleLogout}
-            variant='logout'>Logout</Button>
-        </li>
-      </ul>
-    </div>
-  )
-}
-
-export default MyProfilecart
+export default MyProfilecart;

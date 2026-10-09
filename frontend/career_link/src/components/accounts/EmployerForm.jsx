@@ -17,12 +17,13 @@ const EmployerForm = ({ formik }) => {
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           rows="2"
-          className="border rounded p-2 w-full"
+          aria-label="Company description"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
         />
 
         {formik.touched.company_description &&
           formik.errors.company_description && (
-            <p className="text-red-700">
+            <p className="mt-1 text-xs text-red-600" role="alert">
               {formik.errors.company_description}
             </p>
           )}
@@ -40,16 +41,17 @@ const EmployerForm = ({ formik }) => {
             id="website"
             name="website"
             type="url"
+            aria-label="Company website"
             placeholder="Enter your company website"
             value={formik.values.website}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className="border rounded p-2 w-full"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
           />
 
           {formik.touched.website &&
             formik.errors.website && (
-              <p className="text-red-700">
+              <p className="mt-1 text-xs text-red-600" role="alert">
                 {formik.errors.website}
               </p>
             )}
@@ -64,17 +66,19 @@ const EmployerForm = ({ formik }) => {
           <input
             id="phone"
             name="phone"
-            type="text"
+            type="tel"
+            autoComplete="tel"
+            aria-label="Company phone number"
             placeholder=" Company phone number"
             value={formik.values.phone}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className="border rounded p-2 w-full"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
           />
 
           {formik.touched.phone &&
             formik.errors.phone && (
-              <p className="text-red-700">
+              <p className="mt-1 text-xs text-red-600" role="alert">
                 {formik.errors.phone}
               </p>
             )}
@@ -86,9 +90,9 @@ const EmployerForm = ({ formik }) => {
           COMPANY LOGO
        */}
 
-      <div className="mb-5 flex items-center justify-between border p-3 rounded-lg">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
 
-        <label className="font-medium text-gray-700 text-sm">
+        <label className="text-sm font-medium text-slate-700">
           Company Logo
         </label>
 
@@ -108,16 +112,16 @@ const EmployerForm = ({ formik }) => {
           }}
         />
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
 
           <label
             htmlFor="logo"
-            className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors duration-200"
+            className="inline-flex cursor-pointer items-center rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors duration-200 hover:bg-violet-100"
           >
             Choose File
           </label>
 
-          <span className="text-xs text-gray-600 truncate max-w-120">
+          <span className="max-w-full truncate text-xs text-slate-500 sm:max-w-48">
             {formik.values.logo
               ? formik.values.logo.name
               : "No file chosen"}

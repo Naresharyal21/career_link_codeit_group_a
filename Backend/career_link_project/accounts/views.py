@@ -1,11 +1,16 @@
+import jwt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
 from django.utils import timezone
-from .serializers import LoginSerializer
+from django.conf import settings
+from jwt import PyJWKClient
+from .serializers import LoginSerializer, SocialOnboardingSerializer
 
 from .services import create_and_send_otp, verify_otp
 
@@ -22,7 +27,56 @@ from .models import (
     EmployerProfile,
     User,
     EmailOTP,
+    Auth0Identity,
 )
+
+
+def verify_auth0_id_token(id_token):
+    domain = settings.AUTH0_DOMAIN
+    client_id = settings.AUTH0_CLIENT_ID
+    if not domain or not client_id:
+        raise AuthenticationFailed("Auth0 login is not configured on the server.")
+
+    issuer = f"https://{domain.rstrip('/')}/"
+    jwks_client = PyJWKClient(f"{issuer}.well-known/jwks.json", timeout=5)
+    try:
+        signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+        claims = jwt.decode(
+            id_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=client_id,
+            issuer=issuer,
+            options={"require": ["exp", "iat", "sub", "email", "email_verified"]},
+        )
+    except jwt.PyJWKClientError as error:
+        raise AuthenticationFailed("Could not verify the Auth0 identity token.") from error
+    except jwt.PyJWTError as error:
+        raise AuthenticationFailed("Auth0 identity token is invalid or expired.") from error
+
+    if not claims.get("email_verified"):
+        raise AuthenticationFailed("Verify your email with your identity provider first.")
+    return {
+        "issuer": issuer,
+        "subject": claims["sub"],
+        "email": claims["email"].strip().lower(),
+        "name": claims.get("name", "").strip(),
+    }
+
+
+def role_from_request(request):
+    role = request.data.get("role")
+    if role not in (User.Role.JOBSEEKERS, User.Role.EMPLOYEERS):
+        return None
+    return role
+
+
+def token_response(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+    }
 
 
 class RegisterView(generics.CreateAPIView):
@@ -37,6 +91,113 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
+
+
+class Auth0LoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        id_token = request.data.get("id_token")
+        role = role_from_request(request)
+        if not id_token or not role:
+            return Response(
+                {"detail": "An Auth0 identity token and a valid role are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        identity = verify_auth0_id_token(id_token)
+        social_identity = Auth0Identity.objects.select_related("user").filter(
+            issuer=identity["issuer"],
+            subject=identity["subject"],
+        ).first()
+
+        user = social_identity.user if social_identity else None
+        if user is None:
+            user = User.objects.filter(email__iexact=identity["email"]).first()
+            if user and not user.email_verified:
+                return Response(
+                    {"detail": "Verify this email address before using social sign-in."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+
+        if user is None:
+            return Response(
+                {
+                    "profile_required": True,
+                    "email": identity["email"],
+                    "username": identity["name"] or identity["email"].split("@")[0],
+                    "role": role,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        if user.role != role:
+            return Response(
+                {
+                    "detail": (
+                        f"This account uses the {user.get_role_display()} role. "
+                        "Choose that role to continue."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        if not user.is_active:
+            raise AuthenticationFailed("This account is inactive.")
+
+        if social_identity is None:
+            Auth0Identity.objects.create(
+                user=user,
+                issuer=identity["issuer"],
+                subject=identity["subject"],
+            )
+
+        return Response(token_response(user), status=status.HTTP_200_OK)
+
+
+class Auth0OnboardingView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        id_token = request.data.get("id_token")
+        if not id_token:
+            return Response(
+                {"detail": "An Auth0 identity token is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        identity = verify_auth0_id_token(id_token)
+        if Auth0Identity.objects.filter(
+            issuer=identity["issuer"],
+            subject=identity["subject"],
+        ).exists():
+            return Response(
+                {"detail": "This Auth0 account is already linked."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if User.objects.filter(email__iexact=identity["email"]).exists():
+            return Response(
+                {"detail": "An account already exists for this email. Sign in instead."},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        serializer = SocialOnboardingSerializer(
+            data=request.data,
+            context={"auth0_identity": identity},
+        )
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            user = serializer.save()
+            user.email_verified = True
+            user.save(update_fields=["email_verified"])
+            Auth0Identity.objects.create(
+                user=user,
+                issuer=identity["issuer"],
+                subject=identity["subject"],
+            )
+
+        return Response(token_response(user), status=status.HTTP_201_CREATED)
 
 
 class MeView(APIView):

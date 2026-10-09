@@ -16,7 +16,7 @@ import {toast} from "react-toastify"
 
 
 
-const LoginForm = () => {
+const LoginForm = ({ selectedRole }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,7 +25,7 @@ const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false)
 
 
-  const { loginUser, setUser } = useContext(AuthenticationContext);
+  const { loginUser, logoutUser, setUser } = useContext(AuthenticationContext);
 
   const handletoggle = () => {
     setShowPassword(showPassword ? false : true)
@@ -48,6 +48,13 @@ const LoginForm = () => {
           response.refresh
         );
         const userData = await getMe();
+        if (userData.role !== selectedRole) {
+          logoutUser();
+          toast.error(
+            `This account uses the ${userData.role_display || "other"} role. Select that role to continue.`,
+          );
+          return;
+        }
         setUser(userData);
 toast.success("Login successful!")
 

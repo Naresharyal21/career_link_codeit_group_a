@@ -17,9 +17,10 @@ const POLL_INTERVAL_MS = 30000;
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [storedUnreadCount, setStoredUnreadCount] = useState(0);
   const { isAuthenticated, user } = useContext(AuthenticationContext);
   const location = useLocation();
+  const unreadCount = isAuthenticated ? storedUnreadCount : 0;
 
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
@@ -27,10 +28,7 @@ const Navbar = () => {
   // Refetch the unread count on every page change, every 30 seconds,
   // and when the notifications page announces a change.
   useEffect(() => {
-    if (!isAuthenticated) {
-      setUnreadCount(0);
-      return;
-    }
+    if (!isAuthenticated) return;
 
     const controller = new AbortController();
 
@@ -50,7 +48,7 @@ const Navbar = () => {
         if (!res.ok) return;
 
         const data = await res.json();
-        setUnreadCount(data.unread_count || 0);
+        setStoredUnreadCount(data.unread_count || 0);
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Error fetching unread count:", err);
@@ -86,30 +84,36 @@ const Navbar = () => {
       }
     };
 
+    const handleEscape = (event) => {
+      if (event.key === "Escape") setShowProfileMenu(false);
+    };
+
     document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, []);
 
   return (
-    <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div className="flex h-full items-center">
-        <img src={logo} alt="CareerLink" className="h-16 w-auto object-contain" />
+    <div className="flex h-full min-w-0 items-center justify-between gap-3 px-3 sm:px-6 lg:px-8">
+      <div className="flex h-full shrink-0 items-center">
+        <img src={logo} alt="CareerLink" className="h-12 w-auto object-contain sm:h-14" />
       </div>
 
-      <div className=" font-mono text-green-700">
+      <div className="hidden min-w-0 flex-1 truncate text-center font-mono text-sm text-green-700 sm:block">
         {user?.role_display ? `${user.role_display.toUpperCase()} PORTAL` : "CAREERLINK"}
       </div>
 
-      <div className="flex items-center gap-2 pr-[3%]">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <button
           type="button"
           aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
           aria-pressed={theme === "dark"}
           onClick={toggleTheme}
-          className="rounded-xl p-2 transition hover:bg-purple-100"
+          className="theme-action rounded-xl p-2 transition hover:bg-purple-100"
         >
           {theme === "light" ? (
             <CiDark className="text-2xl" />
@@ -122,7 +126,8 @@ const Navbar = () => {
           <Link
             to="/dashboard/notifications"
             aria-label="Notifications"
-            className="relative rounded-xl p-2 text-2xl text-black transition hover:bg-purple-100"
+            onClick={() => setShowProfileMenu(false)}
+            className="theme-action relative rounded-xl p-2 text-2xl text-black transition hover:bg-purple-100"
           >
             <IoIosNotificationsOutline />
 
@@ -133,12 +138,14 @@ const Navbar = () => {
         )}
 
         {isAuthenticated ? (
-        <div ref={profileRef} className="relative flex gap-2">
-          <div className="h-14 w-14 p-1 rounded flex  justify-center hover:bg-purple-900 ">
+        <div ref={profileRef} className="relative flex items-center gap-2">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full sm:h-12 sm:w-12">
             <button
-              className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
+              type="button"
+              className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-slate-600 text-sm font-semibold text-white transition hover:ring-2 hover:ring-violet-300 sm:h-11 sm:w-11"
               aria-label="Open account menu"
               aria-expanded={showProfileMenu}
+              aria-controls="account-menu"
               onClick={() => setShowProfileMenu((open) => !open)}
             >
               {user?.role === "js" && user?.profile?.profile_pictur ? (
@@ -160,8 +167,10 @@ const Navbar = () => {
           </div>
 
           <button
+            type="button"
             className="hidden items-center gap-2 text-left sm:flex"
             aria-expanded={showProfileMenu}
+            aria-controls="account-menu"
             onClick={() => setShowProfileMenu((open) => !open)}
           >
             <div>
@@ -182,7 +191,10 @@ const Navbar = () => {
           </button>
 
           {showProfileMenu && (
-            <div className="absolute right-0 top-14 z-[100]">
+            <div
+              id="account-menu"
+              className="absolute right-0 top-full z-[100] mt-2 w-72 max-w-[calc(100vw-2rem)]"
+            >
               <MyProfilecart />
             </div>
           )}

@@ -130,12 +130,14 @@ const Sidebar = ({ onNavigate }) => {
                       active
                         ? `
                           bg-[#6C4DFF]
+                          sidebar-nav-active
                           text-white
                           shadow-lg
                           shadow-violet-500/20
                         `
                         : `
                           text-slate-300
+                          sidebar-nav-inactive
                           hover:bg-[#F0ECFF]
                           hover:text-[#6C4DFF]
                         `
@@ -232,7 +234,7 @@ const Sidebar = ({ onNavigate }) => {
               font-semibold
               text-white
             ">
-              Need Help?
+              Contact Us
             </h3>
 
 
@@ -243,17 +245,17 @@ const Sidebar = ({ onNavigate }) => {
               leading-5
               text-slate-300
             ">
-              Our support team is here to assist
-              with your career journey.
+              Need help with your account or career journey? Our team is here to help.
             </p>
 
-
-
-            <button
-              type="button"
+            <a
+              href="mailto:careerlinkdjangogroup1@gmail.com"
               className="
                 mt-4
+                inline-flex
                 w-full
+                items-center
+                justify-center
                 rounded-xl
                 bg-[#F0ECFF]
                 px-4
@@ -262,14 +264,15 @@ const Sidebar = ({ onNavigate }) => {
                 font-semibold
                 text-[#6C4DFF]
                 transition-all duration-200
+                sidebar-contact-link
                 hover:bg-[#6C4DFF]
                 hover:text-white
                 hover:shadow-lg
                 hover:shadow-violet-500/20
               "
             >
-              Contact Us
-            </button>
+              Send us an email
+            </a>
 
           </div>
         </div>

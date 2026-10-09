@@ -127,14 +127,12 @@
     }
 
     html {
-        min-width: 320px;
         min-height: 100%;
         background: #F8F9FF;
     }
 
     body {
         margin: 0;
-        min-width: 320px;
         min-height: 100vh;
         background: #F8F9FF;
         color: #0D1C2F;
@@ -480,4 +478,86 @@ html[data-theme="dark"] .border-slate-300,
 html[data-theme="dark"] .border-gray-200,
 html[data-theme="dark"] .border-gray-300 {
     border-color: #475569;
+}
+
+html[data-theme="dark"] button[data-button-variant="primary"]:hover:not(:disabled) {
+    background-color: #5b45e8;
+}
+
+html[data-theme="dark"] button[data-button-variant="secondary"]:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+html[data-theme="dark"] button[data-button-variant="danger"]:hover:not(:disabled) {
+    background-color: #b91c1c;
+}
+
+html[data-theme="dark"] button[data-button-variant="gray"] {
+    border-color: #475569;
+    background-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] button[data-button-variant="gray"]:hover:not(:disabled) {
+    border-color: #64748b;
+    background-color: #475569;
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] button[data-button-variant="outline"] {
+    border-color: #64748b;
+    background-color: #1e293b;
+    color: #c4b5fd;
+}
+
+html[data-theme="dark"] button[data-button-variant="outline"]:hover:not(:disabled) {
+    background-color: #334155;
+    color: #ddd6fe;
+}
+
+html[data-theme="dark"] button[data-button-variant="logout"]:hover:not(:disabled),
+html[data-theme="dark"] .account-menu-item:hover {
+    background-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] button[data-button-variant="closeButton"]:hover:not(:disabled) {
+    background-color: #450a0a;
+    color: #fca5a5;
+}
+
+html[data-theme="dark"] .sidebar-nav-inactive:hover {
+    background-color: #334155;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] .sidebar-nav-inactive:hover svg {
+    color: #c4b5fd;
+}
+
+html[data-theme="dark"] .sidebar-contact-link:hover {
+    background-color: #5b45e8;
+    color: #ffffff;
+}
+
+html[data-theme="dark"] .theme-action:hover {
+    background-color: #334155;
+}
+
+html[data-theme="dark"] .auth0-provider-button {
+    border-color: #475569;
+    background-color: #1e293b;
+    color: #e2e8f0;
+}
+
+html[data-theme="dark"] .auth0-provider-button:hover:not(:disabled) {
+    border-color: #64748b;
+    background-color: #334155;
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] .login-role-option:not([aria-pressed="true"]):hover {
+    border-color: #64748b;
+    background-color: #334155;
+    color: #f8fafc;
 }

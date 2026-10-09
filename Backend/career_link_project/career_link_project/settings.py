@@ -223,6 +223,8 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or "noreply@localhost"
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN", "").strip()
+AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID", "").strip()
 
 SESSION_COOKIE_NAME = "sessionid"
 SESSION_COOKIE_HTTPONLY = True

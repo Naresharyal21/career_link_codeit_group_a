@@ -12,17 +12,19 @@ const JobseekerForm = ({ formik }) => {
         <input
           id="phone"
           name="phone"
-          type="text"
+          type="tel"
+          autoComplete="tel"
+          aria-label="Phone number"
           placeholder="Enter your phone number"
           value={formik.values.phone}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          className="border rounded p-2 w-full"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
         />
 
         {formik.touched.phone &&
           formik.errors.phone && (
-            <p className="text-red-700">
+            <p className="mt-1 text-xs text-red-600" role="alert">
               {formik.errors.phone}
             </p>
           )}
@@ -38,15 +40,16 @@ const JobseekerForm = ({ formik }) => {
           id="date_of_birth"
           name="date_of_birth"
           type="date"
+          aria-label="Date of birth"
           value={formik.values.date_of_birth}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
-          className="border rounded p-2 w-full"
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
         />
 
         {formik.touched.date_of_birth &&
           formik.errors.date_of_birth && (
-            <p className="text-red-700">
+            <p className="mt-1 text-xs text-red-600" role="alert">
               {formik.errors.date_of_birth}
             </p>
           )}
@@ -57,9 +60,9 @@ const JobseekerForm = ({ formik }) => {
           RESUME
        */}
 
-      <div className="mb-4 flex items-center justify-between border p-3 rounded-lg">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
 
-        <label className="font-medium text-gray-700 text-sm">
+        <label className="text-sm font-medium text-slate-700">
           Resume
         </label>
 
@@ -79,16 +82,16 @@ const JobseekerForm = ({ formik }) => {
           }}
         />
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
 
           <label
             htmlFor="resume_file"
-            className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors duration-200"
+            className="inline-flex cursor-pointer items-center rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors duration-200 hover:bg-violet-100"
           >
             Upload Resume
           </label>
 
-          <span className="text-xs text-gray-600 truncate max-w-120">
+          <span className="max-w-full truncate text-xs text-slate-500 sm:max-w-48">
             {formik.values.resume_file
               ? formik.values.resume_file.name
               : "No file chosen"}
@@ -99,9 +102,9 @@ const JobseekerForm = ({ formik }) => {
 
 
       </div>
-      <div className="mb-4 flex items-center justify-between border p-3 rounded-lg">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3">
 
-        <label className="font-medium text-gray-700 text-sm">
+        <label className="text-sm font-medium text-slate-700">
           Profile Picture
         </label>
 
@@ -121,16 +124,16 @@ const JobseekerForm = ({ formik }) => {
           }}
         />
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
 
           <label
             htmlFor="profile_pictur"
-            className="cursor-pointer inline-flex items-center px-4 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors duration-200"
+            className="inline-flex cursor-pointer items-center rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 transition-colors duration-200 hover:bg-violet-100"
           >
             Choose Image
           </label>
 
-          <span className="text-xs text-gray-600 truncate max-w-120">
+          <span className="max-w-full truncate text-xs text-slate-500 sm:max-w-48">
             {formik.values.profile_pictur
               ? formik.values.profile_pictur.name
               : "No file chosen"}

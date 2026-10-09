@@ -175,6 +175,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class SocialOnboardingSerializer(RegistrationSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+    email = serializers.EmailField(read_only=True)
+    username = serializers.CharField(required=False, max_length=150)
+
+    def validate(self, attrs):
+        identity = self.context["auth0_identity"]
+        attrs["email"] = identity["email"]
+        attrs["username"] = (
+            attrs.get("username") or identity.get("name") or identity["email"].split("@")[0]
+        )
+        return super().validate(attrs)
+
+
 class JobseekerProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(read_only=True)
@@ -217,4 +231,3 @@ class EmployerProfileSerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = ["is_verified"]
-

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./home/components/pages/HomePage";
 import Login from "./pages/accounts/Login";
 import Signup from "./pages/accounts/Signup";
+import Auth0LoginButtons from "./components/accounts/Auth0LoginButtons";
 import MyProfilecart from "./pages/accounts/MyProfilecart";
 import ForgetPasswordPage from "./pages/accounts/ForgetPasswordPage";
 import VerifyOTPpage from "./pages/accounts/VerifyOTPpage";
@@ -10,6 +11,7 @@ import ResetPasswordPage from "./pages/accounts/ResetPasswordPage";
 import EmailConformPasswordPage from "./pages/accounts/EmailConformPasswordPage";
 import EmailChangePage from "./pages/accounts/EmailChangePage";
 import DashboardLayout from "./layout/DashboardLayout";
+import Layout from "./components/Layout";
 import DashboardHomePage from "./pages/DashboardHomePage";
 import SavedJobsPage from "./pages/SavedJobsPage";
 import ResumePage from "./pages/ResumePage";
@@ -27,10 +29,15 @@ const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/custom/admin/login" element={<AdminLogin />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<Auth0LoginButtons callbackOnly />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route element={<Layout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/home" element={<Navigate to="/" replace />} />
+            </Route>
             <Route element={<DashboardLayout />}>
-                {/* Public Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
+                {/* Account support and dashboard routes */}
                 <Route path="/forgetpassword" element={<ForgetPasswordPage />} />
                 <Route path="/verifyotp/:purpose" element={<VerifyOTPpage />} />
                 <Route path="/resetpassword" element={<ResetPasswordPage />} />
@@ -38,8 +45,6 @@ const AppRoutes = () => {
                     <Route path="/conformpassword" element={<EmailConformPasswordPage />} />
                     <Route path="/get/new/email" element={<EmailChangePage />} />
                 </Route>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/jobs" element={<BrowseJobsPage />} />
                 <Route path="/jobs/:id" element={<JobDetailPage />} />
 

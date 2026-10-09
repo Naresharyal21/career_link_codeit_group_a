@@ -13,6 +13,8 @@ from accounts  import views
 urlpatterns = [
     path("register/", views.RegisterView.as_view(), name="register"),
     path("login/", views.LoginView.as_view(), name="login"),
+    path("oauth/auth0/", views.Auth0LoginView.as_view(), name="auth0-login"),
+    path("oauth/auth0/onboarding/", views.Auth0OnboardingView.as_view(), name="auth0-onboarding"),
     path("logout/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path("login/refresh/", TokenRefreshView.as_view(), name="login-refresh"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),

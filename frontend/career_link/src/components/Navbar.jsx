@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiMenu, FiX } from "react-icons/fi";
-import careerLinkIcon from "../assets/careerlink_icon.png";
+import logo from "../assets/logo.png";
 import { AuthenticationContext } from "../context/AuthContext";
 
 function Navbar() {
@@ -25,10 +25,14 @@ function Navbar() {
         <Link
           to="/"
           onClick={closeMenu}
-          className="flex shrink-0 items-center gap-2"
+          aria-label="CareerLink home"
+          className="flex h-16 shrink-0 items-center"
         >
-          <img src={careerLinkIcon} alt="" className="h-9 w-9" />
-          <span className="text-xl font-bold text-slate-900">CareerLink</span>
+          <img
+            src={logo}
+            alt="CareerLink"
+            className="h-12 w-auto object-contain sm:h-14"
+          />
         </Link>
 
         <div className="hidden items-center gap-2 md:flex">

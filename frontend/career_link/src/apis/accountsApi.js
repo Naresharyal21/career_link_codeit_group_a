@@ -18,6 +18,17 @@ const accountsApi = {
     return await apiClient.post("/accounts/login/", credentials);
   },
 
+  auth0Login: async (idToken, role) => {
+    return await apiClient.post("/accounts/oauth/auth0/", {
+      id_token: idToken,
+      role,
+    });
+  },
+
+  completeAuth0Onboarding: async (onboardingData) => {
+    return await apiClient.post("/accounts/oauth/auth0/onboarding/", onboardingData);
+  },
+
   getMe: async () => {
     return await apiClient.get("/accounts/me/");
   },

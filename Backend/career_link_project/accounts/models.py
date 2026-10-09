@@ -120,3 +120,24 @@ class EmailOTP(TimeStamp):
 
         def __str__(self):
             return f"{self.user.email}-{self.purpose}"
+
+
+class Auth0Identity(TimeStamp):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="auth0_identities",
+    )
+    issuer = models.URLField(max_length=255)
+    subject = models.CharField(max_length=255)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["issuer", "subject"],
+                name="accounts_unique_auth0_identity",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.issuer}{self.subject}"

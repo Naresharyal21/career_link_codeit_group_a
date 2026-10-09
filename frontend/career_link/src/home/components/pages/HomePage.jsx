@@ -98,6 +98,15 @@ function HomePage() {
             <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
               CareerLink brings job seekers, employers and verified listings together — with resume tools and honest status tracking on every application.
             </p>
+            <Link
+              to="/signup"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 font-semibold text-white shadow-lg shadow-blue-950/20 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+            >
+              Get started
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 8.75L21 12m0 0-3.75 3.25M21 12H3" />
+              </svg>
+            </Link>
 
             <form onSubmit={handleSearch} className="mt-8 flex flex-col gap-2 rounded-2xl bg-white/5 p-2 ring-1 ring-white/10 backdrop-blur-sm sm:flex-row sm:items-center">
               <div className="relative flex-1">
