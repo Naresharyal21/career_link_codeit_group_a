@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const SignupPage = () => {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'js' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'js', location: '' });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
   const [showPw, setShowPw]   = useState(false);
@@ -16,10 +16,14 @@ const SignupPage = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:8000/api/v1/accounts/register/', formData);
+      await apiClient.post('/accounts/register/', formData);
       navigate('/verify-otp?email=' + encodeURIComponent(formData.email) + '&purpose=emv');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please check your inputs.');
+      const responseData = err.response?.data;
+      const fieldErrors = responseData && typeof responseData === 'object'
+        ? Object.values(responseData).flat().filter(Boolean).join(' ')
+        : '';
+      setError(fieldErrors || responseData?.error || 'Registration failed. Please check your inputs.');
     } finally {
       setLoading(false);
     }
@@ -110,7 +114,7 @@ const SignupPage = () => {
 
             {/* Username */}
             <div>
-              <label className="form-label">Username</label>
+              <label className="form-label" htmlFor="signup-username">Username</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +122,7 @@ const SignupPage = () => {
                   </svg>
                 </span>
                 <input
-                  type="text" name="username" value={formData.username} onChange={handleChange}
+                  id="signup-username" type="text" name="username" value={formData.username} onChange={handleChange}
                   placeholder="Choose a username"
                   className="form-input !pl-11"
                   required
@@ -126,9 +130,24 @@ const SignupPage = () => {
               </div>
             </div>
 
+            <div>
+              <label className="form-label" htmlFor="signup-location">Location</label>
+              <input
+                id="signup-location"
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g. Kathmandu"
+                className="form-input"
+                autoComplete="address-level2"
+                required
+              />
+            </div>
+
             {/* Email */}
             <div>
-              <label className="form-label">Email Address</label>
+              <label className="form-label" htmlFor="signup-email">Email Address</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +155,7 @@ const SignupPage = () => {
                   </svg>
                 </span>
                 <input
-                  type="email" name="email" value={formData.email} onChange={handleChange}
+                  id="signup-email" type="email" name="email" value={formData.email} onChange={handleChange}
                   placeholder="name@company.com"
                   className="form-input !pl-11"
                   required
@@ -146,7 +165,7 @@ const SignupPage = () => {
 
             {/* Password */}
             <div>
-              <label className="form-label">Password</label>
+              <label className="form-label" htmlFor="signup-password">Password</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +173,7 @@ const SignupPage = () => {
                   </svg>
                 </span>
                 <input
-                  type={showPw ? 'text' : 'password'} name="password" value={formData.password}
+                  id="signup-password" type={showPw ? 'text' : 'password'} name="password" value={formData.password}
                   onChange={handleChange} placeholder="Min 8 characters"
                   className="form-input !pl-11 !pr-12"
                   required

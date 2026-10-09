@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const OTPVerifyPage = () => {
@@ -23,7 +23,7 @@ const OTPVerifyPage = () => {
     setMessage('');
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/accounts/verify/otp/', {
+      const response = await apiClient.post('/accounts/verify/otp/', {
         email: email,
         otp: otp,
         purpose: purpose
@@ -46,7 +46,7 @@ const OTPVerifyPage = () => {
     setMessage('');
     setResendLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/accounts/verify/resend/otp/', {
+      const response = await apiClient.post('/accounts/verify/resend/otp/', {
         email: email
       });
       setMessage(response.data.message || 'Verification code resent successfully!');
@@ -101,12 +101,12 @@ const OTPVerifyPage = () => {
 
           <form onSubmit={handleVerify} className="space-y-5">
             <div>
-              <label className="form-label">Email Address</label>
+              <label className="form-label" htmlFor="verify-email">Email Address</label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 </span>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-input !pl-11" required />
+                <input id="verify-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="form-input !pl-11" required />
               </div>
             </div>
             <div>

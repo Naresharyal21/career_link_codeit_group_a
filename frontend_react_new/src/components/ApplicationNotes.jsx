@@ -1,18 +1,14 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
+import apiClient from '../api';
 
 const ApplicationNotes = ({ applicationId }) => {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
 
-  useEffect(() => {
-    fetchNotes();
-  }, [applicationId]);
-
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     const token = sessionStorage.getItem('access_token');
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/applications/notes/', {
+      const response = await apiClient.get('/applications/notes/', {
         headers: { Authorization: 'Bearer ' + token }
       });
       // Assuming response.data could be paginated or an array
@@ -21,14 +17,18 @@ const ApplicationNotes = ({ applicationId }) => {
     } catch (err) {
       console.error("Error fetching notes", err);
     }
-  };
+  }, [applicationId]);
+
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!newNote.trim()) return;
     const token = sessionStorage.getItem('access_token');
     try {
-      await axios.post('http://localhost:8000/api/v1/applications/notes/', 
+      await apiClient.post('/applications/notes/',
         { application: applicationId, note: newNote },
         { headers: { Authorization: 'Bearer ' + token } }
       );

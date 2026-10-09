@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNavigate } from 'react-router-dom';
 
 const PostJobPage = () => {
@@ -16,8 +16,8 @@ const PostJobPage = () => {
     const fetchData = async () => {
       try {
         const [catRes, skillRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/v1/jobs/categories/'),
-          axios.get('http://localhost:8000/api/v1/jobs/skills/')
+          apiClient.get('/jobs/categories/'),
+          apiClient.get('/jobs/skills/')
         ]);
         setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data.results || []));
         setAllSkills(Array.isArray(skillRes.data) ? skillRes.data : (skillRes.data.results || []));
@@ -47,7 +47,7 @@ const PostJobPage = () => {
     if (!cleanedData.deadline) delete cleanedData.deadline;
 
     try {
-      await axios.post('http://localhost:8000/api/v1/jobs/manage/', cleanedData, {
+      await apiClient.post('/jobs/manage/', cleanedData, {
         headers: { Authorization: 'Bearer ' + token }
       });
       navigate('/dashboard/manage-jobs');

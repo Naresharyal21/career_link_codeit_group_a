@@ -1,32 +1,36 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Link, useNavigate } from 'react-router-dom';
+import apiClient from '../api';
+import { Link } from 'react-router-dom';
 
 const HomePage = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [isLoggedIn] = useState(() => {
     const token = sessionStorage.getItem('access_token');
     return !!token && token !== 'undefined' && token !== 'null';
   });
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/v1/jobs/');
+        setLoadError('');
+        const response = await apiClient.get('/jobs/');
         const jobsData = Array.isArray(response.data)
           ? response.data
           : (response.data.results || []);
         setJobs(jobsData);
       } catch (err) {
         console.error("Error fetching jobs", err);
+        setLoadError('Unable to load jobs right now. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     fetchJobs();
-  }, []);
+  }, [reloadCount]);
 
   const filteredJobs = jobs.filter(job =>
     job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -277,7 +281,20 @@ const HomePage = () => {
         )}
 
         {/* Empty state */}
-        {!loading && filteredJobs.length === 0 && (
+        {!loading && loadError && (
+          <div className="empty-state" role="alert">
+            <h3 className="text-lg font-semibold text-gray-900">Jobs are temporarily unavailable</h3>
+            <p className="mt-2 text-sm text-gray-500">{loadError}</p>
+            <button onClick={() => {
+              setLoading(true);
+              setReloadCount(count => count + 1);
+            }} className="btn-primary mt-5">
+              Try again
+            </button>
+          </div>
+        )}
+
+        {!loading && !loadError && filteredJobs.length === 0 && (
           <div className="empty-state">
             <div className="empty-state-icon">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">

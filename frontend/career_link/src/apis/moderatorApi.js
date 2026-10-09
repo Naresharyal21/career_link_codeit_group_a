@@ -1,6 +1,14 @@
 import apiClient from "./apiClient";
 import { MODERATOR_ENDPOINTS } from "./endpoints";
 
+export const adminlogin = async (credentials) => {
+    return apiClient.post(
+        MODERATOR_ENDPOINTS.ADMIN_LOGIN,
+        credentials,
+        { credentials: "include" }
+    );
+};
+
 export const getDashboard = async () => {
     return apiClient.get(
         MODERATOR_ENDPOINTS.DASHBOARD
@@ -143,6 +151,7 @@ export const rejectJob = async (
 
 
 const moderatorApi = {
+    adminlogin,
     getDashboard,
 
     getReports,

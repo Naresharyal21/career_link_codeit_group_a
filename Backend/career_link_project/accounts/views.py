@@ -68,6 +68,27 @@ class MeView(APIView):
 
     def put(self, request):
         user = request.user
+
+        protected_changes = {}
+        if (
+            "email" in request.data
+            and request.data["email"] != user.email
+        ):
+            protected_changes["email"] = (
+                "Use the email verification flow to change your email."
+            )
+        if (
+            "role" in request.data
+            and request.data["role"] != user.role
+        ):
+            protected_changes["role"] = (
+                "Account roles cannot be changed from profile settings."
+            )
+        if protected_changes:
+            return Response(
+                protected_changes,
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         
         # Determine profile based on role
         if user.role == User.Role.JOBSEEKERS:

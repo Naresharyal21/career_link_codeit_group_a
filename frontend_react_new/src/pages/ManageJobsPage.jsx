@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 
 const ManageJobsPage = () => {
   const [jobs, setJobs] = useState([]);
@@ -14,7 +14,7 @@ const ManageJobsPage = () => {
     const token = sessionStorage.getItem('access_token');
     if (!token) return;
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/jobs/manage/', {
+      const response = await apiClient.get('/jobs/manage/', {
         headers: { Authorization: 'Bearer ' + token }
       });
       const jobsData = Array.isArray(response.data) ? response.data : (response.data.results || []);
@@ -30,7 +30,7 @@ const ManageJobsPage = () => {
     if (!window.confirm("Are you sure you want to delete this job?")) return;
     const token = sessionStorage.getItem('access_token');
     try {
-      await axios.delete('http://localhost:8000/api/v1/jobs/manage/' + jobId + '/', {
+      await apiClient.delete('/jobs/manage/' + jobId + '/', {
         headers: { Authorization: 'Bearer ' + token }
       });
       fetchJobs();

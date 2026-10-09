@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const ForgotPasswordPage = () => {
@@ -15,7 +15,7 @@ const ForgotPasswordPage = () => {
     setMessage('');
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/accounts/forgot/password/', { email });
+      const response = await apiClient.post('/accounts/forgot/password/', { email });
       setMessage(response.data.message || 'OTP code sent successfully!');
       setTimeout(() => {
         navigate('/verify-otp?email=' + encodeURIComponent(email) + '&purpose=prv');

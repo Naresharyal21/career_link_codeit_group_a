@@ -1,4 +1,6 @@
 export const MODERATOR_ENDPOINTS = {
+    ADMIN_LOGIN:
+        "/reports/admin/login/",
 
     DASHBOARD:
         "/reports/dashboard/",

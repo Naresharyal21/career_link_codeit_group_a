@@ -1,8 +1,9 @@
 from django.core import mail
 from django.test import TestCase, override_settings
-from rest_framework.test import APIClient
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
 
-from .models import EmailOTP, User
+from .models import EmailOTP, JobseekerProfile, User
 
 
 @override_settings(
@@ -93,3 +94,46 @@ class EmailChangeOTPTests(TestCase):
         self.assertFalse(
             EmailOTP.objects.get(user=self.user, purpose="cev").is_verified
         )
+
+
+class MeIdentityUpdateTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="profile-user",
+            email="profile@example.com",
+            password="correct-horse-battery-staple",
+            role=User.Role.JOBSEEKERS,
+            email_verified=True,
+        )
+        self.profile = JobseekerProfile.objects.create(
+            user=self.user,
+            full_name="Profile User",
+            location="Kathmandu",
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = "/api/v1/accounts/me/"
+
+    def test_email_change_requires_the_verified_email_flow(self):
+        response = self.client.put(
+            self.url,
+            {"email": "new@example.com"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "profile@example.com")
+        self.assertTrue(self.user.email_verified)
+
+    def test_role_change_is_rejected_without_changing_the_profile(self):
+        response = self.client.put(
+            self.url,
+            {"role": User.Role.EMPLOYEERS},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.user.refresh_from_db()
+        self.profile.refresh_from_db()
+        self.assertEqual(self.user.role, User.Role.JOBSEEKERS)
+        self.assertEqual(self.profile.full_name, "Profile User")

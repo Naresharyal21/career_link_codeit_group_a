@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useCallback, useEffect, useState } from 'react';
+import apiClient from '../api';
 import { Link, useNavigate } from 'react-router-dom';
 
 const ApplicationsPage = () => {
@@ -9,11 +9,7 @@ const ApplicationsPage = () => {
   const [loading, setLoading]           = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const token = sessionStorage.getItem('access_token');
     if (!token || token === 'undefined' || token === 'null') {
       navigate('/login');
@@ -22,15 +18,15 @@ const ApplicationsPage = () => {
 
     try {
       const config = { headers: { Authorization: 'Bearer ' + token } };
-      const meRes = await axios.get('http://localhost:8000/api/v1/accounts/me/', config);
+      const meRes = await apiClient.get('/accounts/me/', config);
       const role = meRes.data.role;
       setUserRole(role);
 
-      const appRes = await axios.get('http://localhost:8000/api/v1/applications/', config);
+      const appRes = await apiClient.get('/applications/', config);
       setApplications(Array.isArray(appRes.data) ? appRes.data : (appRes.data.results || []));
 
       if (role === 'js') {
-        const savedRes = await axios.get('http://localhost:8000/api/v1/applications/saved-jobs/', config);
+        const savedRes = await apiClient.get('/applications/saved-jobs/', config);
         setSavedJobs(Array.isArray(savedRes.data) ? savedRes.data : (savedRes.data.results || []));
       }
     } catch (err) {
@@ -42,12 +38,16 @@ const ApplicationsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleUnapply = async (appId) => {
     const token = sessionStorage.getItem('access_token');
     try {
-      await axios.delete('http://localhost:8000/api/v1/applications/' + appId + '/', {
+      await apiClient.delete('/applications/' + appId + '/', {
         headers: { Authorization: 'Bearer ' + token }
       });
       fetchData();
