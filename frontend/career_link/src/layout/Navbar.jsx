@@ -3,45 +3,35 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
-import { useLocation, useNavigate } from "react-router-dom"; // CHANGED: added useLocation
+import { useLocation } from "react-router-dom";
 
 import logo from "../assets/logo.png";
 import MyProfilecart from "../pages/accounts/MyProfilecart";
 import { useTheme } from "../context/ThemeContext";
-import accountsApi from "../apis/accountsApi";
 import { AuthenticationContext } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
-const POLL_INTERVAL_MS = 30000; // CHANGED: new constant
+const POLL_INTERVAL_MS = 30000;
 
 const Navbar = () => {
-  const { theme, toggleModes } = useTheme();
-  const { user, setUser } = useContext(AuthenticationContext);
+  const { theme, toggleTheme } = useTheme();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const navigate = useNavigate();
-  const location = useLocation(); // CHANGED: new line
+  const { isAuthenticated, user } = useContext(AuthenticationContext);
+  const location = useLocation();
 
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
 
+  // Refetch the unread count on every page change, every 30 seconds,
+  // and when the notifications page announces a change.
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await accountsApi.getMe();
-        setUser(data);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      }
-    };
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
 
-    fetchUser();
-  }, []);
-
-  // CHANGED: this effect used to run once, so the dot never updated.
-  // Now it refetches on every page change, every 30 seconds, and when
-  // the notifications page announces a change.
-  useEffect(() => {
     const controller = new AbortController();
 
     const fetchUnreadCount = async () => {
@@ -81,7 +71,7 @@ const Navbar = () => {
       clearInterval(interval);
       window.removeEventListener("notifications:changed", fetchUnreadCount);
     };
-  }, [location.pathname]);
+  }, [location.pathname, isAuthenticated]);
 
   const initials = user?.username
     ?.split(" ")
@@ -110,13 +100,16 @@ const Navbar = () => {
       </div>
 
       <div className=" font-mono text-green-700">
-        {user?.role_display?.toUpperCase()} PORTAL
+        {user?.role_display ? `${user.role_display.toUpperCase()} PORTAL` : "CAREERLINK"}
       </div>
 
-      <div className="flex  gap-2 justify-between items-center w-70 pr-[3%]">
+      <div className="flex items-center gap-2 pr-[3%]">
         <button
-          onClick={toggleModes}
-          className="  p-1 rounded-xl ml-20 hover:cursor-pointer hover:bg-purple-100  "
+          type="button"
+          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+          aria-pressed={theme === "dark"}
+          onClick={toggleTheme}
+          className="rounded-xl p-2 transition hover:bg-purple-100"
         >
           {theme === "light" ? (
             <CiDark className="text-2xl" />
@@ -125,43 +118,28 @@ const Navbar = () => {
           )}
         </button>
 
-        <div ref={profileRef} className=" flex gap-2">
-          <button
-            type="button"
+        {isAuthenticated && (
+          <Link
+            to="/dashboard/notifications"
             aria-label="Notifications"
-            onClick={() => navigate("/dashboard/notifications")}
-            className="
-              relative
-              flex h-10 w-10 items-center justify-center
-              rounded-xl
-              text-[#64748B]
-              transition-all duration-200
-              hover:bg-[#F0ECFF]
-              hover:text-[#6C4DFF]
-              focus:outline-none
-              focus:ring-4
-              focus:ring-violet-500/10
-            "
+            className="relative rounded-xl p-2 text-2xl text-black transition hover:bg-purple-100"
           >
-            <IoIosNotificationsOutline className="text-[25px]" />
+            <IoIosNotificationsOutline />
 
             {unreadCount > 0 && (
-              <span
-                className="
-                  absolute right-[8px] top-[7px]
-                  h-2 w-2
-                  rounded-full
-                  bg-[#6C4DFF]
-                  ring-2 ring-white
-                "
-              />
+              <span className="absolute right-[8px] top-[7px] h-2 w-2 rounded-full bg-[#6C4DFF] ring-2 ring-white" />
             )}
-          </button>
+          </Link>
+        )}
 
+        {isAuthenticated ? (
+        <div ref={profileRef} className="relative flex gap-2">
           <div className="h-14 w-14 p-1 rounded flex  justify-center hover:bg-purple-900 ">
             <button
               className="relative group flex rounded-full h-12 w-13 text-white justify-center items-center bg-gray-600 hover:cursor-pointer"
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              aria-label="Open account menu"
+              aria-expanded={showProfileMenu}
+              onClick={() => setShowProfileMenu((open) => !open)}
             >
               {user?.role === "js" && user?.profile?.profile_pictur ? (
                 <img
@@ -183,7 +161,8 @@ const Navbar = () => {
 
           <button
             className="hidden items-center gap-2 text-left sm:flex"
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            aria-expanded={showProfileMenu}
+            onClick={() => setShowProfileMenu((open) => !open)}
           >
             <div>
               <p className="max-w-[130px] truncate text-sm font-semibold text-[#172337]">
@@ -208,6 +187,22 @@ const Navbar = () => {
             </div>
           )}
         </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Link
+              to="/login"
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/signup"
+              className="rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+            >
+              Sign up
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

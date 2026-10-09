@@ -7,7 +7,7 @@ const Button = ({
   disabled = false,
   variant = "primary",
   className = "",
-
+  ...buttonProps
 
 }) => {
 
@@ -28,6 +28,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
+      {...buttonProps}
       className={`${variants[variant]}
       p-2 rounded-2xl disabled:bg-gray-400 disabled:opacity-50
       ${className}`}     >

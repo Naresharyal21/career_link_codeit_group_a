@@ -1,22 +1,25 @@
 
-import React, { useState } from "react";
-import { Link, replace, useNavigate } from "react-router";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { toast } from "react-toastify";
 
 import { emailRule } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
 import Button from "../../components/commonuiPart/Button";
+import useOtpCooldown from "../../hooks/useOtpCooldown";
 
 const EmailChangePage = () => {
  
 
   const { sendnewemailotp, loading } = useAccounts();
   const navigate = useNavigate();
+  const { startCooldown } = useOtpCooldown("cev", 180);
 
   const formik = useFormik({
     initialValues: {
-      email: "",
+      new_email: "",
      
     },
 
@@ -26,30 +29,15 @@ const EmailChangePage = () => {
     }),
 
     onSubmit: async (values) => {
-      
-    localStorage.setItem("updateemail", values.new_email);
       try {
-
-       
-
-        const response = await sendnewemailotp(
-          
-          values.new_email
-
-        
-         
-        );
-
-
-    navigate("/pr/verifyotp/cev",{ replace:true});
-        
-
-     
-
-        
+        const email = values.new_email.trim().toLowerCase();
+        await sendnewemailotp(email);
+        localStorage.setItem("updateemail", email);
+        startCooldown();
+        navigate("/verifyotp/cev", { replace: true });
 
       } catch (error) {
-        console.log("Password reset error:", error);
+        toast.error(error.message || "Failed to send verification OTP");
       }
     },
   });

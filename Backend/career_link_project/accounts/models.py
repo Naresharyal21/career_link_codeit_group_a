@@ -112,6 +112,7 @@ class EmailOTP(TimeStamp):
             on_delete=models.CASCADE,
             related_name="email_otps",
         )
+        email = models.EmailField(blank=True, null=True)
         otp=models.CharField(max_length=6)
         expires_at=models.DateTimeField()
         is_verified=models.BooleanField(default=False)

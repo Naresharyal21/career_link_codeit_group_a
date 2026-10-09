@@ -26,6 +26,7 @@ import ResetPasswordPage from '../pages/accounts/ResetPasswordPage'
 import ForgetPasswordPage from '../pages/accounts/ForgetPasswordPage'
 import EmailConformPasswordPage from '../pages/accounts/EmailConformPasswordPage'
 import AdminLogin from '../pages/moderator/AdminLogin'
+import AddResume from '../pages/accounts/AddResume'
 
 
 
@@ -39,7 +40,7 @@ const AppRoutes = () => {
 
       <Routes>
         {/* admin routes */}
-        <Route path="admin/login" element={<AdminLogin/>}/>
+        <Route path="custom/admin/login" element={<AdminLogin/>}/>
 
        
         <Route path="login/" element={<Login />} />
@@ -58,6 +59,7 @@ const AppRoutes = () => {
           
 
             <Route path="Profile/" element={<MyProfilecart />} />
+            <Route path="addResume/" element={<AddResume />} />
 
 
 

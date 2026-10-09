@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.contrib.auth import  login
 
 # importing serializers here.
 from .serializers import AdminRegistrationSerializer, AdminLoginSerializer
@@ -42,7 +43,10 @@ class AdminLoginView(APIView):
 
         if serializer.is_valid():
             user = serializer.validated_data["user"]
-            refresh = RefreshToken.for_user(user)
+            login(request, user)
+            print("SESSION KEY:", request.session.session_key)
+            print("SESSION DATA:", dict(request.session))
+            
 
             return Response(
                 {
@@ -54,14 +58,11 @@ class AdminLoginView(APIView):
                         "first_name": user.first_name,
                         "last_name": user.last_name,
                     },
-                    "token": {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    },
+                  
                 },
                 status=status.HTTP_200_OK,
             )
-            return Response(
+        return Response(
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST,
             )

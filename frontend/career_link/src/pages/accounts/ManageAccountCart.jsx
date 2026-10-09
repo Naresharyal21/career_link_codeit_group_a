@@ -1,13 +1,13 @@
-import React from 'react'
+
 import Button from '../../components/commonuiPart/Button'
-import { Link, useNavigate, useParams, } from 'react-router'
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import useAccounts from '../../hooks/useAccounts';
 import useOtpCooldown from "../../hooks/useOtpCooldown";
-import EmailConformPasswordPage from './EmailConformPasswordPage';
 
 const ManageAccountCart = ({ onClose }) => {
 
-  const { sendDeleteOTP  ,resendVerificationOTP} = useAccounts();
+  const { sendDeleteOTP } = useAccounts();
 
 
 
@@ -24,25 +24,15 @@ const ManageAccountCart = ({ onClose }) => {
     try {
 
 
-      const response = await sendDeleteOTP();
+      await sendDeleteOTP();
       startCooldown();
-
-
-      navigate("/pr/verifyotp/dav");
-
+      navigate("/verifyotp/dav");
 
     } catch (error) {
-      console.log("Failed to send delete OTP:", error);
+      toast.error(error.message || "Could not send the account deletion OTP.");
     }
   };
 
-  const handleUpdateEmail=async(email , purpose )=>{
-    try{
-      const response= await resendVerificationOTP()
-    }catch(error){
-      {error:"failed to send the otp"}
-    }
-  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center ">
       <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
@@ -57,12 +47,9 @@ const ManageAccountCart = ({ onClose }) => {
         </h4>
         <Button className='w-full rounded-xl border p-3   '
           type='button'
-          disabled={isCooldown}
-         
-          
           variant='gray'> <h3 className="font-semibold text-gray-800  dark:text-white">
             
-            <Link to="conformpassword">
+            <Link to="/conformpassword">
   Change Email
 </Link>
           </h3></Button>
@@ -86,5 +73,4 @@ const ManageAccountCart = ({ onClose }) => {
 }
 
 export default ManageAccountCart
-
 

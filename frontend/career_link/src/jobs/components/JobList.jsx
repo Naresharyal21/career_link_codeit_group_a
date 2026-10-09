@@ -14,7 +14,14 @@ const SkeletonCard = () => (
   </div>
 )
 
-const JobList = ({ jobs, loading }) => {
+const JobList = ({
+  jobs,
+  loading,
+  canSaveJobs = false,
+  savedJobs = [],
+  savingJobId = null,
+  onToggleSavedJob,
+}) => {
   if (loading) {
     return (
       <div>
@@ -37,7 +44,14 @@ const JobList = ({ jobs, loading }) => {
   return (
     <div>
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} />
+        <JobCard
+          key={job.id}
+          job={job}
+          canSave={canSaveJobs}
+          isSaved={savedJobs.includes(Number(job.id))}
+          saving={savingJobId === job.id}
+          onToggleSaved={() => onToggleSavedJob?.(job.id)}
+        />
       ))}
     </div>
   )

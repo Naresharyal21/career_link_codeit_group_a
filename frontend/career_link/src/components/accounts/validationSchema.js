@@ -18,6 +18,29 @@ export const passwordconfirmRule=Yup.string()
 
 export const locationRule = Yup.string().required("Location is required");
 
+export const resume_fileRule=Yup.mixed()
+.required("Resume is required")
+.test(
+  "fileType",
+  "Only PDF, DOC, or DOX files are allowed",
+  (value)=>{
+    if(!value)return false;
+    return[
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ].includes(value.type);
+  }
+).test(
+   "fileSize",
+    "Resume must be less than 5MB",
+    (value) => {
+      if (!value) return false;
+
+      return value.size <= 5 * 1024 * 1024;
+    }
+);
+
 export const loginValidationSchema = Yup.object({
   email: emailRule,
   password: passwordRule,
@@ -76,4 +99,9 @@ export const otpRule = Yup.string()
 
 export const verifyOtpSchema = Yup.object({
   otp: otpRule,
+});
+
+
+export const verifyresumeaschema= Yup.object({
+   resume_file: resume_fileRule,
 });

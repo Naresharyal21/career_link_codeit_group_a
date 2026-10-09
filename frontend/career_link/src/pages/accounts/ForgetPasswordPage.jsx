@@ -1,156 +1,77 @@
-import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
-
-
+import { toast } from "react-toastify";
 import { forgotpasswordSchema } from "../../components/accounts/validationSchema";
 import useAccounts from "../../hooks/useAccounts";
+import useOtpCooldown from "../../hooks/useOtpCooldown";
 
 const ForgetPasswordPage = () => {
-  const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
-
   const { forgotpassword } = useAccounts();
+  const { formattedTime, isCooldown, startCooldown } = useOtpCooldown("prv", 180);
 
   const formik = useFormik({
-    initialValues: {
-      email: "",
-    },
-
+    initialValues: { email: "" },
     validationSchema: forgotpasswordSchema,
-
     onSubmit: async (values) => {
-   
+      const email = values.email.trim().toLowerCase();
       try {
-       await forgotpassword(values.email);
-        localStorage.setItem("resetemail",values.email)
-
-         
-
-        // Start 3 minute countdown
-        const resendTime = Date.now() + 3 * 60 * 1000;
-        localStorage.setItem("forgotPasswordResendTime", resendTime);
-        setCountdown(180)
-
-        navigate("/verifyotp/prv")
-
+        await forgotpassword(email);
+        localStorage.setItem("resetemail", email);
+        startCooldown();
+        navigate("/verifyotp/prv");
       } catch (error) {
-       
+        toast.error(error.message || "Unable to send the password reset OTP.");
       }
     },
   });
 
-  useEffect(() => {
-    const savedResendTime = localStorage.getItem("forgotPasswordResendTime");
-    if (!savedResendTime) return;
-
-    const remaningTime = Math.ceil((Number(savedResendTime) - Date.now()) / 1000);
-    if (remaningTime > 0) {
-      setCountdown(remaningTime);
-    } else {
-      localStorage.removeItem("forgotPasswordResendTime");
-      setCountdown(0);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (countdown <= 0) return;
-
-    const timer = setInterval(() => {
-      const savedResendTime = localStorage.getItem(
-        "forgotPasswordResendTime"
-      );
-
-      if (!savedResendTime) {
-        setCountdown(0);
-        return;
-      }
-
-      const remainingTime = Math.ceil(
-        (Number(savedResendTime) - Date.now()) / 1000
-      );
-
-      if (remainingTime <= 0) {
-        localStorage.removeItem("forgotPasswordResendTime");
-        setCountdown(0);
-      } else {
-        setCountdown(remainingTime);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [countdown]);
-
-  const minutes = Math.floor(countdown / 60);
-  const seconds = countdown % 60;
-
-
-
-
   return (
-    <div className="min-h-screen flex items-center justify-center">
-
-      <div className="w-full shadow shadow-blue-600 rounded-2xl max-w-md p-6">
-
-        <h1 className="text-2xl font-bold mb-2">
-          Forgot Password
-        </h1>
-
-        <p className="text-gray-500 mb-6">
-          Enter your email to receive an OTP.
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
+      <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
+        <h1 className="text-2xl font-bold text-slate-900">Forgot password?</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Enter your registered email and we’ll send you a verification code.
         </p>
 
-        <form onSubmit={formik.handleSubmit}>
-
-          <div className="mb-4">
-
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Enter your Email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className="border rounded-xl p-2 w-full"
-            />
-
-            {formik.touched.email && formik.errors.email && (
-              <p className="text-red-700">
-                {formik.errors.email}
-              </p>
-            )}
-
-          </div>
-
+        <form onSubmit={formik.handleSubmit} className="mt-6">
+          <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-800">
+            Email address
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="you@example.com"
+            value={formik.values.email}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className="w-full rounded-xl border border-slate-300 px-3 py-3 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          />
+          {formik.touched.email && formik.errors.email && (
+            <p role="alert" className="mt-2 text-sm text-red-700">{formik.errors.email}</p>
+          )}
           <button
-            className="bg-green-600 text-white p-2 rounded-2xl w-full mt-7
-                       disabled:bg-gray-400 disabled:cursor-not-allowed"
             type="submit"
-            disabled={countdown > 0 || formik.isSubmitting}
+            disabled={isCooldown || formik.isSubmitting}
+            className="mt-5 w-full rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {countdown > 0
-              ? `Resend OTP in ${minutes}:${seconds
-                .toString()
-                .padStart(2, "0")}`
-              : "Send OTP"}
+            {formik.isSubmitting
+              ? "Sending code…"
+              : isCooldown
+                ? `Try again in ${formattedTime}`
+                : "Send verification code"}
           </button>
-
         </form>
 
-        <div className="flex items-center justify-center">
-
-          <Link
-            to="/login"
-            className="text-blue-600 underline mt-4 hover:text-blue-800"
-          >
-            Back to Login
+        <div className="mt-5 text-center">
+          <Link to="/login" className="text-sm font-medium text-blue-700 hover:underline">
+            Back to login
           </Link>
-
         </div>
-
-      </div>
-
+      </section>
     </div>
   );
 };

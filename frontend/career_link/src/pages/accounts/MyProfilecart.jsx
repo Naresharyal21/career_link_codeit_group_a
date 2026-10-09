@@ -1,30 +1,34 @@
 import React, { useState } from 'react'
 import { useContext } from 'react';
 
-import { useNavigate } from 'react-router'
 import { AuthenticationContext } from '../../context/AuthContext';
 import Button from '../../components/commonuiPart/Button';
 import ManageAccountCart from './ManageAccountCart';
+import AddResume from './AddResume';
+import EditProfilePicture from './EditProfilePicture';
+
 
 
 const MyProfilecart = () => {
-  const navigate = useNavigate();
   const [showManageAccount , setShowManageAccount]=useState();
 
-  const { user } = useContext(AuthenticationContext);
+  const [showAddResume, setShowAddResume]=useState(false);
+  const [showEditPicture, setShowEditPicture] = useState(false);
+
+  const { user, logoutUser } = useContext(AuthenticationContext);
+  
   const initials = user?.username
     ?.split(" ")
     .map((name) => name[0])
     .join("")
     .toUpperCase();
 
+ 
+
 
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken")
-    localStorage.removeItem("refreshToken")
-    localStorage.removeItem("user")
-    navigate("/login")
+    logoutUser();
   }
 
   return (
@@ -51,12 +55,27 @@ const MyProfilecart = () => {
         </li>
 <li>
        
-          <Button className=' m-1' variant='logout' > Edit Profile Picture</Button>
+          <Button className='m-1' variant='logout' onClick={() => setShowEditPicture(true)}>
+            Edit Profile Picture
+          </Button>
         </li>
+
+{user?.role=="js" && (
 <li>
        
-          <Button className='m-1  'variant='logout' > Add Resume</Button>
-        </li>
+          <Button className='m-1  'variant='logout' onClick={()=>{setShowAddResume(true)}} > Add Resume</Button>
+          </li>
+      
+      )}
+
+        {showAddResume&&(
+          <AddResume onClose={()=> setShowAddResume(false)}/>
+        )}
+
+        {showEditPicture && (
+          <EditProfilePicture onClose={() => setShowEditPicture(false)} />
+        )}
+
         {showManageAccount &&(
           <ManageAccountCart onClose={()=>setShowManageAccount(false)}/>
         )}

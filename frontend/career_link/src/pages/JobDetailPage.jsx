@@ -1,37 +1,28 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getJobById, getSimilarJobs, JOB_TYPE_LABELS } from '../apis/jobsApi'
+import { Link, useParams, useNavigate } from 'react-router-dom'
+import { HiOutlineLocationMarker, HiOutlineBriefcase, HiOutlineArrowLeft } from 'react-icons/hi'
+import { FaRupeeSign } from 'react-icons/fa'
+import { JOB_TYPE_LABELS } from '../apis/jobsApi'
+import useJobs from '../hooks/useJobs'
 
 const JobDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [job, setJob] = useState(null)
-  const [similarJobs, setSimilarJobs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: job, loading, error, fetchJobById } = useJobs()
+  const { data: similarJobs, fetchSimilarJobs } = useJobs()
   const [notFound, setNotFound] = useState(false)
-  const [error, setError] = useState(null)
 
   const loadJob = () => {
-    setLoading(true)
     setNotFound(false)
-    setError(null)
-    getJobById(id)
+    fetchJobById(id)
       .then((data) => {
         if (!data) {
           setNotFound(true)
-          setLoading(false)
           return
         }
-        setJob(data)
-        return getSimilarJobs(id).then((similar) => {
-          setSimilarJobs(similar)
-          setLoading(false)
-        })
+        return fetchSimilarJobs(id)
       })
-      .catch((err) => {
-        setError(err.message || 'Something went wrong while loading this job.')
-        setLoading(false)
-      })
+      .catch(() => {})
   }
 
   useEffect(() => {
@@ -40,7 +31,7 @@ const JobDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 shadow shadow-black/12 rounded p-6 max-w-3xl animate-pulse">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 max-w-3xl animate-pulse">
         <div className="h-7 bg-gray-200 rounded w-2/3 mb-3"></div>
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-6"></div>
         <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
@@ -51,12 +42,12 @@ const JobDetailPage = () => {
 
   if (error) {
     return (
-      <div className="bg-gray-50 shadow shadow-black/12 rounded p-8 max-w-3xl text-center">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 max-w-3xl text-center">
         <p className="text-red-700 font-medium">Couldn't load this job.</p>
         <p className="text-gray-500 text-sm mt-1">{error}</p>
         <button
           onClick={loadJob}
-          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded hover:bg-[#173a6e] transition-colors cursor-pointer"
+          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded-md hover:bg-[#173a6e] transition-colors cursor-pointer text-sm font-medium"
         >
           Try Again
         </button>
@@ -64,13 +55,13 @@ const JobDetailPage = () => {
     )
   }
 
-  if (notFound) {
+  if (notFound || !job) {
     return (
-      <div className="bg-gray-50 shadow shadow-black/12 rounded p-8 max-w-3xl text-center">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-8 max-w-3xl text-center">
         <p className="text-gray-700 font-medium">This job posting couldn't be found.</p>
         <button
           onClick={() => navigate('/jobs')}
-          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded hover:bg-[#173a6e] transition-colors"
+          className="mt-4 bg-[#0f2a52] text-white px-4 py-2 rounded-md hover:bg-[#173a6e] transition-colors cursor-pointer text-sm font-medium"
         >
           Back to Browse Jobs
         </button>
@@ -78,70 +69,87 @@ const JobDetailPage = () => {
     )
   }
 
+  const similarList = similarJobs || []
+
   return (
     <div className="max-w-5xl">
       <button
         onClick={() => navigate('/jobs')}
-        className="text-[#0f2a52] text-sm mb-3 hover:underline cursor-pointer"
+        className="flex items-center gap-1 text-[#0f2a52] text-sm mb-4 hover:underline cursor-pointer"
       >
-        ← Back to Browse Jobs
+        <HiOutlineArrowLeft />
+        Back to Browse Jobs
       </button>
 
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        <div className="bg-gray-50 shadow shadow-black/12 rounded p-6 flex-1 w-full min-w-0">
-          <h2 className="text-2xl font-bold">{job.title}</h2>
-          <p className="text-gray-600 mt-1">{job.employer_name} • {job.location}</p>
+        <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-6 flex-1 w-full min-w-0">
+          <h2 className="text-2xl font-bold text-gray-900">{job.title}</h2>
+          <p className="text-gray-500 mt-1">{job.employer_name}</p>
 
-          <div className="flex gap-4 mt-4 text-sm text-gray-700">
-            <span>{JOB_TYPE_LABELS[job.job_type]}</span>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 text-sm text-gray-600">
+            <span className="flex items-center gap-1">
+              <HiOutlineLocationMarker className="text-gray-400" />
+              {job.location}
+            </span>
+            <span className="flex items-center gap-1">
+              <HiOutlineBriefcase className="text-gray-400" />
+              {JOB_TYPE_LABELS[job.job_type] || job.job_type}
+            </span>
             {job.salary_min && job.salary_max && (
-              <span>NPR {job.salary_min.toLocaleString()} - {job.salary_max.toLocaleString()}</span>
+              <span className="flex items-center gap-1 font-medium text-gray-700">
+                <FaRupeeSign className="text-gray-400" />
+                NPR {job.salary_min.toLocaleString()} - {job.salary_max.toLocaleString()}
+              </span>
             )}
           </div>
 
-          <div className="mt-6">
-            <h3 className="font-semibold">Job Description</h3>
-            <p className="text-gray-700 mt-1">{job.description}</p>
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h3 className="font-semibold text-gray-900">Job Description</h3>
+            <p className="text-gray-600 mt-1.5 leading-relaxed">{job.description}</p>
           </div>
 
-          <div className="mt-4">
-            <h3 className="font-semibold">Responsibilities</h3>
-            <p className="text-gray-700 mt-1">{job.responsibilities}</p>
+          <div className="mt-5">
+            <h3 className="font-semibold text-gray-900">Responsibilities</h3>
+            <p className="text-gray-600 mt-1.5 leading-relaxed">{job.responsibilities}</p>
           </div>
 
-          <div className="mt-4">
-            <h3 className="font-semibold">Requirements</h3>
-            <p className="text-gray-700 mt-1">{job.requirements}</p>
+          <div className="mt-5">
+            <h3 className="font-semibold text-gray-900">Requirements</h3>
+            <p className="text-gray-600 mt-1.5 leading-relaxed">{job.requirements}</p>
           </div>
 
-          <div className="mt-4">
-            <h3 className="font-semibold">Benefits</h3>
-            <p className="text-gray-700 mt-1">{job.benefits}</p>
+          <div className="mt-5">
+            <h3 className="font-semibold text-gray-900">Benefits</h3>
+            <p className="text-gray-600 mt-1.5 leading-relaxed">{job.benefits}</p>
           </div>
 
-          <button className="mt-6 bg-[#0f2a52] text-white px-6 py-2 rounded hover:bg-[#173a6e] active:bg-[#0a1d3a] transition-colors cursor-pointer">
+          <Link
+            to={`/application?job=${encodeURIComponent(job.id)}`}
+            className="mt-6 inline-flex rounded-lg bg-blue-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
             Apply Now
-          </button>
+          </Link>
         </div>
 
-        {similarJobs.length > 0 && (
+        {similarList.length > 0 && (
           <div className="w-full md:w-72 shrink-0">
-            <h3 className="font-semibold mb-3">Similar Jobs</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Similar Jobs</h3>
             <div className="space-y-3">
-              {similarJobs.map((sj) => (
-                <div
+              {similarList.map((sj) => (
+                <Link
                   key={sj.id}
-                  onClick={() => navigate(`/jobs/${sj.id}`)}
-                  className="bg-gray-50 shadow shadow-black/12 rounded p-3 cursor-pointer hover:shadow-md hover:shadow-black/20 transition-shadow"
+                  to={`/jobs/${sj.id}`}
+                  className="block rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-gray-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700"
                 >
-                  <h4 className="font-medium text-sm">{sj.title}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{sj.employer_name}</p>
+                  <h4 className="font-medium text-sm text-gray-900">{sj.title}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{sj.employer_name}</p>
                   {sj.salary_min && sj.salary_max && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-600 font-medium mt-1 flex items-center gap-1">
+                      <FaRupeeSign className="text-gray-400" />
                       NPR {sj.salary_min.toLocaleString()} - {sj.salary_max.toLocaleString()}
                     </p>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           </div>

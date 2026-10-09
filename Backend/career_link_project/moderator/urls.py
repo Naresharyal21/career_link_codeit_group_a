@@ -9,7 +9,7 @@ urlpatterns = [
         name="adminregisterview",
     ),
   path(
-        "login/",
+        "admin/login/",
         AdminLoginView.as_view(),
         name="adminloginview",
     ),

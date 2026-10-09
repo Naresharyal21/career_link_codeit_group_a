@@ -4,10 +4,9 @@ import LoginForm from '../../components/accounts/LoginForm'
 
 const Login = () => {
   return (
-    <div className='flex flex-col h-screen bg-blue-100 items-center justify-center'>
-      
-      <div className=" w-100 h-107  border-b-cyan-600 rounded-4xl  bg-blue-100 shadow shadow-blue-600 pt-15 p-4">
-         <h1 className='  mb-6 -mt-9 pl-[40%] text-xl text-blue-600'>Login</h1>
+    <div className='flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-10'>
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
+         <h1 className='mb-6 text-center text-2xl font-bold text-slate-900'>Welcome back</h1>
        <LoginForm/>
        </div>
     </div>

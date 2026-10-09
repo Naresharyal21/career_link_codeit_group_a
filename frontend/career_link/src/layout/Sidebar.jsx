@@ -1,17 +1,25 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useContext } from "react";
 
-import { MdOutlineDashboard } from "react-icons/md";
+import { MdOutlineDashboard, MdOutlineHome } from "react-icons/md";
 import { IoBagOutline, IoBriefcaseOutline } from "react-icons/io5";
 import { FaRegFilePdf } from "react-icons/fa";
 import { MdOutlineDataSaverOff, MdReport } from "react-icons/md";
-import { FiHeadphones } from "react-icons/fi";
+import { FiHeadphones, FiLogIn, FiUserPlus } from "react-icons/fi";
+import { AuthenticationContext } from "../context/AuthContext";
 
 
 const navigationLinks = [
   {
-    name: "Dashboard",
+    name: "Home",
     path: "/",
+    icon: MdOutlineHome,
+    guestsOnly: true,
+  },
+  {
+    name: "Dashboard",
+    path: "/dashboard",
     icon: MdOutlineDashboard,
   },
   {
@@ -20,19 +28,34 @@ const navigationLinks = [
     icon: IoBriefcaseOutline,
   },
   {
+    name: "Sign in",
+    path: "/login",
+    icon: FiLogIn,
+    guestsOnly: true,
+  },
+  {
+    name: "Create account",
+    path: "/signup",
+    icon: FiUserPlus,
+    guestsOnly: true,
+  },
+  {
     name: "Applied Jobs",
-    path: "/applied-jobs",
+    path: "/dashboard/applications",
     icon: IoBagOutline,
+    roles: ["js"],
   },
   {
     name: "Saved Jobs",
-    path: "/saved-jobs",
+    path: "/dashboard/saved-jobs",
     icon: MdOutlineDataSaverOff,
+    roles: ["js"],
   },
   {
     name: "Resume/CV",
-    path: "/resume",
+    path: "/dashboard/resume",
     icon: FaRegFilePdf,
+    roles: ["js"],
   },
   {
     name: "Reports",
@@ -43,8 +66,15 @@ const navigationLinks = [
 
 
 
-const Sidebar = () => {
+const Sidebar = ({ onNavigate }) => {
   const location = useLocation();
+  const { user, isAuthenticated } = useContext(AuthenticationContext);
+  const links = navigationLinks.filter(
+    (item) =>
+      (!item.roles || item.roles.includes(user?.role)) &&
+      (!item.guestsOnly || !isAuthenticated) &&
+      (isAuthenticated || item.guestsOnly || item.path === "/jobs")
+  );
 
   const isActive = (path) => {
     if (path === "/") {
@@ -52,7 +82,7 @@ const Sidebar = () => {
     }
 
     return location.pathname === path ||
-      location.pathname.startsWith(`${path}/`);
+      (path !== "/dashboard" && location.pathname.startsWith(`${path}/`));
   };
 
   return (
@@ -77,7 +107,7 @@ const Sidebar = () => {
 
         <ul className="space-y-1.5">
 
-          {navigationLinks.map((item) => {
+          {links.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
 
@@ -86,6 +116,7 @@ const Sidebar = () => {
 
                 <Link
                   to={item.path}
+                  onClick={onNavigate}
                   className={`
                     group
                     relative

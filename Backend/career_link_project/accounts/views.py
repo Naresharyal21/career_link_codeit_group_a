@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.db import transaction
+from django.utils import timezone
 from .serializers import LoginSerializer
 
 from .services import create_and_send_otp, verify_otp
@@ -120,18 +122,38 @@ class VerifyOTPView(APIView):
         purpose = request.data.get("purpose")
 
         if not email or not otp or not purpose:
-            return Response({"error": "Email, OTP, and purpose  are required"})
+            return Response(
+                {"error": "Email, OTP, and purpose are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        try:
+        if purpose == "cev":
+            if not request.user.is_authenticated:
+                return Response(
+                    {"error": "Authentication is required to change your email"},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+            user = request.user
+            email = email.strip().lower()
+        else:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response(
+                    {"error": "User does not exist"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({"error": "User does not exist"})
-
-        success, message = verify_otp(user=user, otp=otp, purpose=purpose)
+        success, message = verify_otp(
+            user=user,
+            otp=otp,
+            purpose=purpose,
+            email=email if purpose == "cev" else None,
+        )
         if not success:
             return Response(
                 {"error": message},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         if purpose == "emv":
             user.email_verified = True
@@ -267,7 +289,11 @@ class SendNewEmailOTPView(APIView):
         new_email = request.data.get("email")
 
         if not new_email:
-            return Response({"error": "Email is required"})
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        new_email = new_email.strip().lower()
 
         if User.objects.filter(email=new_email).exclude(id=request.user.id).exists():
             return Response(
@@ -300,10 +326,28 @@ class ChangeEmail(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        request.user.email = new_email
-        request.user.email_verified = True
+        email_otp = (
+            EmailOTP.objects.filter(user=request.user, purpose="cev")
+            .order_by("-created_at")
+            .first()
+        )
+        if (
+            email_otp is None
+            or email_otp.email != new_email
+            or not email_otp.is_verified
+            or email_otp.expires_at <= timezone.now()
+        ):
+            return Response(
+                {"error": "A valid email verification OTP is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        request.user.save(update_fields=["email", "email_verified"])
+        with transaction.atomic():
+            request.user.email = new_email
+            request.user.email_verified = True
+            request.user.save(update_fields=["email", "email_verified"])
+            email_otp.is_verified = False
+            email_otp.save(update_fields=["is_verified"])
 
         return Response(
             {
@@ -313,5 +357,3 @@ class ChangeEmail(APIView):
             },
             status=status.HTTP_200_OK,
         )
-
-

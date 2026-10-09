@@ -7,7 +7,7 @@ import React, { useState, useContext } from 'react'
 import { FiEye } from "react-icons/fi";
 import { FiEyeOff } from "react-icons/fi";
 import { loginValidationSchema } from './validationSchema';
-import { Link, useNavigate, } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useAccounts from '../../hooks/useAccounts';
 import { AuthenticationContext } from '../../context/AuthContext';
 import Button from '../commonuiPart/Button';
@@ -18,13 +18,14 @@ import {toast} from "react-toastify"
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const { login, loading } = useAccounts();
+  const { login, getMe } = useAccounts();
 
   const [showPassword, setShowPassword] = useState(false)
 
 
-  const { loginUser } = useContext(AuthenticationContext);
+  const { loginUser, setUser } = useContext(AuthenticationContext);
 
   const handletoggle = () => {
     setShowPassword(showPassword ? false : true)
@@ -39,18 +40,19 @@ const LoginForm = () => {
     validationSchema: loginValidationSchema,
 
     onSubmit: async (values) => {
-
       try {
-        const response = await login(values)
 
+        const response = await login(values)
         loginUser(
           response.access,
           response.refresh
         );
+        const userData = await getMe();
+        setUser(userData);
 toast.success("Login successful!")
 
 
-        navigate("/")
+        navigate(location.state?.from || "/dashboard", { replace: true })
 
 
       } catch (err) {
@@ -133,9 +135,10 @@ if(message==="Please verify your email before logging in"){
 
       <Button
         type="submit"
+        disabled={formik.isSubmitting}
         className="w-full mt-7"
       >
-        Login
+        {formik.isSubmitting ? "Signing in..." : "Log in"}
       </Button>
 
       <div className="flex flex-col items-center ">
@@ -150,7 +153,7 @@ if(message==="Please verify your email before logging in"){
         <hr></hr>
         <Link
           className="bg-blue-600  pl-9 pr-9 -mt-3 text-white p-3    rounded-2xl "
-          to="/Signup"
+          to="/signup"
         >
           Signup
         </Link>
