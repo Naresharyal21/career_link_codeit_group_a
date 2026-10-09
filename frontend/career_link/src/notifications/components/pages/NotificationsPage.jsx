@@ -1,229 +1,194 @@
-import { useCallback, useEffect, useState } from "react";
-import apiClient from "../../../apis/apiClient";
+import { useState } from "react";
+import { Check, Trash2, Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useUnreadCount } from "../../hooks/useUnreadCount";
+import { useNotificationList } from "../../hooks/useNotificationList";
 
-const TYPE_STYLES = {
-  status_update: "bg-blue-50 border-l-4 border-l-blue-400",
-  new_job_match: "bg-green-50 border-l-4 border-l-green-400",
-  system: "bg-gray-50 border-l-4 border-l-gray-300",
+const TYPES = {
+  status_update: { label: "Status Update", style: "bg-blue-50 border-l-4 border-l-blue-400" },
+  new_job_match: { label: "New Job Match", style: "bg-green-50 border-l-4 border-l-green-400" },
+  job_approval_update: {
+    label: "Job Approval Update",
+    style: "bg-amber-50 border-l-4 border-l-amber-400",
+  },
+  system: { label: "System", style: "bg-gray-50 border-l-4 border-l-gray-300" },
 };
 
-const TYPE_LABELS = {
-  status_update: "Status Update",
-  new_job_match: "New Job Match",
-  system: "System",
-};
+const TABS = [
+  ["all", "All"],
+  ["unread", "Unread"],
+];
 
 function timeAgo(dateString) {
-  const seconds = Math.floor((Date.now() - new Date(dateString)) / 1000);
-  if (seconds < 60) return "just now";
-
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return minutes + "m ago";
-
+  const minutes = Math.floor((Date.now() - new Date(dateString)) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours + "h ago";
-
-  const days = Math.floor(hours / 24);
-  return days + "d ago";
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function NotificationsPage() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.get("/notifications/");
-      setNotifications(Array.isArray(data) ? data : data?.results || []);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const unread = useUnreadCount();
+  const { unreadCount } = unread;
+  const {
+    notifications,
+    hasMore,
+    loading,
+    refreshing,
+    loadingMore,
+    clearing,
+    error,
+    loadMore,
+    markAsRead,
+    deleteNotification,
+    markAllAsRead,
+    clearAllRead,
+  } = useNotificationList(filter, unread);
 
-  async function markAsRead(id) {
-    const original = notifications.find((notification) => notification.id === id);
-    if (!original || original.is_read) return;
-    setNotifications((current) =>
-      current.map((notification) =>
-        notification.id === id ? { ...notification, is_read: true } : notification
-      )
-    );
-    try {
-      await apiClient.patch(`/notifications/${id}/read/`);
-    } catch (err) {
-      setNotifications((current) =>
-        current.map((notification) =>
-          notification.id === id ? original : notification
-        )
-      );
-      setError(err.message || "Could not mark this notification as read.");
-    }
+  const hasRead = notifications.some((n) => n.is_read);
+
+  function handleClick(n) {
+    if (!n.is_read) markAsRead(n.id);
+    if (n.link) navigate(n.link);
   }
-
-  async function markAllAsRead() {
-    const unread = notifications.filter((notification) => !notification.is_read);
-    if (!unread.length) return;
-    setError(null);
-    setNotifications((current) =>
-      current.map((notification) => ({ ...notification, is_read: true }))
-    );
-    const results = await Promise.allSettled(
-      unread.map((notification) =>
-        apiClient.patch(`/notifications/${notification.id}/read/`)
-      )
-    );
-    const failedIds = new Set(
-      results.flatMap((result, index) =>
-        result.status === "rejected" ? [unread[index].id] : []
-      )
-    );
-    if (failedIds.size > 0) {
-      setNotifications((current) =>
-        current.map((notification) =>
-          failedIds.has(notification.id)
-            ? { ...notification, is_read: false }
-            : notification
-        )
-      );
-      setError(
-        failedIds.size === unread.length
-          ? "Could not mark notifications as read."
-          : `Marked ${unread.length - failedIds.size} notifications as read; ${failedIds.size} could not be updated.`
-      );
-    }
-  }
-
-  useEffect(() => {
-    let active = true;
-    apiClient
-      .get("/notifications/")
-      .then((data) => {
-        if (active) {
-          setNotifications(Array.isArray(data) ? data : data?.results || []);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (active) setError(err.message);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  let visibleNotifications = notifications;
-  if (filter === "unread") {
-    visibleNotifications = notifications.filter((n) => !n.is_read);
-  }
-
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-blue-900">Notifications</h1>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllAsRead}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Mark all as read
-          </button>
-        )}
+        <h1 className="text-xl font-semibold text-blue-900 flex items-center gap-2">
+          Notifications
+          {refreshing && (
+            <span
+              className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"
+              aria-hidden="true"
+            />
+          )}
+        </h1>
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 font-medium px-3 py-1.5 rounded-md hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 transition-colors"
+            >
+              <Check size={15} strokeWidth={2.5} />
+              Mark all read
+            </button>
+          )}
+          {hasRead && (
+            <button
+              onClick={clearAllRead}
+              disabled={clearing}
+              className="inline-flex items-center gap-1.5 text-sm text-gray-500 font-medium px-3 py-1.5 rounded-md hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+            >
+              <Trash2 size={15} strokeWidth={2.5} />
+              {clearing ? "Clearing..." : "Clear read"}
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-            filter === "all"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500"
-          }`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter("unread")}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-            filter === "unread"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500"
-          }`}
-        >
-          Unread {unreadCount > 0 && `(${unreadCount})`}
-        </button>
+      <div className="flex gap-1 mb-6 border-b border-gray-200" role="tablist">
+        {TABS.map(([key, label]) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={filter === key}
+            onClick={() => setFilter(key)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors focus:outline-none ${
+              filter === key
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {label} {key === "unread" && unreadCount > 0 && `(${unreadCount})`}
+          </button>
+        ))}
       </div>
 
       {loading && (
-        <div className="py-16 text-center text-sm text-gray-500">
-          Loading notifications...
-        </div>
+        <div className="py-16 text-center text-sm text-gray-500">Loading notifications...</div>
       )}
 
       {error && !loading && (
-        <div className="py-16 text-center text-sm text-red-600">
-          <p>{error === "Failed to fetch" ? "Couldn't load notifications." : error}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setLoading(true);
-              fetchNotifications();
-            }}
-            className="mt-2 font-semibold underline"
-          >
-            Try again
-          </button>
+        <div className="py-4 mb-4 px-4 rounded-md bg-red-50 border border-red-100 text-center text-sm text-red-600">
+          {error}
         </div>
       )}
 
-      {!loading && !error && visibleNotifications.length === 0 && (
-        <div className="py-16 text-center text-sm text-gray-500">
-          {filter === "unread"
-            ? "You're all caught up!"
-            : "No notifications yet."}
+      {!loading && notifications.length === 0 && !error && (
+        <div className="py-20 flex flex-col items-center text-center">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+            <Bell size={20} className="text-gray-400" strokeWidth={1.75} />
+          </div>
+          <p className="text-sm text-gray-500">
+            {filter === "unread" ? "You're all caught up!" : "No notifications yet."}
+          </p>
         </div>
       )}
 
-      {!loading && !error && visibleNotifications.length > 0 && (
-        <div className="space-y-2">
-          {visibleNotifications.map((n) => (
-            <button
-              key={n.id}
-              onClick={() => !n.is_read && markAsRead(n.id)}
-              className={`w-full text-left px-4 py-4 rounded-md ${
-                TYPE_STYLES[n.type] || "bg-white border-l-4 border-l-gray-200"
-              } ${n.is_read ? "opacity-60" : ""}`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  {!n.is_read && (
-                    <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500"></span>
-                  )}
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">
-                      {TYPE_LABELS[n.type] || n.type}
-                    </span>
-                    <p className="text-sm text-gray-800 mt-0.5">{n.message}</p>
+      {!loading && notifications.length > 0 && (
+        <>
+          <div className="space-y-2">
+            {notifications.map((n) => {
+              const type = TYPES[n.type];
+              return (
+                <div
+                  key={n.id}
+                  className={`w-full px-4 py-4 rounded-md transition-shadow group ${
+                    type?.style || "bg-white border-l-4 border-l-gray-200"
+                  } ${n.is_read ? "opacity-60" : "hover:shadow-sm"}`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      onClick={() => handleClick(n)}
+                      aria-label={n.is_read ? n.message : `Unread: ${n.message}`}
+                      className="flex items-start gap-2 text-left flex-1 min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded"
+                    >
+                      {!n.is_read && (
+                        <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                      )}
+                      <div className="min-w-0">
+                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                          {type?.label || n.type}
+                        </span>
+                        <p className="text-sm text-gray-800 mt-0.5">{n.message}</p>
+                      </div>
+                    </button>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-gray-500 whitespace-nowrap">
+                        {timeAgo(n.created_at)}
+                      </span>
+                      <button
+                        onClick={() => deleteNotification(n.id)}
+                        aria-label="Delete notification"
+                        className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 text-gray-400 hover:text-red-500 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300 rounded p-1"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400">
-                  {timeAgo(n.created_at)}
-                </span>
-              </div>
-            </button>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+
+          {hasMore && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

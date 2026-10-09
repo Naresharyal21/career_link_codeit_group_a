@@ -70,10 +70,6 @@ class Report(models.Model):
     def __str__(self):
         return f"{self.reported_job} - {self.status}"
 
-
-
-
-
 class JobApproval(models.Model):
 
     STATUS_CHOICES = [

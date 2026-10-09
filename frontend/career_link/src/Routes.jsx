@@ -28,74 +28,59 @@ const AppRoutes = () => {
         <Routes>
             <Route path="/custom/admin/login" element={<AdminLogin />} />
             <Route element={<DashboardLayout />}>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route
-                path="/forgetpassword"
-                element={<ForgetPasswordPage />}
-            />
-            <Route
-                path="/verifyotp/:purpose"
-                element={<VerifyOTPpage />}
-            />
-            <Route
-                path="/resetpassword"
-                element={<ResetPasswordPage />}
-            />
-            <Route element={<ProtectedRoute />}>
-                <Route
-                    path="/conformpassword"
-                    element={<EmailConformPasswordPage />}
-                />
-                <Route
-                    path="/get/new/email"
-                    element={<EmailChangePage />}
-                />
-            </Route>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/home" element={<Navigate to="/" replace />} />
-            <Route path="/jobs" element={<BrowseJobsPage />} />
-            <Route path="/jobs/:id" element={<JobDetailPage />} />
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgetpassword" element={<ForgetPasswordPage />} />
+                <Route path="/verifyotp/:purpose" element={<VerifyOTPpage />} />
+                <Route path="/resetpassword" element={<ResetPasswordPage />} />
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/conformpassword" element={<EmailConformPasswordPage />} />
+                    <Route path="/get/new/email" element={<EmailChangePage />} />
+                </Route>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/home" element={<Navigate to="/" replace />} />
+                <Route path="/jobs" element={<BrowseJobsPage />} />
+                <Route path="/jobs/:id" element={<JobDetailPage />} />
 
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardHomePage />} />
-                <Route path="/dashboard/application" element={<ApplicationPage />} />
-                <Route path="/dashboard/applications" element={<MyApplicationsPage />} />
-                <Route path="/dashboard/saved-jobs" element={<SavedJobsPage />} />
-                <Route path="/dashboard/resume" element={<ResumePage />} />
-                <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-                <Route path="/dashboard/applied-jobs" element={<Navigate to="/dashboard/applications" replace />} />
-                <Route path="/application" element={<ApplicationPage />} />
-                <Route path="/applications" element={<Navigate to="/dashboard/applications" replace />} />
-                <Route path="/applied-jobs" element={<Navigate to="/dashboard/applications" replace />} />
-                <Route path="/saved-jobs" element={<Navigate to="/dashboard/saved-jobs" replace />} />
-                <Route path="/resume" element={<Navigate to="/dashboard/resume" replace />} />
-                <Route path="/notifications" element={<Navigate to="/dashboard/notifications" replace />} />
-                {/* User Profile */}
-                <Route
-                    path="/profile"
-                    element={<MyProfilecart />}
-                />
-                {/* Moderator */}
-                <Route
-                    path="/reports/*"
-                    element={<ModeratorRoutes />}
-                />
-                {/* Employer only */}
-                <Route element={<EmployerRoute />}>
-                    {employerRoutes.map((route) => (
-                        <Route
-                            key={route.path}
-                            path={route.path}
-                            element={route.element}
-                        />
-                    ))}
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/dashboard" element={<DashboardHomePage />} />
+                    <Route path="/dashboard/application" element={<ApplicationPage />} />
+                    <Route path="/dashboard/applications" element={<MyApplicationsPage />} />
+                    <Route path="/dashboard/saved-jobs" element={<SavedJobsPage />} />
+                    <Route path="/dashboard/resume" element={<ResumePage />} />
+                    <Route path="/dashboard/notifications" element={<NotificationsPage />} />
+                    <Route path="/dashboard/applied-jobs" element={<Navigate to="/dashboard/applications" replace />} />
+                    <Route path="/application" element={<ApplicationPage />} />
+                    <Route path="/applications" element={<Navigate to="/dashboard/applications" replace />} />
+                    <Route path="/applied-jobs" element={<Navigate to="/dashboard/applications" replace />} />
+                    <Route path="/saved-jobs" element={<Navigate to="/dashboard/saved-jobs" replace />} />
+                    <Route path="/resume" element={<Navigate to="/dashboard/resume" replace />} />
+                    <Route path="/notifications" element={<Navigate to="/dashboard/notifications" replace />} />
+
+                    {/* User Profile */}
+                    <Route path="/profile" element={<MyProfilecart />} />
+
+                    {/* Moderator */}
+                    <Route path="/reports/*" element={<ModeratorRoutes />} />
+
+                    {/* Employer only */}
+                    <Route element={<EmployerRoute />}>
+                        {employerRoutes.map((route) => (
+                            <Route
+                                key={route.path}
+                                path={route.path}
+                                element={route.element}
+                            />
+                        ))}
+                    </Route>
                 </Route>
             </Route>
-            </Route>
+
+            <Route path="*" element={<div>Page not found</div>} />
         </Routes>
     );
 };
+
 export default AppRoutes;

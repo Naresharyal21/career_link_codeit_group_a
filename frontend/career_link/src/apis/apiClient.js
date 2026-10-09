@@ -8,8 +8,7 @@ const request = async (endpoint, options = {}) => {
     const cleanEndpoint = endpoint.replace(/^\/+/, "");
     const finalURL = `${cleanBase}/${cleanEndpoint}`;
 
-    const isFormData =
-        options.body instanceof FormData;
+    const isFormData = options.body instanceof FormData;
 
     const headers = {
         ...(isFormData

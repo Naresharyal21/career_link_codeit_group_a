@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { CiLight, CiDark } from "react-icons/ci";
 import { FiChevronDown } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
 
 import logo from "../assets/logo.png";
 import MyProfilecart from "../pages/accounts/MyProfilecart";
@@ -10,13 +11,67 @@ import { useTheme } from "../context/ThemeContext";
 import { AuthenticationContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const POLL_INTERVAL_MS = 30000;
+
 const Navbar = () => {
   const { theme, toggleTheme } = useTheme();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { isAuthenticated, user } = useContext(AuthenticationContext);
+  const location = useLocation();
 
   const MEDIA_BASE_URL = import.meta.env.VITE_MEDIA_BASE_URL;
   const profileRef = useRef(null);
+
+  // Refetch the unread count on every page change, every 30 seconds,
+  // and when the notifications page announces a change.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchUnreadCount = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/notifications/unread-count/`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setUnreadCount(data.unread_count || 0);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error fetching unread count:", err);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchUnreadCount();
+    }, POLL_INTERVAL_MS);
+
+    window.addEventListener("notifications:changed", fetchUnreadCount);
+
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+      window.removeEventListener("notifications:changed", fetchUnreadCount);
+    };
+  }, [location.pathname, isAuthenticated]);
 
   const initials = user?.username
     ?.split(" ")
@@ -41,26 +96,39 @@ const Navbar = () => {
   return (
     <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
       <div className="flex h-full items-center">
-        <img
-          src={logo}
-          alt="CareerLink"
-          className="h-16 w-auto object-contain"
-        />
+        <img src={logo} alt="CareerLink" className="h-16 w-auto object-contain" />
       </div>
+
       <div className=" font-mono text-green-700">
         {user?.role_display ? `${user.role_display.toUpperCase()} PORTAL` : "CAREERLINK"}
       </div>
 
       <div className="flex items-center gap-2 pr-[3%]">
-        <button type="button" aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`} aria-pressed={theme === "dark"} onClick={toggleTheme} className="rounded-xl p-2 transition hover:bg-purple-100" >  {theme === "light" ? <CiDark className="text-2xl" />
-          : <CiLight className="text-2xl text-black" />}</button>
+        <button
+          type="button"
+          aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+          aria-pressed={theme === "dark"}
+          onClick={toggleTheme}
+          className="rounded-xl p-2 transition hover:bg-purple-100"
+        >
+          {theme === "light" ? (
+            <CiDark className="text-2xl" />
+          ) : (
+            <CiLight className="text-2xl text-black" />
+          )}
+        </button>
+
         {isAuthenticated && (
           <Link
             to="/dashboard/notifications"
             aria-label="Notifications"
-            className="rounded-xl p-2 text-2xl text-black transition hover:bg-purple-100"
+            className="relative rounded-xl p-2 text-2xl text-black transition hover:bg-purple-100"
           >
             <IoIosNotificationsOutline />
+
+            {unreadCount > 0 && (
+              <span className="absolute right-[8px] top-[7px] h-2 w-2 rounded-full bg-[#6C4DFF] ring-2 ring-white" />
+            )}
           </Link>
         )}
 
@@ -84,7 +152,8 @@ const Navbar = () => {
                   src={`${MEDIA_BASE_URL}${user.profile.logo}`}
                   alt="company logo"
                   className="w-full h-full rounded-full object-cover bg-white"
-                />) : (
+                />
+              ) : (
                 initials
               )}
             </button>
@@ -100,9 +169,7 @@ const Navbar = () => {
                 {user?.username || "User"}
               </p>
 
-              <p className="text-xs text-[#64748B]">
-                {user?.role || "Account"}
-              </p>
+              <p className="text-xs text-[#64748B]">{user?.role || "Account"}</p>
             </div>
 
             <FiChevronDown

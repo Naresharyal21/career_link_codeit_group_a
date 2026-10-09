@@ -94,7 +94,7 @@ function HomePage() {
             <div className="inline-flex rounded-full bg-white/10 px-4 py-1.5">
               <span className="text-sm font-medium tracking-wide text-slate-300">Opportunities for your next career move</span>
             </div>
-            <h1 className="mt-6 text-4xl font-bold leading-tight text-white sm:text-6xl lg:text-7xl">Find work worth doing.</h1>
+            <h1 className="mt-6 text-4xl font-bold leading-tight text-sky-200 sm:text-6xl lg:text-7xl">Find work worth doing.</h1>
             <p className="mt-4 max-w-xl text-lg leading-8 text-slate-300">
               CareerLink brings job seekers, employers and verified listings together — with resume tools and honest status tracking on every application.
             </p>
@@ -268,14 +268,14 @@ function HomePage() {
 
       <section className="bg-slate-100 py-20">
         <div className="mx-auto max-w-3xl px-8">
-          <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white px-8 py-16 text-center">
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white px-8 py-16 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-7 w-7 text-slate-400">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72" />
               </svg>
             </div>
             <h2 className="mt-6 text-2xl font-semibold text-slate-900">Ready to take the next step?</h2>
-            <p className="mx-auto mt-3 max-w-md text-blue-600">
+            <p className="mx-auto mt-3 max-w-md text-slate-600">
               Create your profile, upload your resume, and start applying to jobs in minutes.
             </p>
             <Link

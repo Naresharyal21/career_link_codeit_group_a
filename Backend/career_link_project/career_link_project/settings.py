@@ -191,9 +191,10 @@ REST_FRAMEWORK = {
 }
 ## for api documentation
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Accounts API",
-    "DESCRIPTION": "API documentation for the Account app",
+    "TITLE": "Notifications API",
+    "DESCRIPTION": "API documentation for the Notifications app",
     "VERSION": "1.0.0",
+    'SCHEMA_PATH_PREFIX': r'/api',
 }
 
 from datetime import timedelta
@@ -221,21 +222,9 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or "noreply@localhost"
-
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 SESSION_COOKIE_NAME = "sessionid"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False
-# ── CORS ──
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://0.0.0.0:5173",
-    "http://0.0.0.0:5174",
-    "http://192.168.10.70:5173",
-    "http://192.168.10.70:5174",
-]
-CORS_ALLOW_CREDENTIALS = True
