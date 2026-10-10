@@ -5,6 +5,7 @@ import { AuthenticationContext } from "../../../context/AuthContext";
 import apiClient from "../../../apis/apiClient";
 import useJobs from "../../../hooks/useJobs";
 import { JOB_TYPE_LABELS } from "../../../apis/jobsApi";
+import LocationSelect from "../../../components/commonuiPart/LocationSelect";
 
 const popularCategories = ["Engineering", "Design", "Marketing", "Sales", "Customer Support", "Finance"];
 
@@ -129,12 +130,12 @@ function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                 </svg>
-                <input
-                  type="text"
+                <LocationSelect
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full rounded-xl bg-transparent py-3.5 pl-11 pr-4 text-base text-white placeholder:text-slate-400 outline-none focus:bg-white/5 transition-colors duration-300"
-                  placeholder="Location"
+                  placeholder="Any location"
+                  ariaLabel="Search by location"
                 />
               </div>
 

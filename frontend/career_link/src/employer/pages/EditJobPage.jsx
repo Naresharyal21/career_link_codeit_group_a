@@ -3,6 +3,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useParams } from "react-router-dom";
 import useJobs from "../../hooks/useJobs";
+import LocationSelect from "../../components/commonuiPart/LocationSelect";
 
 const JOB_TYPES = [
   { value: "FT", label: "Full-time" },
@@ -280,14 +281,14 @@ const EditJobPage = () => {
 
         <div>
           <label className="block text-sm font-medium mb-1">Location</label>
-          <input
+          <LocationSelect
             id="location"
-            name="location"
-            type="text"
             value={formik.values.location}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             className="border rounded p-2 w-full"
+            placeholder="Select a location"
+            ariaLabel="Job location"
           />
           {formik.touched.location && formik.errors.location && (
             <p className="text-red-700 text-sm">{formik.errors.location}</p>

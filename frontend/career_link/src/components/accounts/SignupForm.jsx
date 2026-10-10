@@ -16,8 +16,8 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 
 import useAccounts from "../../hooks/useAccounts";
 import { signupValidationSchema } from "./validationSchema";
-import { nepalLocations } from "../../appstore/nepalLocations";
 import Button from "../commonuiPart/Button";
+import LocationSelect from "../commonuiPart/LocationSelect";
 import accountsApi from "../../apis/accountsApi";
 import { AuthenticationContext } from "../../context/AuthContext";
 
@@ -236,26 +236,19 @@ const SignupForm = () => {
 
       {/* LOCATION */}
       <div className="mb-4 ">
-        <select
+        <LocationSelect
           id="location"
-          name="location"
-          aria-label={formik.values.role === "ep" ? "Company location" : "Location"}
+          ariaLabel={formik.values.role === "ep" ? "Company location" : "Location"}
           value={formik.values.location}
           onChange={formik.handleChange}
           onBlur={formik.handleBlur}
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:border-slate-300 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-500/10"
-        >
-          <option value="" disabled>
-            {formik.values.role === "ep"
+          placeholder={
+            formik.values.role === "ep"
               ? "Select your Company Location"
-              : "Select your Location"}
-          </option>
-          {nepalLocations.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
+              : "Select your Location"
+          }
+        />
         {formik.touched.location && formik.errors.location && (
           <p className="mt-1 text-xs text-red-600" role="alert">{formik.errors.location}</p>
         )}

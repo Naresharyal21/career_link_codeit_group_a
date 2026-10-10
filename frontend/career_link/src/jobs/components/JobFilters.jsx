@@ -1,4 +1,5 @@
 import React from 'react'
+import LocationSelect from '../../components/commonuiPart/LocationSelect'
 
 const JobFilters = ({ filters, onChange }) => {
   const hasActiveFilters = filters.jobType || filters.location || filters.experience
@@ -34,9 +35,9 @@ const JobFilters = ({ filters, onChange }) => {
 
       <div className="mb-4">
         <label className="text-sm font-medium text-gray-700 block mb-1.5">Location</label>
-        <input
-          type="text"
-          placeholder="e.g. Kathmandu"
+        <LocationSelect
+          placeholder="Any location"
+          ariaLabel="Filter jobs by location"
           className="w-full border border-gray-300 rounded-md p-2 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#0f2a52] focus:border-[#0f2a52]"
           value={filters.location}
           onChange={(e) => onChange({ ...filters, location: e.target.value })}
