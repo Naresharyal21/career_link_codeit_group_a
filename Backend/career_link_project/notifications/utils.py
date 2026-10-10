@@ -1,4 +1,6 @@
+# CHANGED: added "import threading" (used to send emails in the background)
 import logging
+import threading
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -45,12 +47,24 @@ def send_notification_email(user, notification):
         return False
 
 
+# CHANGED: new helper. Sends the email in a background thread so a slow or
+# blocked Gmail connection can never freeze the web request. The thread is a
+# daemon, so it never blocks the server from shutting down.
+def _send_in_background(user, notification):
+    threading.Thread(
+        target=send_notification_email,
+        args=(user, notification),
+        daemon=True,
+    ).start()
+
+
 def notify_user(user, message, type=Notification.NotificationType.SYSTEM, link="", send_email=True):
     notification = Notification.objects.create(
         user=user, message=message, type=type, link=link
     )
     if send_email and type in EMAIL_TYPES:
-        transaction.on_commit(lambda: send_notification_email(user, notification))
+        # CHANGED: was send_notification_email(...), now runs in the background
+        transaction.on_commit(lambda: _send_in_background(user, notification))
     return notification
 
 
@@ -68,7 +82,7 @@ def notify_job_approval_update(job_approval):
             else ""
         )
         message = f"Your job posting '{job.title}' was rejected.{reason}"
-        link = ""  # no employer page for a rejected job exists yet
+        link = ""  
     else:
         return None
 

@@ -1,3 +1,6 @@
+# CHANGED: added "import logging" (used by the new logger below)
+import logging
+
 from django.contrib.auth import login
 from django.db import transaction
 from django.db.models import Count, Q
@@ -7,6 +10,12 @@ from rest_framework import generics, permissions, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+# CHANGED: import the two notification helpers from the notifications app
+from notifications.utils import (
+    notify_job_approval_update,
+    notify_matching_job_seekers,
+)
 
 from .api_serializers import (
     JobApprovalSerializer,
@@ -23,6 +32,10 @@ from .permissions import (
 )
 from .serializers import AdminLoginSerializer, AdminRegistrationSerializer
 from .services import reject_report, resolve_report, review_report
+
+# CHANGED: module-level logger, used to record notification failures
+logger = logging.getLogger(__name__)
+
 
 class AdminRegistrationView(APIView):
     permission_classes = [AllowAny]
@@ -250,6 +263,28 @@ class JobApprovalActionView(APIView):
     permission_classes = [IsModerator]
     new_status = None
 
+    # CHANGED: new method. Creates the employer notification and, on the
+    # first approval only, the job-match notifications for job seekers.
+    # Each call has its own try/except so one failure cannot block the other,
+    # and a notification error can never break the moderator's action.
+    @staticmethod
+    def _notify(approval, old_status):
+        try:
+            notify_job_approval_update(approval)
+        except Exception:
+            logger.exception(
+                "Approval notification failed for approval %s", approval.pk
+            )
+
+        # Job-match alerts only on Pending -> Approved, never on Rejected -> Approved
+        if approval.status == "Approved" and old_status == "Pending":
+            try:
+                notify_matching_job_seekers(approval.job)
+            except Exception:
+                logger.exception(
+                    "Job-match notifications failed for job %s", approval.job_id
+                )
+
     def post(self, request, pk):
         rejection_reason = ""
         if self.new_status == "Rejected":
@@ -263,10 +298,14 @@ class JobApprovalActionView(APIView):
         with transaction.atomic():
             approval = get_object_or_404(
                 JobApproval.objects.select_for_update().select_related(
-                    "job__employer"
+                    # CHANGED: also load the employer's user (was "job__employer")
+                    # because the notification is sent to job.employer.user
+                    "job__employer__user"
                 ),
                 pk=pk,
             )
+            # CHANGED: remember the status before overwriting it
+            old_status = approval.status
             approval.status = self.new_status
             approval.reviewed_by = request.user
             approval.reviewed_at = timezone.now()
@@ -280,6 +319,13 @@ class JobApprovalActionView(APIView):
                     "updated_at",
                 ]
             )
+
+            # CHANGED: send notifications only after the transaction commits,
+            # and only when the status really changed (blocks duplicates when
+            # approve or reject is called twice)
+            if old_status != self.new_status:
+                transaction.on_commit(lambda: self._notify(approval, old_status))
+
             return Response(
                 JobApprovalSerializer(
                     approval,
