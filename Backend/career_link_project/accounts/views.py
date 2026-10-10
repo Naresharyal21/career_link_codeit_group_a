@@ -222,6 +222,8 @@ class MeView(APIView):
                 "email": user.email,
                 "role": user.role,
                 "role_display": user.get_role_display(),
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
                 "profile": data,
             }
         )

@@ -77,3 +77,17 @@ class ModeratorDashboardAPITests(APITestCase):
         self.assertEqual(response.data["under_review_reports"], 0)
         self.assertEqual(response.data["resolved_reports"], 1)
         self.assertEqual(response.data["rejected_reports"], 0)
+
+    def test_superuser_can_access_dashboard_without_staff_status(self):
+        superuser = User.objects.create_user(
+            username="dashboard_superuser",
+            email="dashboard_superuser@example.com",
+            password="test-password-123",
+            is_superuser=True,
+            is_staff=False,
+        )
+        self.client.force_authenticate(user=superuser)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

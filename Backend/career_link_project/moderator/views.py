@@ -20,6 +20,7 @@ from .permissions import (
     CanCreateReport,
     IsAdminOrOwnerReadOnly,
     IsModerator,
+    has_moderator_access,
 )
 from .serializers import AdminLoginSerializer, AdminRegistrationSerializer
 from .services import reject_report, resolve_report, review_report
@@ -85,7 +86,7 @@ class ReportListCreateView(generics.ListCreateAPIView):
         queryset = super().get_queryset()
         user = self.request.user
 
-        if user.is_staff:
+        if has_moderator_access(user):
             return self._filter_status(queryset)
         if user.role == "js":
             queryset = queryset.filter(reported_by=user)
@@ -130,7 +131,7 @@ class ReportDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
-        if user.is_staff:
+        if has_moderator_access(user):
             return queryset
         if user.role == "js":
             return queryset.filter(reported_by=user)

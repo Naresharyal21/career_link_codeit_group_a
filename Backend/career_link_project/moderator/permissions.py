@@ -1,6 +1,10 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
+def has_moderator_access(user):
+    return user.is_staff or user.is_superuser
+
+
 class IsJobSeeker(BasePermission):
     message = "Only job seekers can perform this action."
 
@@ -19,7 +23,7 @@ class CanCreateReport(BasePermission):
             request.user.is_authenticated
             and (
                 request.user.role in ("js", "moderator", "admin")
-                or request.user.is_staff
+                or has_moderator_access(request.user)
             )
         )
 
@@ -40,7 +44,7 @@ class IsModerator(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
-            and request.user.is_staff
+            and has_moderator_access(request.user)
         )
 
 
@@ -74,7 +78,7 @@ class IsAdminOrOwnerReadOnly(BasePermission):
         return True
 
     def has_object_permission(self, request, view, obj):
-        if request.user.is_staff:
+        if has_moderator_access(request.user):
             return True
 
         if request.method in SAFE_METHODS:

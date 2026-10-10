@@ -149,6 +149,31 @@ class ReportAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 2)
 
+    def test_superuser_without_staff_status_sees_all_reports(self):
+        Report.objects.create(
+            reported_job=self.job,
+            reported_by=self.user,
+            report_reason="Spam",
+        )
+        Report.objects.create(
+            reported_job=self.other_job,
+            reported_by=self.other_job_seeker,
+            report_reason="Scam",
+        )
+        superuser = User.objects.create_user(
+            username="report_superuser",
+            email="report_superuser@example.com",
+            password="test-password-123",
+            is_superuser=True,
+            is_staff=False,
+        )
+        self.client.force_authenticate(user=superuser)
+
+        response = self.client.get(self.report_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 2)
+
     def test_job_seeker_only_sees_own_reports(self):
         own_report = Report.objects.create(
             reported_job=self.job,

@@ -139,6 +139,17 @@ class MeIdentityUpdateTests(APITestCase):
         self.assertEqual(self.user.role, User.Role.JOBSEEKERS)
         self.assertEqual(self.profile.full_name, "Profile User")
 
+    def test_me_returns_staff_and_superuser_flags(self):
+        self.user.is_staff = True
+        self.user.is_superuser = True
+        self.user.save(update_fields=["is_staff", "is_superuser"])
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["is_staff"])
+        self.assertTrue(response.data["is_superuser"])
+
 
 class Auth0LoginTests(APITestCase):
     identity = {
@@ -233,3 +244,23 @@ class Auth0LoginTests(APITestCase):
         self.assertTrue(
             Auth0Identity.objects.filter(user=user, subject=self.identity["subject"]).exists()
         )
+
+    @patch("accounts.views.verify_auth0_id_token", return_value=identity)
+    def test_employer_onboarding_ignores_blank_date_of_birth(self, _verify):
+        response = self.client.post(
+            self.onboarding_url,
+            {
+                "id_token": "verified-token",
+                "role": User.Role.EMPLOYEERS,
+                "username": "Example Company",
+                "company_name": "Example Company",
+                "location": "Kathmandu",
+                "date_of_birth": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email=self.identity["email"])
+        self.assertEqual(user.role, User.Role.EMPLOYEERS)
+        self.assertEqual(user.employer_profile.company_name, "Example Company")

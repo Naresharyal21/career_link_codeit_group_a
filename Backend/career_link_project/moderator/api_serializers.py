@@ -4,6 +4,7 @@ from accounts.models import EmployerProfile, User
 from jobs.models import JobPosting
 
 from .models import JobApproval, Report
+from .permissions import has_moderator_access
 
 
 class ModeratorUserSerializer(serializers.ModelSerializer):
@@ -115,7 +116,7 @@ class ReportWriteSerializer(serializers.ModelSerializer):
         if (
             self.instance is not None
             and request is not None
-            and not request.user.is_staff
+            and not has_moderator_access(request.user)
         ):
             self.fields["reported_job"].read_only = True
 

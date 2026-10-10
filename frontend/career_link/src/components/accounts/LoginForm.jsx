@@ -48,7 +48,9 @@ const LoginForm = ({ selectedRole }) => {
           response.refresh
         );
         const userData = await getMe();
-        if (userData.role !== selectedRole) {
+        const hasModeratorAccess =
+          userData.is_staff || userData.is_superuser;
+        if (!hasModeratorAccess && userData.role !== selectedRole) {
           logoutUser();
           toast.error(
             `This account uses the ${userData.role_display || "other"} role. Select that role to continue.`,
@@ -59,7 +61,11 @@ const LoginForm = ({ selectedRole }) => {
 toast.success("Login successful!")
 
 
-        navigate(location.state?.from || "/dashboard", { replace: true })
+        navigate(
+          location.state?.from ||
+            (hasModeratorAccess ? "/reports" : "/dashboard"),
+          { replace: true },
+        )
 
 
       } catch (err) {

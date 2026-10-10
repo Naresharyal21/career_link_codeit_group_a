@@ -41,6 +41,15 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, min_length=8)
 
+    def to_internal_value(self, data):
+        if (
+            data.get("role") == User.Role.EMPLOYEERS
+            and "date_of_birth" in data
+        ):
+            data = data.copy()
+            data.pop("date_of_birth")
+        return super().to_internal_value(data)
+
     # -------------------------
     # Jobseeker fields
     # -------------------------
