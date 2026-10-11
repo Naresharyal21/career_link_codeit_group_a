@@ -44,6 +44,8 @@ class Application(TimeStampedModel):
         default=Status.APPLIED,
     )
 
+    contact_email = models.EmailField(blank=True, default="")
+    contact_phone = models.CharField(max_length=100, blank=True, default="")
     cover_letter = models.TextField(blank=True)
 
     resume = models.FileField(

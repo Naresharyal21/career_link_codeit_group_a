@@ -114,11 +114,6 @@ class Auth0LoginView(APIView):
         user = social_identity.user if social_identity else None
         if user is None:
             user = User.objects.filter(email__iexact=identity["email"]).first()
-            if user and not user.email_verified:
-                return Response(
-                    {"detail": "Verify this email address before using social sign-in."},
-                    status=status.HTTP_409_CONFLICT,
-                )
 
         if user is None:
             return Response(
@@ -129,6 +124,12 @@ class Auth0LoginView(APIView):
                     "role": role,
                 },
                 status=status.HTTP_200_OK,
+            )
+
+        if not user.email_verified:
+            return Response(
+                {"detail": "Verify this email address before using social sign-in."},
+                status=status.HTTP_409_CONFLICT,
             )
 
         if user.role != role:
@@ -189,15 +190,22 @@ class Auth0OnboardingView(APIView):
 
         with transaction.atomic():
             user = serializer.save()
-            user.email_verified = True
-            user.save(update_fields=["email_verified"])
             Auth0Identity.objects.create(
                 user=user,
                 issuer=identity["issuer"],
                 subject=identity["subject"],
             )
 
-        return Response(token_response(user), status=status.HTTP_201_CREATED)
+        create_and_send_otp(user=user, purpose="emv")
+
+        return Response(
+            {
+                "email_verification_required": True,
+                "email": user.email,
+                "message": "Verify your email address to complete registration.",
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class MeView(APIView):

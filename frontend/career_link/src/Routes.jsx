@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import HomePage from "./home/components/pages/HomePage";
+import { AuthenticationContext } from "./context/AuthContext";
 import Login from "./pages/accounts/Login";
 import Signup from "./pages/accounts/Signup";
 import Auth0LoginButtons from "./components/accounts/Auth0LoginButtons";
@@ -25,6 +26,18 @@ import NotificationsPage from "./notifications/components/pages/NotificationsPag
 import ModeratorRoutes from "./routes/ModeratorRoutes";
 import employerRoutes from "./routes/EmployerRoutes";
 import AdminLogin from "./pages/moderator/AdminLogin";
+
+const HomeRoute = () => {
+    const { isAuthenticated, loading, user } = useContext(AuthenticationContext);
+
+    if (loading) return null;
+    if (!isAuthenticated) return <HomePage />;
+
+    const destination =
+        user?.is_staff || user?.is_superuser ? "/reports" : "/dashboard";
+    return <Navigate to={destination} replace />;
+};
+
 const AppRoutes = () => {
     return (
         <Routes>
@@ -33,7 +46,7 @@ const AppRoutes = () => {
             <Route path="/auth/callback" element={<Auth0LoginButtons callbackOnly />} />
             <Route path="/signup" element={<Signup />} />
             <Route element={<Layout />}>
-                <Route path="/" element={<HomePage />} />
+                <Route path="/" element={<HomeRoute />} />
                 <Route path="/home" element={<Navigate to="/" replace />} />
             </Route>
             <Route element={<DashboardLayout />}>

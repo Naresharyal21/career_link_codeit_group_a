@@ -9,6 +9,8 @@ const ApplicationForm = () => {
   const [job, setJob] = useState(null);
   const [coverLetter, setCoverLetter] = useState("");
   const [resume, setResume] = useState(null);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [resumeError, setResumeError] = useState("");
   const [loading, setLoading] = useState(Boolean(jobId));
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +39,27 @@ const ApplicationForm = () => {
     };
   }, [jobId]);
 
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get("/accounts/me/")
+      .then((userData) => {
+        if (active) {
+          setContactEmail(userData.email || "");
+          setContactPhone(userData.profile?.phone || "");
+        }
+      })
+      .catch((requestError) => {
+        if (active) {
+          setError(requestError.message || "Unable to load your contact information.");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!jobId || submitting) return;
@@ -45,6 +68,8 @@ const ApplicationForm = () => {
     setSubmitting(true);
     const formData = new FormData();
     formData.append("job", jobId);
+    formData.append("contact_email", contactEmail.trim());
+    formData.append("contact_phone", contactPhone.trim());
     formData.append("cover_letter", coverLetter.trim());
     if (resume) formData.append("resume", resume);
 
@@ -132,6 +157,45 @@ const ApplicationForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+        <fieldset className="space-y-4 rounded-xl border border-slate-200 p-4">
+          <legend className="px-1 text-sm font-semibold text-slate-800">
+            Contact information for this application
+          </legend>
+          <div>
+            <label htmlFor="contact-email" className="mb-2 block text-sm font-medium text-slate-800">
+              Email
+            </label>
+            <input
+              id="contact-email"
+              type="email"
+              autoComplete="email"
+              required
+              maxLength={254}
+              value={contactEmail}
+              onChange={(event) => setContactEmail(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          <div>
+            <label htmlFor="contact-phone" className="mb-2 block text-sm font-medium text-slate-800">
+              Phone / WhatsApp
+            </label>
+            <input
+              id="contact-phone"
+              type="tel"
+              autoComplete="tel"
+              required
+              maxLength={100}
+              value={contactPhone}
+              onChange={(event) => setContactPhone(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          <p className="text-xs text-slate-500">
+            Employers who receive your application will be able to use these details to contact you.
+          </p>
+        </fieldset>
+
         <div>
           <label htmlFor="cover-letter" className="mb-2 block text-sm font-medium text-slate-800">
             Cover letter <span className="font-normal text-slate-500">(optional)</span>

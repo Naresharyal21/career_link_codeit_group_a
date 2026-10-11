@@ -21,10 +21,25 @@ from .serializers import ApplicationNoteSerializer, ApplicationSerializer, Saved
 logger = logging.getLogger(__name__)
 
 VALID_TRANSITIONS = {
-    Application.Status.APPLIED: [Application.Status.UNDER_REVIEW, Application.Status.REJECTED],
-    Application.Status.UNDER_REVIEW: [Application.Status.SHORTLISTED, Application.Status.REJECTED],
-    Application.Status.SHORTLISTED: [Application.Status.INTERVIEW, Application.Status.REJECTED],
-    Application.Status.INTERVIEW: [Application.Status.ACCEPTED, Application.Status.REJECTED],
+    Application.Status.APPLIED: [
+        Application.Status.UNDER_REVIEW,
+        Application.Status.ACCEPTED,
+        Application.Status.REJECTED,
+    ],
+    Application.Status.UNDER_REVIEW: [
+        Application.Status.SHORTLISTED,
+        Application.Status.ACCEPTED,
+        Application.Status.REJECTED,
+    ],
+    Application.Status.SHORTLISTED: [
+        Application.Status.INTERVIEW,
+        Application.Status.ACCEPTED,
+        Application.Status.REJECTED,
+    ],
+    Application.Status.INTERVIEW: [
+        Application.Status.ACCEPTED,
+        Application.Status.REJECTED,
+    ],
     Application.Status.ACCEPTED: [],
     Application.Status.REJECTED: [],
 }
@@ -34,7 +49,10 @@ STATUS_MESSAGES = {
     Application.Status.UNDER_REVIEW: "Your application is now under review.",
     Application.Status.SHORTLISTED: "You've been shortlisted!",
     Application.Status.INTERVIEW: "You've been invited to an interview.",
-    Application.Status.ACCEPTED: "Congratulations! Your application has been accepted.",
+    Application.Status.ACCEPTED: (
+        "Congratulations! Your application has been accepted. "
+        "Please check your email or WhatsApp for next steps."
+    ),
     Application.Status.REJECTED: "Your application was not successful this time.",
 }
 

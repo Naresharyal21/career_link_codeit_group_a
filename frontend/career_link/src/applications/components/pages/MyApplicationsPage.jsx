@@ -28,9 +28,13 @@ function MyApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedApplication, setExpandedApplication] = useState(null);
+  const [updatingApplication, setUpdatingApplication] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   const loadApplications = useCallback(async () => {
     try {
+      setError("");
       const response = await apiClient.get("/applications/");
       setApplications(Array.isArray(response) ? response : response?.results || []);
     } catch (requestError) {
@@ -61,6 +65,25 @@ function MyApplicationsPage() {
   }, []);
 
   const isEmployer = user?.role === "ep";
+  const updateApplicationStatus = async (application, status) => {
+    setUpdatingApplication(application.id);
+    setActionError("");
+    try {
+      const updated = await apiClient.patch(`/applications/${application.id}/`, { status });
+      setApplications((current) =>
+        current.map((item) =>
+          item.id === application.id ? { ...item, ...updated } : item,
+        ),
+      );
+    } catch (requestError) {
+      setActionError({
+        applicationId: application.id,
+        message: requestError.message || "Unable to update this application.",
+      });
+    } finally {
+      setUpdatingApplication(null);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-5xl">
@@ -132,35 +155,173 @@ function MyApplicationsPage() {
       {!loading && !error && applications.length > 0 && (
         <ul className="space-y-3">
           {applications.map((application) => (
-            <li key={application.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-semibold text-slate-900">
-                    {application.job_title || `Job #${application.job}`}
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Submitted{" "}
-                    {new Date(application.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    STATUS_STYLES[application.status] || "bg-slate-100 text-slate-700"
-                  }`}
-                >
-                  {STATUS_LABELS[application.status] || application.status}
-                </span>
-              </div>
-              {application.cover_letter && (
-                <p className="mt-4 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
-                  {application.cover_letter}
-                </p>
-              )}
-            </li>
+            <ApplicationCard
+              key={application.id}
+              application={application}
+              isEmployer={isEmployer}
+              expanded={expandedApplication === application.id}
+              updating={updatingApplication === application.id}
+              actionError={
+                actionError?.applicationId === application.id ? actionError.message : ""
+              }
+              onToggleDetails={() =>
+                setExpandedApplication((current) =>
+                  current === application.id ? null : application.id,
+                )
+              }
+              onStatusUpdate={updateApplicationStatus}
+            />
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function ApplicationCard({
+  application,
+  isEmployer,
+  expanded,
+  updating,
+  actionError,
+  onToggleDetails,
+  onStatusUpdate,
+}) {
+  const canDecide = ["APPLIED", "UNDER_REVIEW", "SHORTLISTED", "INTERVIEW"].includes(
+    application.status,
+  );
+  const phoneDigits = (application.contact_phone || "").replace(/\D/g, "");
+  const whatsappNumber = phoneDigits
+    ? phoneDigits.startsWith("977")
+      ? phoneDigits
+      : `977${phoneDigits.replace(/^0/, "")}`
+    : "";
+
+  return (
+    <li className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          {isEmployer && (
+            <p className="text-sm font-medium text-slate-600">
+              Applicant: {application.job_seeker}
+            </p>
+          )}
+          <h2 className="font-semibold text-slate-900">
+            {application.job_title || `Job #${application.job}`}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Submitted {new Date(application.created_at).toLocaleDateString()}
+          </p>
+        </div>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            STATUS_STYLES[application.status] || "bg-slate-100 text-slate-700"
+          }`}
+        >
+          {STATUS_LABELS[application.status] || application.status}
+        </span>
+      </div>
+      {!isEmployer && application.cover_letter && (
+        <p className="mt-4 line-clamp-3 whitespace-pre-line text-sm text-slate-600">
+          {application.cover_letter}
+        </p>
+      )}
+
+      {isEmployer && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onToggleDetails}
+            aria-expanded={expanded}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            {expanded ? "Hide details" : "View details"}
+          </button>
+          {canDecide && (
+            <>
+              <button
+                type="button"
+                disabled={updating}
+                onClick={() => onStatusUpdate(application, "ACCEPTED")}
+                className="rounded-lg bg-green-700 px-3 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-60"
+              >
+                {updating ? "Updating..." : "Approve"}
+              </button>
+              <button
+                type="button"
+                disabled={updating}
+                onClick={() => onStatusUpdate(application, "REJECTED")}
+                className="rounded-lg bg-red-700 px-3 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-60"
+              >
+                {updating ? "Updating..." : "Reject"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {isEmployer && actionError && (
+        <p role="alert" className="mt-3 text-sm text-red-700">{actionError}</p>
+      )}
+
+      {isEmployer && expanded && (
+        <div className="mt-4 space-y-3 border-t border-slate-100 pt-4">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Applicant contact</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Email:{" "}
+              {application.contact_email ? (
+                <a
+                  href={`mailto:${application.contact_email}`}
+                  className="font-medium text-blue-700 hover:underline"
+                >
+                  {application.contact_email}
+                </a>
+              ) : "Not provided"}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              Phone / WhatsApp: {application.contact_phone || "Not provided"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {application.contact_email && (
+                <a
+                  href={`mailto:${application.contact_email}`}
+                  className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                >
+                  Email applicant
+                </a>
+              )}
+              {whatsappNumber && (
+                <a
+                  href={`https://wa.me/${whatsappNumber}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-green-200 px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-50"
+                >
+                  WhatsApp applicant
+                </a>
+              )}
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-slate-800">Cover letter</h3>
+            <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
+              {application.cover_letter || "No cover letter provided."}
+            </p>
+          </div>
+          {application.resume && (
+            <a
+              href={application.resume}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-sm font-semibold text-blue-700 hover:underline"
+            >
+              View resume
+            </a>
+          )}
+        </div>
+      )}
+    </li>
   );
 }
 

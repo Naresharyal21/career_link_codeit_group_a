@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import careerLinkIcon from "../assets/careerlink_icon.png";
+import logo from "../assets/logo.png";
 import { useContext } from "react";
 import { AuthenticationContext } from "../context/AuthContext";
 
@@ -12,7 +12,7 @@ function Footer() {
       <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-5 px-4 py-5 sm:px-6 md:grid-cols-4 lg:px-8">
         <div className="col-span-2 space-y-2 md:col-span-1">
           <Link to="/" className="inline-flex items-center gap-2">
-            <img src={careerLinkIcon} alt="CareerLink logo" className="h-7 w-7" />
+            <img src={logo} alt="CareerLink logo" className="h-12 w-auto object-contain sm:h-14" />
             <span className="text-lg font-bold">CareerLink</span>
           </Link>
           <p className="max-w-xs text-xs leading-5 text-slate-300">

@@ -7,6 +7,8 @@ from jobs.models import JobPosting
 
 class ApplicationSerializer(serializers.ModelSerializer):
     job_seeker = serializers.StringRelatedField(read_only=True)
+    contact_email = serializers.EmailField(required=True)
+    contact_phone = serializers.CharField(required=True, max_length=100)
     job_title = serializers.CharField(
         source="job.title",
         read_only=True,
@@ -19,6 +21,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "job_seeker",
             "job",
             "job_title",
+            "contact_email",
+            "contact_phone",
             "cover_letter",
             "resume",
             "status",
@@ -54,7 +58,19 @@ class ApplicationSerializer(serializers.ModelSerializer):
         else:
             fields["status"].read_only = True
 
+        if self.instance:
+            fields["contact_email"].read_only = True
+            fields["contact_phone"].read_only = True
+
         return fields
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data["contact_email"]:
+            data["contact_email"] = instance.job_seeker.user.email
+        if not data["contact_phone"]:
+            data["contact_phone"] = instance.job_seeker.phone
+        return data
 
     def validate_resume(self, value):
         """
