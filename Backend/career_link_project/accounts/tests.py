@@ -94,6 +94,51 @@ class RegistrationOTPTests(APITestCase):
     EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
     DEFAULT_FROM_EMAIL="no-reply@example.com",
 )
+class ForgotPasswordOTPTests(APITestCase):
+    url = "/api/v1/accounts/forgot/password/"
+
+    def test_existing_email_receives_password_reset_otp(self):
+        user = User.objects.create_user(
+            username="Forgot Password User",
+            email="forgot@example.com",
+            password="test-password-123",
+            role=User.Role.JOBSEEKERS,
+        )
+
+        response = self.client.post(
+            self.url,
+            {"email": "  FORGOT@example.com "},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        otp = EmailOTP.objects.get(user=user, purpose="prv")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [user.email])
+        self.assertIn(otp.otp, mail.outbox[0].body)
+
+    def test_unknown_email_does_not_create_or_send_password_reset_otp(self):
+        response = self.client.post(
+            self.url,
+            {"email": "unknown@example.com"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertFalse(EmailOTP.objects.filter(purpose="prv").exists())
+        self.assertEqual(mail.outbox, [])
+
+    def test_missing_email_is_rejected(self):
+        response = self.client.post(self.url, {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(mail.outbox, [])
+
+
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    DEFAULT_FROM_EMAIL="no-reply@example.com",
+)
 class EmailChangeOTPTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -356,7 +401,7 @@ class Auth0LoginTests(APITestCase):
         self.assertIn("access", login_response.data)
 
     @patch("accounts.views.verify_auth0_id_token", return_value=identity)
-    def test_linked_social_account_cannot_login_before_email_otp(self, _verify):
+    def test_unverified_linked_social_account_requires_otp_before_login(self, _verify):
         user = User.objects.create_user(
             username="Unverified Social User",
             email=self.identity["email"],
@@ -376,8 +421,36 @@ class Auth0LoginTests(APITestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["email_verification_required"])
+        self.assertEqual(response.data["email"], user.email)
         self.assertNotIn("access", response.data)
+        otp = EmailOTP.objects.get(user=user, purpose="emv")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [user.email])
+        self.assertIn(otp.otp, mail.outbox[0].body)
+
+        verify_response = self.client.post(
+            "/api/v1/accounts/verify/otp/",
+            {"email": user.email, "otp": otp.otp, "purpose": "emv"},
+            format="json",
+        )
+        self.assertEqual(verify_response.status_code, status.HTTP_200_OK)
+
+        login_response = self.client.post(
+            self.url,
+            {"id_token": "verified-token", "role": User.Role.JOBSEEKERS},
+            format="json",
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", login_response.data)
+        self.assertTrue(
+            Auth0Identity.objects.filter(
+                user=user,
+                issuer=self.identity["issuer"],
+                subject=self.identity["subject"],
+            ).exists()
+        )
 
     @patch("accounts.views.verify_auth0_id_token", return_value=identity)
     def test_employer_onboarding_ignores_blank_date_of_birth(self, _verify):

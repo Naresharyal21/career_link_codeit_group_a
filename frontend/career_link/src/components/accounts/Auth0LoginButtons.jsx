@@ -34,6 +34,15 @@ const ProviderButtons = ({ role, callbackOnly }) => {
         }
 
         const response = await accountsApi.auth0Login(idToken, selectedRole);
+        if (response.email_verification_required) {
+          localStorage.setItem("signupemail", response.email);
+          sessionStorage.removeItem("careerlink_auth0_role");
+          sessionStorage.removeItem("careerlink_auth0_return_path");
+          toast.success("Check your email for a verification code.");
+          navigate("/verifyotp/emv", { replace: true, state: null });
+          return;
+        }
+
         if (response.profile_required) {
           navigate("/signup", {
             replace: true,

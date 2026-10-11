@@ -189,9 +189,7 @@ SPECTACULAR_SETTINGS = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    # CHANGED: 8 hours for the demo so the bell and list keep loading.
-    # After the demo set this back to timedelta(minutes=30).
-    "ACCESS_TOKEN_LIFETIME":  timedelta(minutes=30),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=8),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     # CHANGED: old refresh tokens are blacklisted after rotation (needed by logout)

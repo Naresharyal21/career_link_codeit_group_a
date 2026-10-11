@@ -61,6 +61,7 @@ const navigationLinks = [
     name: "Reports",
     path: "/reports",
     icon: MdReport,
+    superuserOnly: true,
   },
 ];
 
@@ -72,6 +73,7 @@ const Sidebar = ({ onNavigate }) => {
   const links = navigationLinks.filter(
     (item) =>
       (!item.roles || item.roles.includes(user?.role)) &&
+      (!item.superuserOnly || user?.is_superuser === true) &&
       (!item.guestsOnly || !isAuthenticated) &&
       (isAuthenticated || item.guestsOnly || item.path === "/jobs")
   );

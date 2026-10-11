@@ -126,12 +126,6 @@ class Auth0LoginView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        if not user.email_verified:
-            return Response(
-                {"detail": "Verify this email address before using social sign-in."},
-                status=status.HTTP_409_CONFLICT,
-            )
-
         if user.role != role:
             return Response(
                 {
@@ -141,6 +135,17 @@ class Auth0LoginView(APIView):
                     )
                 },
                 status=status.HTTP_409_CONFLICT,
+            )
+
+        if not user.email_verified:
+            create_and_send_otp(user=user, purpose="emv")
+            return Response(
+                {
+                    "email_verification_required": True,
+                    "email": user.email,
+                    "message": "Verify your email address to continue signing in.",
+                },
+                status=status.HTTP_200_OK,
             )
 
         if not user.is_active:
@@ -293,14 +298,21 @@ class ForgetPasswordView(APIView):
     def post(self, request):
         email = request.data.get("email")
 
-        if not email:
-            return Response({"error": "Email is required"})
+        if not isinstance(email, str) or not email.strip():
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email.strip())
 
         except User.DoesNotExist:
-            return Response({"error": "User doesnot exist "})
+            return Response(
+                {"error": "No account exists for this email address."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         create_and_send_otp(user=user, purpose="prv")
         return Response({"message": "OTP sent successfully"})
 
