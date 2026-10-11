@@ -29,6 +29,7 @@ VALID_TRANSITIONS = {
     Application.Status.REJECTED: [],
 }
 
+# NOTE: applications/signals.py imports this dictionary, so keep it here.
 STATUS_MESSAGES = {
     Application.Status.UNDER_REVIEW: "Your application is now under review.",
     Application.Status.SHORTLISTED: "You've been shortlisted!",
@@ -138,16 +139,10 @@ class ApplicationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         application = serializer.save()
 
-        if new_status != old_status and new_status in STATUS_MESSAGES:
-            try:
-                notify_user(
-                    user=application.job_seeker.user,
-                    message=STATUS_MESSAGES[new_status],
-                    type=Notification.NotificationType.STATUS_UPDATE,
-                       link="/dashboard/applications",
-                )
-            except Exception:
-                logger.exception("Failed to send notification for application %s", application.id)
+        # CHANGED: removed the notify_user(...) block that was here.
+        # The status-change notification is now created by the signal
+        # notify_seeker_on_status_change in applications/signals.py, so it works
+        # for API, admin and shell. Keeping it here would create duplicates.
 
 
 class SavedJobViewSet(viewsets.ModelViewSet):
@@ -273,4 +268,5 @@ class ApplicationNoteViewSet(viewsets.ModelViewSet):
         if application.job.employer.user == self.request.user:
             serializer.save(employer=self.request.user.employer_profile)
         else:
-            raise permissions.PermissionDenied("You are not authorized to add notes to this application.")
+           
+            raise PermissionDenied("You are not authorized to add notes to this application.")

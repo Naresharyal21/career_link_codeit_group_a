@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     "corsheaders",
 
     "accounts",
-    "applications",
+    "applications.apps.ApplicationsConfig",
     "jobs",
     "moderator.apps.ModeratorConfig",
     "notifications",
