@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiMail, FiShield, FiTrash2 } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -11,6 +11,8 @@ const ManageAccountCart = ({ onClose }) => {
   const { sendDeleteOTP } = useAccounts();
   const navigate = useNavigate();
   const { formattedTime, isCooldown, startCooldown } = useOtpCooldown("dav", 180);
+  const [sendingDeleteOTP, setSendingDeleteOTP] = useState(false);
+  const sendingDeleteOTPRef = useRef(false);
 
   useEffect(() => {
     const closeOnEscape = (event) => {
@@ -22,12 +24,19 @@ const ManageAccountCart = ({ onClose }) => {
   }, [onClose]);
 
   const handleDeleteAccount = async () => {
+    if (sendingDeleteOTPRef.current || isCooldown) return;
+    sendingDeleteOTPRef.current = true;
+    setSendingDeleteOTP(true);
     try {
       await sendDeleteOTP();
       startCooldown();
+      onClose();
       navigate("/verifyotp/dav");
     } catch (error) {
       toast.error(error.message || "Could not send the account deletion OTP.");
+    } finally {
+      sendingDeleteOTPRef.current = false;
+      setSendingDeleteOTP(false);
     }
   };
 
@@ -102,14 +111,16 @@ const ManageAccountCart = ({ onClose }) => {
                 </p>
                 <Button
                   type="button"
-                  disabled={isCooldown}
+                  disabled={isCooldown || sendingDeleteOTP}
                   onClick={handleDeleteAccount}
                   variant="danger"
                   className="mt-4 w-full px-4 py-2.5 text-sm"
                 >
-                  {isCooldown
-                    ? `Try again in ${formattedTime}`
-                    : "Request account deletion"}
+                  {sendingDeleteOTP
+                    ? "Sending verification code..."
+                    : isCooldown
+                      ? `Try again in ${formattedTime}`
+                      : "Request account deletion"}
                 </Button>
               </div>
             </div>

@@ -27,7 +27,7 @@ const SignupForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const auth0Onboarding = location.state?.auth0Onboarding;
-  const { loginUser, logoutUser, setUser } = useContext(AuthenticationContext);
+  const { logoutUser } = useContext(AuthenticationContext);
 
   const formik = useFormik({
     initialValues: {
@@ -66,12 +66,15 @@ const SignupForm = () => {
             id_token: auth0Onboarding.idToken,
           });
 
-          loginUser(response.access, response.refresh);
-          const user = await accountsApi.getMe();
-          setUser(user);
+          if (!response.email_verification_required) {
+            throw new Error("Email verification is required to finish registration.");
+          }
+
+          localStorage.setItem("signupemail", response.email);
           sessionStorage.removeItem("careerlink_auth0_role");
           sessionStorage.removeItem("careerlink_auth0_return_path");
-          navigate("/dashboard", { replace: true, state: null });
+          toast.success("Check your email for a verification code.");
+          navigate("/verifyotp/emv", { replace: true, state: null });
           return;
         }
 

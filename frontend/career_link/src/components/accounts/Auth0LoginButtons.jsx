@@ -53,10 +53,16 @@ const ProviderButtons = ({ role, callbackOnly }) => {
         const user = await accountsApi.getMe();
         setUser(user);
         sessionStorage.removeItem("careerlink_auth0_role");
-        const returnPath =
+        const requestedPath =
           sessionStorage.getItem("careerlink_auth0_return_path") ||
-          location.state?.from ||
-          "/dashboard";
+          location.state?.from;
+        const returnPath =
+          requestedPath &&
+          requestedPath.startsWith("/") &&
+          !requestedPath.startsWith("//") &&
+          !requestedPath.startsWith("/verifyotp/")
+            ? requestedPath
+            : "/dashboard";
         sessionStorage.removeItem("careerlink_auth0_return_path");
         toast.success("Login successful!");
         navigate(returnPath, { replace: true });

@@ -60,10 +60,17 @@ const LoginForm = ({ selectedRole }) => {
         setUser(userData);
 toast.success("Login successful!")
 
-
+        const requestedPath = location.state?.from;
+        const defaultPath = hasModeratorAccess ? "/reports" : "/dashboard";
+        const destination =
+          typeof requestedPath === "string" &&
+          requestedPath.startsWith("/") &&
+          !requestedPath.startsWith("//") &&
+          !requestedPath.startsWith("/verifyotp/")
+            ? requestedPath
+            : defaultPath;
         navigate(
-          location.state?.from ||
-            (hasModeratorAccess ? "/reports" : "/dashboard"),
+          destination,
           { replace: true },
         )
 

@@ -129,14 +129,11 @@ const VerifyOTPPage = () => {
 
 
 
-          const response = await updateEmail(email);
+          await updateEmail(email);
           localStorage.removeItem("updateemail");
+          logoutUser();
           toast.success("Email changed successfully");
-          if (response.email_verified) {
-            navigate("/dashboard");
-          } else {
-            navigate("/verifyemail");
-          }
+          navigate("/login", { replace: true });
           return;
         }
 

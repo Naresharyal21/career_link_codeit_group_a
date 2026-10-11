@@ -1,0 +1,21 @@
+services:
+  backend:
+    build: ./Backend/career_link_project
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Backend/career_link_project:/app
+
+  frontend:
+    build:
+      context: ./frontend/career_link
+      dockerfile: ../Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/career_link:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
